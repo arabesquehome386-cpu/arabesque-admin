@@ -1,0 +1,4 @@
+*.rar
+*.zip
+.tmp/
+node_modules/
