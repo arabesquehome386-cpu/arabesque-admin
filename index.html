@@ -985,9 +985,12 @@
         .container { max-width: 100% !important; padding: 8px !important; }
         .content-wrapper { padding: 10px !important; }
 
-        /* أي Grid (بكلاس أو inline) يتحول لعمود واحد على الموبايل */
+        /* أي Grid بيستخدم minmax (نماذج الإدخال) يتحول لعمود واحد على الموبايل.
+           ملحوظة v22.1: قصرناها على minmax(...) عمداً ومستبعدين شبكة التقويم (repeat(7, 1fr))
+           اللي المفروض تفضل 7 أعمدة (أيام الأسبوع) حتى على الموبايل — أول نسخة كانت غلط
+           لأنها كسرت شكل التقويم وخلته يطلع عمود واحد. */
         .admin-grid,
-        [style*="grid-template-columns"] {
+        [style*="minmax("] {
             grid-template-columns: 1fr !important;
         }
 
