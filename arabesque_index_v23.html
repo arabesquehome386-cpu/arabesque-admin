@@ -994,6 +994,16 @@
             grid-template-columns: 1fr !important;
         }
 
+        /* السبب الحقيقي وراء قص خانات العملة/مصدر الحجز وما بعدها:
+           بعض حقول .admin-field فيها style="grid-column: span 2;" (خانة العملة وخانة مصدر الحجز)
+           وعمود واحد بس متاح على الموبايل (grid-template-columns: 1fr) — فالمتصفح بيضطر
+           يفتح عمود إضافي "ضمني" (implicit column) عشان يستوعب الـ span 2 دي، وده بيرجع
+           الشبكة كلها لعمودين تاني حتى الحقول اللي قبلها (البالغين/الواي فاي/السعر...).
+           الحل: نلغي الـ span على الموبايل ونخليها عمود واحد زي الباقي. */
+        .admin-grid [style*="grid-column"] {
+            grid-column: 1 / -1 !important;
+        }
+
         /* أي Flex Row (inline) يسمح بالالتفاف بدل القص الجانبي */
         [style*="display: flex"], [style*="display:flex"] {
             flex-wrap: wrap !important;
