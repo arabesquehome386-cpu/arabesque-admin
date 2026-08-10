@@ -1144,6 +1144,9 @@
                 <div style="width:9px; height:9px; border-radius:2px; background: rgba(163,127,61,0.5); border: 1px solid var(--gold);"></div> Airbnb/Booking
             </div>
             <div style="display:flex; align-items:center; gap:3px; font-size: 0.62rem; color: #a0a0a5;">
+                <div style="width:9px; height:9px; border-radius:2px; background: repeating-linear-gradient(45deg, rgba(230,160,30,0.5) 0 3px, rgba(230,160,30,0.15) 3px 6px); border: 1px solid #E6A01E;"></div> معلّق (لسه متاح)
+            </div>
+            <div style="display:flex; align-items:center; gap:3px; font-size: 0.62rem; color: #a0a0a5;">
                 <div style="width:9px; height:9px; border-radius:2px; background: rgba(52,152,219,0.5); border: 1px solid #3498db;"></div> اليوم
             </div>
         </div>
@@ -1326,9 +1329,31 @@
         </div>
     </div>
 
+    <!-- ===== v24: شريط الحجوزات المعلّقة (من Airbnb / Booking) ===== -->
+    <div id="pending-bar" style="display:none; margin: 14px 0; background: rgba(230,160,30,0.10); border: 1px solid #E6A01E; border-radius: 10px; padding: 12px;">
+        <div style="font-weight:900; color:#E6A01E; margin-bottom:8px;">
+            ⏳ حجوزات في انتظار تأكيدك — الأيام دي لسه مفتوحة ومحدش قافلها
+        </div>
+        <div id="pending-list"></div>
+    </div>
+
+    <!-- ===== v24: لوحة الأرشيف (الحجوزات الملغاة) ===== -->
+    <div id="archive-panel" style="display:none; margin: 14px 0; background: rgba(178,34,34,0.08); border: 1px solid #B22222; border-radius: 10px; padding: 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+            <div style="font-weight:900; color:#ff8a8a;">🗂️ أرشيف الحجوزات الملغاة</div>
+            <button onclick="document.getElementById('archive-panel').style.display='none';"
+                    style="background:#3a3a45; color:#d1d1d6; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-family:inherit; font-weight:700;">
+                إغلاق ✕
+            </button>
+        </div>
+        <div id="archive-list" style="color:#d1d1d6; font-size:0.85rem;">جاري التحميل…</div>
+    </div>
+
     <!-- أزرار التحكم الفعالة دون مسح تلقائي للمدخلات لتسهيل المراجعة -->
     <div class="admin-buttons">
         <button id="save-booking-btn" class="btn-panel" onclick="submitBookingToGoogleSheets('auto')"><i class="fa-solid fa-floppy-disk"></i> حفظ الحجز 💾</button>
+        <button id="cancel-booking-btn" class="btn-panel" onclick="cancelBookingToArchive()" style="background:linear-gradient(135deg,#8B2020,#B22222);"><i class="fa-solid fa-ban"></i> إلغاء الحجز ونقله للأرشيف 🚫</button>
+        <button id="restore-booking-btn" class="btn-panel" onclick="openArchivePanel()" style="background:linear-gradient(135deg,#1f6e4a,#2E8B57);"><i class="fa-solid fa-rotate-left"></i> الأرشيف وإعادة الحجز ♻️</button>
         <button id="delete-booking-btn" class="btn-panel" onclick="deleteBookingFromSheets()"><i class="fa-solid fa-trash-can"></i> حذف هذا الحجز نهائياً 🗑️</button>
         <button id="run-btn" class="btn-panel" onclick="updateGuideData(true)">🖨️ توليد الدليل وجاهزية الطباعة | Generate & Print</button>
         <button id="test-bot-btn" class="btn-panel" onclick="testTelegramBot()"><i class="fa-solid fa-robot"></i> تجربة بوت تليجرام 🤖</button>
@@ -2288,9 +2313,133 @@
             if (b.archived) return; // لا تظهر الحجوزات المؤرشفة في القائمة النشطة
             const opt = document.createElement('option');
             opt.value = b.bookingID;
-            opt.textContent = `${b.guestName} (${b.checkIn} ➔ ${b.checkOut})${b.locked ? ' 🔒' : ''}`;
+            const stIcon = (b.status === 'معلّق' || b.status === 'معلق') ? ' ⏳' : '';
+            opt.textContent = `${b.guestName} (${b.checkIn} ➔ ${b.checkOut})${b.locked ? ' 🔒' : ''}${stIcon}`;
             select.appendChild(opt);
         });
+
+        renderPendingBar(); // v24: تحديث شريط الحجوزات المعلّقة
+    }
+
+    /* =========================================================
+       v24: نظام الحالات — مؤكد / معلّق / ملغي
+       ========================================================= */
+    function isPending(b) { return b && (b.status === 'معلّق' || b.status === 'معلق'); }
+
+    // شريط الحجوزات المعلّقة القادمة من Airbnb / Booking
+    function renderPendingBar() {
+        const bar  = document.getElementById('pending-bar');
+        const list = document.getElementById('pending-list');
+        if (!bar || !list) return;
+
+        const pending = (localBookingsCache || []).filter(b => isPending(b) && !b.archived);
+        if (!pending.length) { bar.style.display = 'none'; return; }
+
+        bar.style.display = '';
+        list.innerHTML = pending.map(b => `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
+                        background:rgba(0,0,0,0.25); border-radius:8px; padding:10px; margin-bottom:8px;">
+                <div style="color:#e8e8ea; font-size:0.85rem; line-height:1.7;">
+                    <b>${b.guestName}</b><br>
+                    📅 ${b.checkIn} ← ${b.checkOut} • 🌐 ${b.bookingSource || '—'}
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button onclick="confirmPendingBooking('${b.bookingID}')"
+                        style="background:#2E8B57; color:#fff; border:none; padding:8px 14px; border-radius:6px;
+                               cursor:pointer; font-family:inherit; font-weight:700;">✅ تأكيد وقفل الأيام</button>
+                    <button onclick="cancelBookingToArchive('${b.bookingID}')"
+                        style="background:#B22222; color:#fff; border:none; padding:8px 14px; border-radius:6px;
+                               cursor:pointer; font-family:inherit; font-weight:700;">🚫 إلغاء</button>
+                </div>
+            </div>`).join('');
+    }
+
+    function confirmPendingBooking(bookingId) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl || !bookingId) return;
+        showStatus('⏳ جاري تأكيد الحجز وقفل الأيام...', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'confirmPending', bookingId: bookingId }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') { showStatus('✅ تم تأكيد الحجز — الأيام دي اتقفلت.', 'success'); loadBookingsFromSheets(); }
+            else showStatus('❌ ' + (d.message || 'تعذر التأكيد.'), 'error');
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال أثناء التأكيد.', 'error'));
+    }
+
+    // إلغاء الحجز → ينقله لصفحة الأرشيف في الجوجل شيت
+    function cancelBookingToArchive(explicitId) {
+        const bookingId = explicitId || document.getElementById('bookings-select').value;
+        const gasUrl    = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl)    { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (!bookingId) { showStatus('⚠️ اختر الحجز اللي عايز تلغيه من القائمة أولاً.', 'error'); return; }
+
+        const b = (localBookingsCache || []).find(x => x.bookingID === bookingId);
+        const name = b ? b.guestName : bookingId;
+        if (!confirm('تأكيد إلغاء حجز "' + name + '"؟\n\nهيتنقل لصفحة الأرشيف في الجوجل شيت، والأيام هتبقى متاحة تاني.\nتقدر ترجّعه في أي وقت من زر "الأرشيف وإعادة الحجز".')) return;
+
+        const reason = prompt('سبب الإلغاء (اختياري):', '') || '';
+
+        showStatus('⏳ جاري إلغاء الحجز ونقله للأرشيف...', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'cancel', bookingId: bookingId, cancelReason: reason }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                showStatus('🚫 تم إلغاء الحجز ونقله للأرشيف. الأيام بقت متاحة.', 'success');
+                resetFormToDefault();
+                loadBookingsFromSheets();
+            } else showStatus('❌ ' + (d.message || 'تعذر الإلغاء.'), 'error');
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال أثناء الإلغاء.', 'error'));
+    }
+
+    // فتح لوحة الأرشيف وتحميل الحجوزات الملغاة
+    function openArchivePanel() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const panel  = document.getElementById('archive-panel');
+        const list   = document.getElementById('archive-list');
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+
+        panel.style.display = '';
+        list.innerHTML = 'جاري التحميل…';
+
+        fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=archive')
+        .then(r => r.json())
+        .then(d => {
+            if (d.status !== 'success') { list.innerHTML = '❌ ' + (d.message || 'تعذر تحميل الأرشيف.'); return; }
+            if (!d.data.length) { list.innerHTML = '🗂️ الأرشيف فاضي — مفيش حجوزات ملغاة.'; return; }
+
+            list.innerHTML = d.data.map(b => `
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
+                            background:rgba(0,0,0,0.25); border-radius:8px; padding:10px; margin-bottom:8px;">
+                    <div style="line-height:1.7;">
+                        <b style="color:#ff8a8a;">${b.guestName}</b><br>
+                        📅 ${b.checkIn} ← ${b.checkOut} • 🌐 ${b.bookingSource || '—'}
+                        ${b.cancelInfo ? '<br><span style="color:#8a8a90; font-size:0.78rem;">📝 ' + b.cancelInfo + '</span>' : ''}
+                    </div>
+                    <button onclick="restoreBookingFromArchive('${b.bookingID}')"
+                        style="background:#2E8B57; color:#fff; border:none; padding:8px 14px; border-radius:6px;
+                               cursor:pointer; font-family:inherit; font-weight:700;">↩️ إعادة الحجز</button>
+                </div>`).join('');
+        })
+        .catch(() => { list.innerHTML = '❌ خطأ في الاتصال أثناء تحميل الأرشيف.'; });
+    }
+
+    // إعادة الحجز من الأرشيف للقائمة النشطة
+    function restoreBookingFromArchive(bookingId) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl || !bookingId) return;
+        showStatus('⏳ جاري إعادة الحجز من الأرشيف...', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'restore', bookingId: bookingId }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                showStatus('♻️ تمت إعادة الحجز — الأيام اتحجزت تاني.', 'success');
+                openArchivePanel();
+                loadBookingsFromSheets();
+            } else showStatus('❌ ' + (d.message || 'تعذر إعادة الحجز.'), 'error');
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال أثناء إعادة الحجز.', 'error'));
     }
 
     /* ===== تبويبات لوحة التحكم ===== */
@@ -3730,10 +3879,17 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                 cell.style.color = 'white';
             } else if (booking) {
                 const isExternal = booking.bookingSource === 'Airbnb' || booking.bookingSource === 'Booking.com';
-                cell.style.background = isExternal ? 'rgba(163,127,61,0.45)' : 'rgba(178,34,34,0.45)';
-                cell.style.borderColor = isExternal ? 'var(--gold)' : '#B22222';
-                cell.style.color = 'white';
-                cell.title = `${booking.guestName} (${booking.checkIn} ← ${booking.checkOut}) — ${booking.bookingSource}`;
+                if (isPending(booking)) {
+                    // v24: المعلّق بلون برتقالي مخطّط — اليوم لسه متاح فعلياً
+                    cell.style.background  = 'repeating-linear-gradient(45deg, rgba(230,160,30,0.35) 0 4px, rgba(230,160,30,0.12) 4px 8px)';
+                    cell.style.borderColor = '#E6A01E';
+                    cell.style.color = '#ffe2a8';
+                } else {
+                    cell.style.background = isExternal ? 'rgba(163,127,61,0.45)' : 'rgba(178,34,34,0.45)';
+                    cell.style.borderColor = isExternal ? 'var(--gold)' : '#B22222';
+                    cell.style.color = 'white';
+                }
+                cell.title = `${booking.guestName} (${booking.checkIn} ← ${booking.checkOut}) — ${booking.bookingSource}` + (isPending(booking) ? ' — ⏳ معلّق، لسه محتاج تأكيدك' : '');
                 cell.addEventListener('mouseenter', () => showCalTooltip(booking));
                 cell.addEventListener('mouseleave', hideCalTooltip);
                 cell.addEventListener('click',      () => { loadSelectedBookingData(booking.bookingID); document.getElementById('bookings-select').value = booking.bookingID; });
@@ -3755,14 +3911,19 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     }
 
     function getBookingForDate(date) {
+        // v24: لو فيه حجز مؤكد وحجز معلّق في نفس اليوم، المؤكد له الأولوية في العرض
+        let pendingHit = null;
         for (const b of localBookingsCache) {
             if (b.archived) continue;
             if (!b.checkIn || !b.checkOut) continue;
             const inD  = new Date(b.checkIn);  inD.setHours(0,0,0,0);
             const outD = new Date(b.checkOut); outD.setHours(0,0,0,0);
-            if (date >= inD && date < outD) return b;
+            if (date >= inD && date < outD) {
+                if (isPending(b)) { if (!pendingHit) pendingHit = b; }
+                else return b;
+            }
         }
-        return null;
+        return pendingHit;
     }
 
     function showCalTooltip(b) {
