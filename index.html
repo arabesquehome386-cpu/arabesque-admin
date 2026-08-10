@@ -1607,6 +1607,20 @@
     </div>
     
 
+        <!-- ===== v27: تفضيلات العرض ===== -->
+        <div style="background: rgba(197,168,92,0.07); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+            <div style="color: var(--gold-light); font-weight: 800; font-size: 1rem; margin-bottom: 10px;">
+                <i class="fa-solid fa-clock"></i> تفضيلات العرض
+            </div>
+            <div class="admin-field" style="max-width: 420px;">
+                <label>نظام الساعة في كل مكان بالبرنامج (اللوحة + دليل الضيف + الرسائل)</label>
+                <select id="input-time-format" onchange="setTimeFormat(this.value)">
+                    <option value="12">12 ساعة — 2:30 م</option>
+                    <option value="24">24 ساعة — 14:30</option>
+                </select>
+            </div>
+        </div>
+
         <!-- ===== الربط بجوجل شيت ===== -->
         <div style="background: rgba(163,127,61,0.08); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
             <div style="color: var(--gold-light); font-weight: 800; font-size: 1rem; margin-bottom: 12px;">
@@ -1638,11 +1652,13 @@
             <div class="admin-grid">
                 <div class="admin-field" style="grid-column: 1 / -1;">
                     <label>📥 رابط استيراد Airbnb (من: التقويم ← الإتاحة ← مزامنة التقويمات ← تصدير)</label>
-                    <input type="url" id="input-ical-airbnb" placeholder="https://ar.airbnb.com/calendar/ical/....ics?t=...">
+                    <input type="url" id="input-ical-airbnb" placeholder="https://ar.airbnb.com/calendar/ical/....ics?t=..."
+                           value="https://ar.airbnb.com/calendar/ical/1303959451330103107.ics?t=3a6f90aef76b4a79b6c974c35cf87854">
                 </div>
                 <div class="admin-field" style="grid-column: 1 / -1;">
                     <label>📥 رابط استيراد Booking.com (من: Rates &amp; Availability ← Sync calendars ← Export)</label>
-                    <input type="url" id="input-ical-booking" placeholder="https://ical.booking.com/v1/export?t=...">
+                    <input type="url" id="input-ical-booking" placeholder="https://ical.booking.com/v1/export?t=..."
+                           value="https://ical.booking.com/v1/export?t=df4da9cb-ab68-41e4-8633-80678481ca78">
                 </div>
                 <div class="admin-field" style="grid-column: 1 / -1;">
                     <button class="router-reminder-btn" style="padding: 9px 18px; align-self:flex-start;" onclick="saveIcalSettings()">
@@ -1689,6 +1705,19 @@
                 <span style="font-family:monospace; direction:ltr; display:inline-block;">
                     {اسم_الضيف} {تاريخ_الدخول} {تاريخ_الخروج} {عدد_الليالي} {الواي_فاي} {باسورد_الواي_فاي} {كود_البوكس} {اللوكيشن} {رابط_البوت}
                 </span>
+            </div>
+
+            <!-- v27: اختيار حجز لمعاينة الرسائل ببياناته الحقيقية -->
+            <div class="admin-field" style="border-color:#3498db; margin-bottom:14px;">
+                <label>👁️ معاينة الرسائل ببيانات حجز حقيقي</label>
+                <select id="msg-preview-booking" onchange="renderMsgTemplates()"
+                        style="width:100%; padding:10px; background:#1e1e24; color:white; border:1px solid #3498db; border-radius:6px; font-family:inherit;">
+                    <option value="">— اختر حجزاً لترى الرسالة بشكلها النهائي —</option>
+                </select>
+                <div style="color:#a0a0a5; font-size:0.76rem; margin-top:8px; line-height:1.8;">
+                    أول ما تختار حجز، هتشوف تحت كل رسالة شكلها النهائي بالاسم والتواريخ والباسوردات الحقيقية،
+                    وهيظهر زر يبعتها للضيف ده فوراً من غير ما تستنى ميعادها.
+                </div>
             </div>
 
             <div id="msg-templates-container"></div>
@@ -2312,12 +2341,53 @@
         updateGuideData(false);
     }
 
+    /* =========================================================
+       v27: نظام الساعة الموحّد (12 / 24) — مصدر واحد لكل البرنامج
+       ========================================================= */
+    let TIME_FORMAT = '12';   // '12' أو '24'
+
+    try {
+        const savedTF = localStorage.getItem('arabesque_time_format');
+        if (savedTF === '12' || savedTF === '24') TIME_FORMAT = savedTF;
+    } catch (e) {}
+
+    function setTimeFormat(fmt) {
+        TIME_FORMAT = (fmt === '24') ? '24' : '12';
+        try { localStorage.setItem('arabesque_time_format', TIME_FORMAT); } catch (e) {}
+        saveSettingsToCloud({ timeFormat: TIME_FORMAT });
+
+        // إعادة رسم أي حاجة بتعرض وقت
+        try { renderMsgTemplates(); } catch (e) {}
+        try { updateGuideData(false); } catch (e) {}
+        try { renderCalendar(); } catch (e) {}
+
+        showStatus('🕐 تم تطبيق نظام ' + TIME_FORMAT + ' ساعة على كل البرنامج.', 'success');
+    }
+
+    function applyTimeFormatToUI() {
+        const el = document.getElementById('input-time-format');
+        if (el) el.value = TIME_FORMAT;
+    }
+
+    // الدالة الموحّدة لعرض أي وقت في البرنامج — بتحترم اختيار المستخدم
+    // (اسمها القديم اتساب زي ما هو عشان كل الاستدعاءات القديمة تفضل شغالة)
     function formatTime12h(timeStr) {
         if (!timeStr) return '';
-        const [h, m] = timeStr.split(':').map(Number);
+        const parts = String(timeStr).split(':');
+        const h = Number(parts[0]), m = Number(parts[1] || 0);
+        if (isNaN(h)) return '';
+
+        if (TIME_FORMAT === '24') {
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+        }
         const ampm = h >= 12 ? 'م' : 'ص';
         const h12  = h % 12 || 12;
         return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+    }
+
+    // نسخة تاخد رقم الساعة بس (للقوائم المنسدلة)
+    function formatHourLabel(h) {
+        return formatTime12h(String(h).padStart(2,'0') + ':00');
     }
 
     function calcNights(checkIn, checkOut) {
@@ -2474,7 +2544,8 @@
             select.appendChild(opt);
         });
 
-        renderPendingBar(); // v24: تحديث شريط الحجوزات المعلّقة
+        renderPendingBar();               // v24: تحديث شريط الحجوزات المعلّقة
+        try { populateMsgPreviewDropdown(); } catch (e) {}  // v27: قائمة معاينة الرسائل
     }
 
     /* =========================================================
@@ -2520,13 +2591,120 @@
                     </select>
                     <span>الساعة</span>
                     <select style="padding:6px;" onchange="msgTemplates[${i}].hour = parseInt(this.value);">
-                        ${Array.from({length:24}, (_,h) => `<option value="${h}" ${t.hour===h?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}
+                        ${Array.from({length:24}, (_,h) => `<option value="${h}" ${t.hour===h?'selected':''}>${formatHourLabel(h)}</option>`).join('')}
                     </select>
                 </div>
 
                 <textarea rows="6" style="width:100%; padding:10px; background:#1e1e24; color:#e8e8ea; border:1px solid #3a3a45; border-radius:6px; font-family:inherit; font-size:0.83rem; line-height:1.8; box-sizing:border-box;"
-                          oninput="msgTemplates[${i}].text = this.value;">${t.text.replace(/</g,'&lt;')}</textarea>
+                          oninput="msgTemplates[${i}].text = this.value; schedulePreviewRefresh();">${t.text.replace(/</g,'&lt;')}</textarea>
+
+                ${previewBlock(t, i)}
             </div>`).join('');
+
+        populateMsgPreviewDropdown();
+    }
+
+    // بيملأ القائمة المنسدلة بالحجوزات النشطة
+    function populateMsgPreviewDropdown() {
+        const sel = document.getElementById('msg-preview-booking');
+        if (!sel) return;
+        const keep = sel.value;
+        sel.innerHTML = '<option value="">— اختر حجزاً لترى الرسالة بشكلها النهائي —</option>';
+        (localBookingsCache || []).forEach(b => {
+            if (b.archived) return;
+            const o = document.createElement('option');
+            o.value = b.bookingID;
+            o.textContent = `${b.guestName} (${b.checkIn} ➔ ${b.checkOut})`;
+            sel.appendChild(o);
+        });
+        if (keep) sel.value = keep;
+    }
+
+    function getPreviewBooking() {
+        const sel = document.getElementById('msg-preview-booking');
+        if (!sel || !sel.value) return null;
+        return (localBookingsCache || []).find(b => b.bookingID === sel.value) || null;
+    }
+
+    // نفس منطق الاستبدال الموجود في الباك إند — عشان اللي تشوفه هو اللي هيتبعت بالظبط
+    function fillTemplateFront(text, b) {
+        if (!b) return text;
+        const botUser = 'arabesque_Residence_alerts_bot';
+        const botLink = 'https://t.me/' + botUser + '?start=' + encodeURIComponent(b.bookingID || '');
+        const nights  = b.nights || calcNights(b.checkIn, b.checkOut);
+
+        return String(text || '')
+            .replace(/\{اسم_الضيف\}/g,       b.guestName || '')
+            .replace(/\{تاريخ_الدخول\}/g,     b.checkIn  || '')
+            .replace(/\{تاريخ_الخروج\}/g,     b.checkOut || '')
+            .replace(/\{عدد_الليالي\}/g,      String(nights || ''))
+            .replace(/\{الواي_فاي\}/g,        b.wifiName || (document.getElementById('input-wifiname') || {}).value || '')
+            .replace(/\{باسورد_الواي_فاي\}/g, b.wifiPassword || (document.getElementById('input-wifipass') || {}).value || '')
+            .replace(/\{كود_البوكس\}/g,       b.boxCode || (document.getElementById('input-boxcode') || {}).value || '')
+            .replace(/\{اللوكيشن\}/g,         'https://maps.google.com/?q=30.0686764,31.2799624')
+            .replace(/\{رابط_البوت\}/g,       botLink);
+    }
+
+    function previewBlock(t, i) {
+        const b = getPreviewBooking();
+        if (!b) return '';
+
+        const filled = fillTemplateFront(t.text, b);
+        const esc = filled.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+        // حساب ميعاد الإرسال الفعلي لهذا الحجز تحديداً
+        const anchorDate = new Date(t.anchor === 'checkOut' ? b.checkOut : b.checkIn);
+        let whenTxt = '—';
+        if (!isNaN(anchorDate.getTime())) {
+            const due = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate() + Number(t.offsetDays || 0));
+            whenTxt = formatDateString2(due) + ' الساعة ' + formatHourLabel(t.hour);
+        }
+
+        return `
+            <div style="margin-top:10px; background:#1a1a20; border:1px dashed #3498db; border-radius:8px; padding:10px;">
+                <div style="color:#7fc4ee; font-size:0.76rem; font-weight:800; margin-bottom:6px;">
+                    👁️ المعاينة لـ «${(b.guestName||'').replace(/</g,'&lt;')}» — تتبعت: ${whenTxt}
+                </div>
+                <div style="white-space:pre-wrap; color:#d8d8dc; font-size:0.82rem; line-height:1.9; background:#121216; border-radius:6px; padding:10px;">${esc}</div>
+                <button onclick="sendMessageNow('${t.key}')"
+                        style="margin-top:8px; background:#2E8B57; color:#fff; border:none; padding:7px 16px; border-radius:6px; cursor:pointer; font-family:inherit; font-weight:700; font-size:0.8rem;">
+                    📨 ابعتها لـ ${(b.guestName||'').substring(0,18)} دلوقتي
+                </button>
+            </div>`;
+    }
+
+    // إعادة رسم المعاينة بهدوء أثناء الكتابة (من غير ما يضيع مكان المؤشر)
+    let _previewTimer = null;
+    function schedulePreviewRefresh() {
+        if (!getPreviewBooking()) return;
+        clearTimeout(_previewTimer);
+        _previewTimer = setTimeout(() => {
+            msgTemplates.forEach((t, i) => {
+                const card = document.querySelectorAll('#msg-templates-container > div')[i];
+                if (!card) return;
+                const prev = card.querySelector('div[style*="dashed"]');
+                if (prev) prev.outerHTML = previewBlock(t, i);
+            });
+        }, 600);
+    }
+
+    function sendMessageNow(templateKey) {
+        const b = getPreviewBooking();
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!b || !gasUrl) return;
+        if (!confirm('إرسال الرسالة دي لـ "' + b.guestName + '" دلوقتي؟')) return;
+
+        showStatus('⏳ جاري الإرسال...', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({
+            action: 'sendMessageNow', bookingId: b.bookingID, templateKey: templateKey,
+            text: fillTemplateFront((msgTemplates.find(x => x.key === templateKey) || {}).text, b)
+        })})
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') showStatus('📨 ' + (d.message || 'تم الإرسال.'), 'success');
+            else showStatus('❌ ' + (d.message || 'تعذر الإرسال.'), 'error');
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال.', 'error'));
     }
 
     function saveMsgTemplates() {
@@ -2837,7 +3015,8 @@
             renderIncomeTable();
             loadInventory();          // v26
         }
-        if (tab === 'settings') {     // v26
+        if (tab === 'settings') {     // v26 / v27
+            applyTimeFormatToUI();
             renderMsgTemplates();
         }
         if (tab === 'rules') {
@@ -4176,6 +4355,12 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             }
             if (s.icalBooking && document.getElementById('input-ical-booking')) {
                 document.getElementById('input-ical-booking').value = s.icalBooking;
+            }
+            // v27: نظام الساعة
+            if (s.timeFormat === '12' || s.timeFormat === '24') {
+                TIME_FORMAT = s.timeFormat;
+                try { localStorage.setItem('arabesque_time_format', TIME_FORMAT); } catch (e) {}
+                applyTimeFormatToUI();
             }
             // v26: قوالب الرسائل التلقائية
             if (s.msgTemplates) {
