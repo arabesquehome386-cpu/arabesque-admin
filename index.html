@@ -1061,49 +1061,12 @@
         <button id="tab-btn-rules" class="admin-tab-btn" onclick="switchAdminTab('rules')">
             <i class="fa-solid fa-scroll"></i> القوانين والملاحظات
         </button>
+        <button id="tab-btn-settings" class="admin-tab-btn" onclick="switchAdminTab('settings')">
+            <i class="fa-solid fa-gear"></i> الإعدادات والربط
+        </button>
     </div>
 
     <div id="admin-tab-bookings">
-    
-    <!-- صندوق الحسابات الفنية الموحد الفاخر للمضيف (مخفي عن الضيوف) -->
-    <div class="router-reminder-box" style="background: rgba(142, 68, 173, 0.15); border-color: #8e44ad; padding: 15px; margin-bottom: 20px; border-radius: 12px; display: block;">
-        <div class="router-reminder-title" style="color: #bb8fce; margin-bottom: 12px; font-size: 1rem; font-weight: 800;">
-            <i class="fa-solid fa-user-shield"></i>
-            <span>صندوق الحسابات الفنية الموحد للمضيف (بيانات الراوتر، حساب جوجل، تفاصيل البوت)</span>
-        </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 10px;">
-            <!-- مستخدم الراوتر -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>مستخدم الراوتر:</strong> admin</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'admin')">نسخ</button>
-            </div>
-            <!-- باسورد الراوتر -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>باسورد الراوتر:</strong> Stay@Arabesque24</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'Stay@Arabesque24')">نسخ</button>
-            </div>
-            <!-- حساب جوجل للمضيف -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>حساب جوجل للمضيف:</strong> arabesquehome386@gmail.com</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'arabesquehome386@gmail.com')">نسخ</button>
-            </div>
-            <!-- رمز حساب جوجل للمضيف -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>رمز حساب جوجل للمضيف:</strong> Karim_4120096</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'Karim_4120096')">نسخ</button>
-            </div>
-            <!-- توكن تليجرام البوت المطور -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; grid-column: span 1;">
-                <span style="font-size: 0.82rem; color: #d1d1d6; word-break: break-all; font-family: monospace;"><strong>Token:</strong> 8660063702:AAH9PnvHbkVOoZcoGDpg4Kp_HlUZqOAm5FM</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem; margin-right: 10px;" onclick="copyDirectText(event, '8660063702:AAH9PnvHbkVOoZcoGDpg4Kp_HlUZqOAm5FM')">نسخ</button>
-            </div>
-            <!-- الـ Chat ID المعتمد -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>Chat ID:</strong> 8987938583</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, '8987938583')">نسخ</button>
-            </div>
-        </div>
-    </div>
     
     <!-- ===== تقويم الحجوزات التفاعلي ===== -->
     <div id="admin-calendar-section" style="margin-bottom: 18px; max-width: 320px; margin-inline: auto;">
@@ -1181,6 +1144,16 @@
             <label>تاريخ المغادرة / Check-Out Date</label>
             <input type="date" id="input-checkout-date" onchange="calculateNightsAndPrice(); checkDateOverlaps();">
         </div>
+        <div class="admin-field" style="flex-direction:row; align-items:center; gap:8px;">
+            <input type="checkbox" id="chk-checkin-time" class="gold-switch" onchange="toggleField('input-checkin-time', this.checked)">
+            <label style="margin:0; cursor:pointer;" for="chk-checkin-time">ساعة الدخول / Show Check-in Time</label>
+            <input type="time" id="input-checkin-time" disabled style="margin-right:auto; padding:6px; width: 90px; opacity: 0.5;">
+        </div>
+        <div class="admin-field" style="flex-direction:row; align-items:center; gap:8px;">
+            <input type="checkbox" id="chk-checkout-time" class="gold-switch" onchange="toggleField('input-checkout-time', this.checked)">
+            <label style="margin:0; cursor:pointer;" for="chk-checkout-time">ساعة الخروج / Show Check-out Time</label>
+            <input type="time" id="input-checkout-time" disabled style="margin-right:auto; padding:6px; width: 90px; opacity: 0.5;">
+        </div>
         <div class="admin-field">
             <label>رمز بوكس المفاتيح / Lockbox Code</label>
             <input type="text" id="input-boxcode" placeholder="مثال: 4590" maxlength="6">
@@ -1244,15 +1217,6 @@
             </div>
         </div>
         
-        <!-- حقل رابط Apps Script المدعم بمفتاح الحفظ الفوري المخصص والجديد -->
-        <div class="admin-field" style="grid-column: 1 / -1;">
-            <label>رابط اتصال Apps Script لـ Google Sheets الخاص بك</label>
-            <input type="url" id="input-gas-url" placeholder="https://script.google.com/macros/s/xxxx/exec" value="https://script.google.com/macros/s/AKfycbw2NYhwKY4iMNDiZTz-JWkyzl8vXA3dDhu8x3xsnkHHz9Y5EO4XhlgTvn3aLb5YTq64/exec" onchange="loadBookingsFromSheets()">
-            <button class="router-reminder-btn" style="margin-top: 8px; align-self: flex-start; padding: 6px 15px;" onclick="saveGasUrl()">
-                <i class="fas fa-save"></i> 💾 حفظ رابط الاتصال بالذاكرة
-            </button>
-        </div>
-
         <!-- قائمة تسجيل وثائق وجوازات سفر الضيوف ديناميكياً لتخزينها بجوجل شيت وجوجل درايف -->
         <div class="guest-docs-box">
             <h4 style="color: var(--gold-light); margin-bottom: 10px; font-size: 0.9rem;"><i class="fa-solid fa-address-card"></i> تسجيل هويات الضيوف ورفعها (تربط بالكامل بالشيت ودرايف)</h4>
@@ -1279,16 +1243,6 @@
             </label>
         </div>
 
-        <div class="admin-field" style="flex-direction:row; align-items:center; gap:8px;">
-            <input type="checkbox" id="chk-checkin-time" class="gold-switch" onchange="toggleField('input-checkin-time', this.checked)">
-            <label style="margin:0; cursor:pointer;" for="chk-checkin-time">ساعة الدخول / Show Check-in Time</label>
-            <input type="time" id="input-checkin-time" disabled style="margin-right:auto; padding:6px; width: 90px; opacity: 0.5;">
-        </div>
-        <div class="admin-field" style="flex-direction:row; align-items:center; gap:8px;">
-            <input type="checkbox" id="chk-checkout-time" class="gold-switch" onchange="toggleField('input-checkout-time', this.checked)">
-            <label style="margin:0; cursor:pointer;" for="chk-checkout-time">ساعة الخروج / Show Check-out Time</label>
-            <input type="time" id="input-checkout-time" disabled style="margin-right:auto; padding:6px; width: 90px; opacity: 0.5;">
-        </div>
         <div class="admin-field" style="flex-direction:row; align-items:center; gap:8px; flex-wrap:wrap;">
             <input type="checkbox" id="chk-price" class="gold-switch" onchange="calculateNightsAndPrice()">
             <label style="margin:0; cursor:pointer;" for="chk-price">إظهار السعر والملخص بالدليل للجست / Show Pricing Info</label>
@@ -1488,6 +1442,49 @@
             </div>
         </div>
 
+
+        <!-- ===== v26: جرد المستلزمات ===== -->
+        <div style="background: rgba(163,127,61,0.08); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-top: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+                <div style="color: var(--gold-light); font-weight: 800; font-size: 1rem;">
+                    <i class="fa-solid fa-boxes-stacked"></i> جرد المستلزمات
+                </div>
+                <button class="router-reminder-btn" style="padding: 7px 14px;" onclick="loadInventory()">
+                    <i class="fas fa-rotate"></i> تحديث
+                </button>
+            </div>
+            <p style="color:#a0a0a5; font-size:0.8rem; line-height:1.9; margin-bottom:12px;">
+                لما الكمية توصل للحد الأدنى، الصنف بيتلوّن أحمر، والبوت بيفكّرك تشتري قبل أي وصول بيومين.
+                تقدر تعدّل الكميات من هنا أو من زر 📦 المخزون في التليجرام.
+            </p>
+
+            <div style="overflow-x:auto;">
+                <table id="inventory-table" style="width:100%; border-collapse: collapse; color:#d1d1d6; font-size:0.85rem; min-width: 520px;">
+                    <thead>
+                        <tr style="background: rgba(163,127,61,0.25); color: var(--gold-light);">
+                            <th style="padding:8px; text-align:right;">الصنف</th>
+                            <th style="padding:8px; text-align:center;">الوحدة</th>
+                            <th style="padding:8px; text-align:center;">الكمية</th>
+                            <th style="padding:8px; text-align:center;">الحد الأدنى</th>
+                            <th style="padding:8px; text-align:center;">—</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-tbody"></tbody>
+                </table>
+            </div>
+
+            <div id="inventory-shopping" style="margin-top:12px;"></div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+                <button class="router-reminder-btn" style="padding: 9px 18px; background:#2E8B57;" onclick="addInventoryRow()">
+                    <i class="fas fa-plus"></i> إضافة صنف
+                </button>
+                <button class="router-reminder-btn" style="padding: 9px 18px;" onclick="saveInventory()">
+                    <i class="fas fa-save"></i> 💾 حفظ الجرد
+                </button>
+            </div>
+        </div>
+
     </div> <!-- end admin-tab-reports -->
 
     <!-- ===== تبويب القوانين والملاحظات ===== -->
@@ -1565,6 +1562,151 @@
         </div>
 
     </div> <!-- end admin-tab-rules -->
+
+    <!-- ===== v25: تبويب الإعدادات والربط ===== -->
+    <div id="admin-tab-settings" style="display:none;">
+
+    <!-- صندوق الحسابات الفنية الموحد الفاخر للمضيف (مخفي عن الضيوف) -->
+    <div class="router-reminder-box" style="background: rgba(142, 68, 173, 0.15); border-color: #8e44ad; padding: 15px; margin-bottom: 20px; border-radius: 12px; display: block;">
+        <div class="router-reminder-title" style="color: #bb8fce; margin-bottom: 12px; font-size: 1rem; font-weight: 800;">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>صندوق الحسابات الفنية الموحد للمضيف (بيانات الراوتر، حساب جوجل، تفاصيل البوت)</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 10px;">
+            <!-- مستخدم الراوتر -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
+                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>مستخدم الراوتر:</strong> admin</span>
+                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'admin')">نسخ</button>
+            </div>
+            <!-- باسورد الراوتر -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
+                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>باسورد الراوتر:</strong> Stay@Arabesque24</span>
+                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'Stay@Arabesque24')">نسخ</button>
+            </div>
+            <!-- حساب جوجل للمضيف -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
+                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>حساب جوجل للمضيف:</strong> arabesquehome386@gmail.com</span>
+                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'arabesquehome386@gmail.com')">نسخ</button>
+            </div>
+            <!-- رمز حساب جوجل للمضيف -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
+                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>رمز حساب جوجل للمضيف:</strong> Karim_4120096</span>
+                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'Karim_4120096')">نسخ</button>
+            </div>
+            <!-- توكن تليجرام البوت المطور -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; grid-column: span 1;">
+                <span style="font-size: 0.82rem; color: #d1d1d6; word-break: break-all; font-family: monospace;"><strong>Token:</strong> 8660063702:AAH9PnvHbkVOoZcoGDpg4Kp_HlUZqOAm5FM</span>
+                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem; margin-right: 10px;" onclick="copyDirectText(event, '8660063702:AAH9PnvHbkVOoZcoGDpg4Kp_HlUZqOAm5FM')">نسخ</button>
+            </div>
+            <!-- الـ Chat ID المعتمد -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
+                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>Chat ID:</strong> 8987938583</span>
+                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, '8987938583')">نسخ</button>
+            </div>
+        </div>
+    </div>
+    
+
+        <!-- ===== الربط بجوجل شيت ===== -->
+        <div style="background: rgba(163,127,61,0.08); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+            <div style="color: var(--gold-light); font-weight: 800; font-size: 1rem; margin-bottom: 12px;">
+                <i class="fa-solid fa-link"></i> الربط بجوجل شيت (Apps Script)
+            </div>
+            <div class="admin-grid">
+        <!-- حقل رابط Apps Script المدعم بمفتاح الحفظ الفوري المخصص والجديد -->
+        <div class="admin-field" style="grid-column: 1 / -1;">
+            <label>رابط اتصال Apps Script لـ Google Sheets الخاص بك</label>
+            <input type="url" id="input-gas-url" placeholder="https://script.google.com/macros/s/xxxx/exec" value="https://script.google.com/macros/s/AKfycbw2NYhwKY4iMNDiZTz-JWkyzl8vXA3dDhu8x3xsnkHHz9Y5EO4XhlgTvn3aLb5YTq64/exec" onchange="loadBookingsFromSheets()">
+            <button class="router-reminder-btn" style="margin-top: 8px; align-self: flex-start; padding: 6px 15px;" onclick="saveGasUrl()">
+                <i class="fas fa-save"></i> 💾 حفظ رابط الاتصال بالذاكرة
+            </button>
+        </div>
+
+            </div>
+        </div>
+
+        <!-- ===== مزامنة التقويمات ===== -->
+        <div style="background: rgba(46,139,87,0.08); border: 1px solid var(--accent-green); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+            <div style="color: #7fd7a5; font-weight: 800; font-size: 1rem; margin-bottom: 6px;">
+                <i class="fa-solid fa-calendar-days"></i> مزامنة التقويمات مع Airbnb و Booking
+            </div>
+            <p style="color:#a0a0a5; font-size:0.8rem; line-height:1.8; margin-bottom:12px;">
+                المزامنة اتجاهين. <strong>الاستيراد</strong> = روابط المنصات اللي البرنامج بيقراها عشان يعرف حجوزاتك عندهم.
+                <strong>التصدير</strong> = رابط البرنامج اللي بتديه للمنصات عشان يقفلوا أيامك المحجوزة.
+            </p>
+
+            <div class="admin-grid">
+                <div class="admin-field" style="grid-column: 1 / -1;">
+                    <label>📥 رابط استيراد Airbnb (من: التقويم ← الإتاحة ← مزامنة التقويمات ← تصدير)</label>
+                    <input type="url" id="input-ical-airbnb" placeholder="https://ar.airbnb.com/calendar/ical/....ics?t=...">
+                </div>
+                <div class="admin-field" style="grid-column: 1 / -1;">
+                    <label>📥 رابط استيراد Booking.com (من: Rates &amp; Availability ← Sync calendars ← Export)</label>
+                    <input type="url" id="input-ical-booking" placeholder="https://ical.booking.com/v1/export?t=...">
+                </div>
+                <div class="admin-field" style="grid-column: 1 / -1;">
+                    <button class="router-reminder-btn" style="padding: 9px 18px; align-self:flex-start;" onclick="saveIcalSettings()">
+                        <i class="fas fa-save"></i> 💾 حفظ روابط الاستيراد
+                    </button>
+                </div>
+            </div>
+
+            <hr style="border:none; border-top:1px dashed #3a3a45; margin:16px 0;">
+
+            <div class="admin-field" style="border-color: var(--gold);">
+                <label>📤 رابط التصدير بتاعنا — حطّه في Airbnb و Booking</label>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:6px;">
+                    <button class="router-reminder-btn" style="padding: 9px 18px;" onclick="generateExportIcalUrl()">
+                        <i class="fas fa-wand-magic-sparkles"></i> ⚙️ توليد الرابط
+                    </button>
+                    <button class="router-reminder-btn" style="padding: 9px 18px; background:#2E8B57;" onclick="copyExportIcalUrl(event)">
+                        <i class="fas fa-copy"></i> نسخ
+                    </button>
+                </div>
+                <input type="text" id="output-ical-export" readonly placeholder="اضغط «توليد الرابط»"
+                       style="margin-top:10px; font-family: monospace; font-size:0.78rem; direction:ltr; text-align:left;">
+                <div style="color:#a0a0a5; font-size:0.76rem; line-height:1.9; margin-top:10px;">
+                    <strong style="color:var(--gold-light);">مكان وضعه:</strong><br>
+                    • Airbnb ← التقويم ← الإتاحة ← مزامنة التقويمات ← <strong>استيراد تقويم</strong><br>
+                    • Booking.com ← Rates &amp; Availability ← Sync calendars ← <strong>Import calendar</strong><br>
+                    <span style="color:#E6A01E;">ملاحظة:</span> بيصدّر الحجوزات <strong>المؤكدة</strong> بس، ومن غير أسماء أو أرقام الضيوف (للخصوصية).
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ===== v26: الرسائل التلقائية المجدولة ===== -->
+        <div style="background: rgba(52,152,219,0.07); border: 1px solid #3498db; border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+            <div style="color: #7fc4ee; font-weight: 800; font-size: 1rem; margin-bottom: 6px;">
+                <i class="fa-solid fa-paper-plane"></i> الرسائل التلقائية المجدولة
+            </div>
+            <p style="color:#a0a0a5; font-size:0.8rem; line-height:1.9; margin-bottom:6px;">
+                عدّل نص كل رسالة وميعاد إرسالها. لو الضيف مفعّل بوت التليجرام، الرسالة بتروحله مباشرة.
+                لو لأ، بتوصلك أنت على التليجرام ومعاها زر «افتح واتساب» والرسالة مكتوبة جاهزة.
+            </p>
+            <div style="color:#E6A01E; font-size:0.76rem; line-height:1.9; background:rgba(230,160,30,0.08); border-radius:8px; padding:8px 10px; margin-bottom:14px;">
+                <strong>المتغيرات المتاحة</strong> (اكتبها بالأقواس وهتتبدل تلقائياً):
+                <span style="font-family:monospace; direction:ltr; display:inline-block;">
+                    {اسم_الضيف} {تاريخ_الدخول} {تاريخ_الخروج} {عدد_الليالي} {الواي_فاي} {باسورد_الواي_فاي} {كود_البوكس} {اللوكيشن} {رابط_البوت}
+                </span>
+            </div>
+
+            <div id="msg-templates-container"></div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+                <button class="router-reminder-btn" style="padding: 9px 18px;" onclick="saveMsgTemplates()">
+                    <i class="fas fa-save"></i> 💾 حفظ الرسائل والمواعيد
+                </button>
+                <button class="router-reminder-btn" style="padding: 9px 18px; background:#3498db;" onclick="previewScheduledMessages()">
+                    <i class="fas fa-eye"></i> 👁️ معاينة رسائل النهاردة
+                </button>
+                <button class="router-reminder-btn" style="padding: 9px 18px; background:#6b6b75;" onclick="resetMsgTemplates()">
+                    <i class="fas fa-rotate-left"></i> استرجاع النصوص الافتراضية
+                </button>
+            </div>
+        </div>
+
+    </div> <!-- end admin-tab-settings -->
 </div>
 
 <!-- ===== دليل الإقامة والصفحات الفاخرة للضيف ===== -->
@@ -2129,6 +2271,20 @@
                         And that's where our idea came from! We have transformed <strong>"forgetfulness"</strong> into <strong>"unforgettable memories"</strong>. In this corner, we invite you to leave your own special mark; whether it's a simple token you wish to share with the guests coming after you, or an inspiring message written by your hand in our guestbook.
                     </p>
                 </div>
+
+                <!-- ===== توقيع الشركة المطوّرة ===== -->
+                <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(163,127,61,0.4); text-align: center; direction: ltr;">
+                    <p style="font-size: 0.72rem; color: var(--gold-dark); font-weight: 700; margin: 0 0 3px;">
+                        &copy; 2022&ndash;2026 IDEA for(IDEA-EG). All rights reserved.
+                    </p>
+                    <p style="font-size: 0.68rem; color: #8a7a68; font-weight: 600; margin: 0 0 3px;">
+                        A project of the IDEA-EG Operating System
+                    </p>
+                    <a href="https://www.ideaeg.online" target="_blank" rel="noopener"
+                       style="font-size: 0.7rem; color: var(--gold-dark); font-weight: 800; text-decoration: none; border-bottom: 1px solid var(--gold);">
+                        www.ideaeg.online
+                    </a>
+                </div>
             </section>
         </div>
 
@@ -2322,6 +2478,230 @@
     }
 
     /* =========================================================
+       v26: الرسائل التلقائية المجدولة
+       ========================================================= */
+    const DEFAULT_MSG_TEMPLATES = [
+      { key: "before_arrival", label: "قبل الوصول",   enabled: true, anchor: "checkIn",  offsetDays: -1, hour: 12,
+        text: "أهلاً {اسم_الضيف} 👋\n\nمتشوقين لاستقبالك في أرابيسك ريزيدنس بكرة!\n\n📅 الدخول: {تاريخ_الدخول}\n📅 الخروج: {تاريخ_الخروج}\n🌙 {عدد_الليالي} ليلة\n\nلو محتاج أي حاجة قبل وصولك، إحنا معاك.\n{رابط_البوت}" },
+      { key: "arrival_day",    label: "يوم الوصول",   enabled: true, anchor: "checkIn",  offsetDays: 0,  hour: 10,
+        text: "صباح الخير {اسم_الضيف} ☀️\n\nالشقة جاهزة لاستقبالك النهاردة!\n\n📍 اللوكيشن: {اللوكيشن}\n🔐 كود بوكس المفاتيح: {كود_البوكس}\n📶 الواي فاي: {الواي_فاي}\n🔑 الباسورد: {باسورد_الواي_فاي}\n\nوصول آمن ومريح 🌿\n{رابط_البوت}" },
+      { key: "mid_stay",       label: "أثناء الإقامة", enabled: true, anchor: "checkIn",  offsetDays: 2,  hour: 13,
+        text: "أهلاً {اسم_الضيف} 🌿\n\nعامل إيه؟ إقامتك ماشية كويس؟\n\nلو فيه أي حاجة ناقصة أو محتاج مساعدة، قولنا في أي وقت وهنتصرف فوراً." },
+      { key: "after_checkout", label: "بعد المغادرة", enabled: true, anchor: "checkOut", offsetDays: 0,  hour: 16,
+        text: "شكراً لإقامتك معانا {اسم_الضيف} 🙏\n\nكان من دواعي سرورنا استضافتك في أرابيسك ريزيدنس.\n\nلو الإقامة عجبتك، تقييمك بيفرق معانا جداً ❤️\n\nومستنينك مرة تانية في أي وقت!" }
+    ];
+
+    let msgTemplates = JSON.parse(JSON.stringify(DEFAULT_MSG_TEMPLATES));
+
+    function renderMsgTemplates() {
+        const box = document.getElementById('msg-templates-container');
+        if (!box) return;
+
+        box.innerHTML = msgTemplates.map((t, i) => `
+            <div style="background:#2a2a35; border:1px solid ${t.enabled ? '#3498db' : '#3a3a45'}; border-radius:10px; padding:12px; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                    <input type="checkbox" class="gold-switch" ${t.enabled ? 'checked' : ''}
+                           onchange="msgTemplates[${i}].enabled = this.checked; renderMsgTemplates();">
+                    <span style="font-weight:800; color:var(--gold-light); font-size:0.9rem;">${t.label}</span>
+                </div>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; font-size:0.8rem; color:#d1d1d6;">
+                    <span>تتبعت</span>
+                    <input type="number" value="${Math.abs(t.offsetDays)}" min="0" max="30" style="width:60px; padding:6px;"
+                           onchange="msgTemplates[${i}].offsetDays = (msgTemplates[${i}].offsetDays < 0 ? -1 : 1) * Math.abs(parseInt(this.value)||0);">
+                    <span>يوم</span>
+                    <select style="padding:6px;" onchange="msgTemplates[${i}].offsetDays = (this.value === 'before' ? -1 : 1) * Math.abs(msgTemplates[${i}].offsetDays);">
+                        <option value="before" ${t.offsetDays < 0 ? 'selected' : ''}>قبل</option>
+                        <option value="after"  ${t.offsetDays >= 0 ? 'selected' : ''}>من / بعد</option>
+                    </select>
+                    <select style="padding:6px;" onchange="msgTemplates[${i}].anchor = this.value;">
+                        <option value="checkIn"  ${t.anchor === 'checkIn'  ? 'selected' : ''}>تاريخ الدخول</option>
+                        <option value="checkOut" ${t.anchor === 'checkOut' ? 'selected' : ''}>تاريخ الخروج</option>
+                    </select>
+                    <span>الساعة</span>
+                    <select style="padding:6px;" onchange="msgTemplates[${i}].hour = parseInt(this.value);">
+                        ${Array.from({length:24}, (_,h) => `<option value="${h}" ${t.hour===h?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}
+                    </select>
+                </div>
+
+                <textarea rows="6" style="width:100%; padding:10px; background:#1e1e24; color:#e8e8ea; border:1px solid #3a3a45; border-radius:6px; font-family:inherit; font-size:0.83rem; line-height:1.8; box-sizing:border-box;"
+                          oninput="msgTemplates[${i}].text = this.value;">${t.text.replace(/</g,'&lt;')}</textarea>
+            </div>`).join('');
+    }
+
+    function saveMsgTemplates() {
+        saveSettingsToCloud({ msgTemplates: JSON.stringify(msgTemplates) });
+        try { localStorage.setItem('arabesque_msg_templates', JSON.stringify(msgTemplates)); } catch(e) {}
+        showStatus('✅ تم حفظ الرسائل ومواعيدها.', 'success');
+    }
+
+    function resetMsgTemplates() {
+        if (!confirm('استرجاع النصوص الافتراضية؟ التعديلات الحالية هتتمسح.')) return;
+        msgTemplates = JSON.parse(JSON.stringify(DEFAULT_MSG_TEMPLATES));
+        renderMsgTemplates();
+        showStatus('↩️ تم استرجاع النصوص الافتراضية (اضغط حفظ عشان تتثبت).', 'success');
+    }
+
+    function previewScheduledMessages() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'previewMessages' }) })
+        .then(r => r.json())
+        .then(() => showStatus('👁️ بعتنا المعاينة على التليجرام.', 'success'))
+        .catch(() => showStatus('❌ خطأ في الاتصال.', 'error'));
+    }
+
+    /* =========================================================
+       v26: جرد المستلزمات
+       ========================================================= */
+    let inventoryCache = [];
+
+    function loadInventory() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) return;
+        fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=inventory')
+        .then(r => r.json())
+        .then(d => {
+            if (d.status !== 'success') { showStatus('❌ تعذر تحميل الجرد.', 'error'); return; }
+            inventoryCache = d.data || [];
+            renderInventory();
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال أثناء تحميل الجرد.', 'error'));
+    }
+
+    function renderInventory() {
+        const tb = document.getElementById('inventory-tbody');
+        if (!tb) return;
+
+        tb.innerHTML = inventoryCache.map((it, i) => {
+            const low = Number(it.qty) <= Number(it.minQty);
+            return `
+            <tr style="border-bottom:1px solid #3a3a45; ${low ? 'background: rgba(178,34,34,0.12);' : ''}">
+                <td style="padding:7px;">
+                    <input type="text" value="${(it.item||'').replace(/"/g,'&quot;')}" style="width:100%; padding:5px; font-size:0.82rem;"
+                           oninput="inventoryCache[${i}].item = this.value;">
+                </td>
+                <td style="padding:7px; text-align:center;">
+                    <input type="text" value="${(it.unit||'').replace(/"/g,'&quot;')}" style="width:70px; padding:5px; font-size:0.82rem; text-align:center;"
+                           oninput="inventoryCache[${i}].unit = this.value;">
+                </td>
+                <td style="padding:7px; text-align:center;">
+                    <div style="display:inline-flex; align-items:center; gap:4px;">
+                        <button onclick="bumpInventory(${i}, -1)" style="width:26px; height:26px; border:none; border-radius:5px; background:#B22222; color:#fff; cursor:pointer; font-weight:900;">−</button>
+                        <input type="number" value="${it.qty}" min="0" style="width:58px; padding:5px; font-size:0.82rem; text-align:center; ${low ? 'color:#ff8a8a; font-weight:900;' : ''}"
+                               oninput="inventoryCache[${i}].qty = parseInt(this.value)||0; renderInventory();">
+                        <button onclick="bumpInventory(${i}, 1)" style="width:26px; height:26px; border:none; border-radius:5px; background:#2E8B57; color:#fff; cursor:pointer; font-weight:900;">+</button>
+                    </div>
+                </td>
+                <td style="padding:7px; text-align:center;">
+                    <input type="number" value="${it.minQty}" min="0" style="width:58px; padding:5px; font-size:0.82rem; text-align:center;"
+                           oninput="inventoryCache[${i}].minQty = parseInt(this.value)||0; renderInventory();">
+                </td>
+                <td style="padding:7px; text-align:center;">
+                    <button onclick="removeInventoryRow(${i})" title="حذف الصنف"
+                            style="background:none; border:none; color:#B22222; cursor:pointer; font-size:0.95rem;">🗑️</button>
+                </td>
+            </tr>`;
+        }).join('');
+
+        const low = inventoryCache.filter(it => Number(it.qty) <= Number(it.minQty));
+        const box = document.getElementById('inventory-shopping');
+        if (box) {
+            box.innerHTML = low.length
+                ? `<div style="background:rgba(178,34,34,0.12); border:1px solid #B22222; border-radius:8px; padding:10px; color:#ffb3b3; font-size:0.83rem;">
+                     🛒 <strong>قائمة الشرا:</strong> ${low.map(l => l.item).join(' • ')}
+                   </div>`
+                : `<div style="background:rgba(46,139,87,0.12); border:1px solid var(--accent-green); border-radius:8px; padding:10px; color:#a8e6c0; font-size:0.83rem;">
+                     ✅ كل المستلزمات متوفرة فوق الحد الأدنى.
+                   </div>`;
+        }
+    }
+
+    function bumpInventory(i, delta) {
+        inventoryCache[i].qty = Math.max(0, (Number(inventoryCache[i].qty) || 0) + delta);
+        renderInventory();
+    }
+
+    function addInventoryRow() {
+        inventoryCache.push({ item: '', unit: 'قطعة', qty: 0, minQty: 1, low: true });
+        renderInventory();
+    }
+
+    function removeInventoryRow(i) {
+        if (!confirm('حذف الصنف ده من الجرد؟')) return;
+        inventoryCache.splice(i, 1);
+        renderInventory();
+    }
+
+    function saveInventory() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        const items = inventoryCache.filter(it => String(it.item || '').trim());
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveInventory', items: items }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') showStatus('✅ تم حفظ الجرد في جوجل شيت.', 'success');
+            else showStatus('❌ ' + (d.message || 'تعذر الحفظ.'), 'error');
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال أثناء الحفظ.', 'error'));
+    }
+
+    /* =========================================================
+       v25: تبويب الإعدادات — روابط التقويمات
+       ========================================================= */
+    function saveIcalSettings() {
+        const airbnb  = (document.getElementById('input-ical-airbnb')  || {}).value || '';
+        const booking = (document.getElementById('input-ical-booking') || {}).value || '';
+
+        // تحقق بسيط قبل الحفظ عشان مانحفظش رابط غلط ونفضل نستنى مزامنة مش هتيجي
+        if (airbnb && airbnb.indexOf('airbnb') === -1) {
+            showStatus('⚠️ رابط Airbnb مش شكله صح — لازم يحتوي على airbnb.', 'error'); return;
+        }
+        if (booking && booking.indexOf('booking.com') === -1) {
+            showStatus('⚠️ رابط Booking مش شكله صح — لازم يحتوي على booking.com.', 'error'); return;
+        }
+
+        saveSettingsToCloud({ icalAirbnb: airbnb.trim(), icalBooking: booking.trim() });
+        showStatus('✅ تم حفظ روابط الاستيراد. المزامنة الجاية هتستخدمها.', 'success');
+    }
+
+    // يولّد رابط التصدير من رابط Apps Script المحفوظ
+    function generateExportIcalUrl() {
+        let gasUrl = (document.getElementById('input-gas-url') || {}).value || '';
+        gasUrl = gasUrl.trim();
+
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script الأول.', 'error'); return; }
+
+        // رابط /dev بيطلب تسجيل دخول جوجل، والمنصات مش هتقدر تقراه
+        if (gasUrl.indexOf('/dev') !== -1) {
+            showStatus('⚠️ الرابط ده بينتهي بـ /dev وده بيطلب تسجيل دخول. لازم رابط ينتهي بـ /exec.', 'error');
+            return;
+        }
+        if (gasUrl.indexOf('/exec') === -1) {
+            showStatus('⚠️ رابط Apps Script لازم ينتهي بـ /exec.', 'error');
+            return;
+        }
+
+        const url = gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=ical';
+        document.getElementById('output-ical-export').value = url;
+        showStatus('✅ اتولد الرابط. انسخه وحطه في Airbnb و Booking.', 'success');
+    }
+
+    function copyExportIcalUrl(ev) {
+        const el = document.getElementById('output-ical-export');
+        if (!el || !el.value) { generateExportIcalUrl(); }
+        if (!el.value) return;
+        el.select();
+        try {
+            navigator.clipboard.writeText(el.value);
+            showStatus('📋 تم نسخ الرابط.', 'success');
+        } catch (e) {
+            document.execCommand('copy');
+            showStatus('📋 تم نسخ الرابط.', 'success');
+        }
+    }
+
+    /* =========================================================
        v24: نظام الحالات — مؤكد / معلّق / ملغي
        ========================================================= */
     function isPending(b) { return b && (b.status === 'معلّق' || b.status === 'معلق'); }
@@ -2444,7 +2824,7 @@
 
     /* ===== تبويبات لوحة التحكم ===== */
     function switchAdminTab(tab) {
-        const tabs = ['bookings', 'reports', 'rules'];
+        const tabs = ['bookings', 'reports', 'rules', 'settings'];
         tabs.forEach(t => {
             const content = document.getElementById('admin-tab-' + t);
             const btn     = document.getElementById('tab-btn-' + t);
@@ -2455,6 +2835,10 @@
             renderFinancialReport();
             renderExpensesTable();
             renderIncomeTable();
+            loadInventory();          // v26
+        }
+        if (tab === 'settings') {     // v26
+            renderMsgTemplates();
         }
         if (tab === 'rules') {
             loadRulesFromStorage();
@@ -3786,6 +4170,26 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             if (s.currency && document.getElementById('input-currency')) {
                 document.getElementById('input-currency').value = s.currency;
             }
+            // v25: روابط استيراد التقويمات
+            if (s.icalAirbnb && document.getElementById('input-ical-airbnb')) {
+                document.getElementById('input-ical-airbnb').value = s.icalAirbnb;
+            }
+            if (s.icalBooking && document.getElementById('input-ical-booking')) {
+                document.getElementById('input-ical-booking').value = s.icalBooking;
+            }
+            // v26: قوالب الرسائل التلقائية
+            if (s.msgTemplates) {
+                try {
+                    const parsed = JSON.parse(s.msgTemplates);
+                    if (Array.isArray(parsed) && parsed.length) {
+                        msgTemplates = parsed;
+                        renderMsgTemplates();
+                    }
+                } catch (e) { console.warn('msgTemplates parse:', e); }
+            } else {
+                // أول مرة: نزرع النسخة الافتراضية في السحابة عشان الباك إند يلاقيها
+                saveSettingsToCloud({ msgTemplates: JSON.stringify(msgTemplates) });
+            }
             if (s.showInstapay === 'true' && document.getElementById('chk-instapay')) {
                 document.getElementById('chk-instapay').checked = true;
             }
@@ -4067,5 +4471,20 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         renderGuideRules();
     }
 </script>
+
+<!-- ===== توقيع الشركة المطوّرة — لوحة التحكم ===== -->
+<div style="text-align:center; padding: 26px 14px 34px; direction: ltr; font-family: 'Tajawal', sans-serif;">
+    <div style="width: 90px; height: 1px; background: linear-gradient(90deg, transparent, #A37F3D, transparent); margin: 0 auto 14px;"></div>
+    <p style="font-size: 0.76rem; color: #C5A85C; font-weight: 700; margin: 0 0 4px; letter-spacing: 0.3px;">
+        &copy; 2022&ndash;2026 IDEA for(IDEA-EG). All rights reserved.
+    </p>
+    <p style="font-size: 0.72rem; color: #7a7a82; font-weight: 600; margin: 0 0 6px;">
+        A project of the IDEA-EG Operating System
+    </p>
+    <a href="https://www.ideaeg.online" target="_blank" rel="noopener"
+       style="font-size: 0.74rem; color: #C5A85C; font-weight: 800; text-decoration: none; border-bottom: 1px solid rgba(197,168,92,0.5); padding-bottom: 1px;">
+        www.ideaeg.online
+    </a>
+</div>
 </body>
 </html>
