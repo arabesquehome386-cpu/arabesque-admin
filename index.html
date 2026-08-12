@@ -1586,10 +1586,15 @@
             </div>
             <div class="admin-field">
                 <label>شعار الوحدة (اختياري)</label>
-                <input type="file" id="input-unit-logo" accept="image/*" onchange="uploadUnitLogo()">
+                <div id="logo-dropzone" ondragover="event.preventDefault(); this.style.borderColor='var(--gold)';"
+                     ondragleave="this.style.borderColor='#3a3a45';" ondrop="handleLogoDrop(event)"
+                     style="border:2px dashed #3a3a45; border-radius:8px; padding:10px; transition:border-color .2s;">
+                    <input type="file" id="input-unit-logo" accept="image/*" onchange="uploadUnitLogo()">
+                    <span style="color:#8a8a90; font-size:0.72rem; display:block; margin-top:4px;">أو اسحب الصورة هنا</span>
+                </div>
             </div>
         </div>
-        <div id="unit-logo-preview" style="margin-top:10px;"></div>
+        <div id="unit-logo-preview" style="margin-top:10px; display:flex; align-items:center; gap:10px;"></div>
     </div>
 
     <!-- ===== v28: مضيف الشقة والمساعدين (Co-Host) ===== -->
@@ -2574,14 +2579,21 @@
                         <option value="جواز سفر">جواز سفر</option>
                     </select>
                     <input type="text" id="doc-number-${i}" placeholder="رقم الوثيقة" style="padding: 6px; font-size:0.85rem; flex: 1; min-width: 120px;">
-                    <input type="file" id="doc-file-${i}" accept="image/*,.pdf" style="width: auto;">
+                </div>
+                <div id="doc-dropzone-${i}" ondragover="event.preventDefault(); this.style.borderColor='var(--gold)';"
+                     ondragleave="this.style.borderColor='#3a3a45';"
+                     ondrop="handleDocDrop(event, ${i})"
+                     style="border:2px dashed #3a3a45; border-radius:8px; padding:10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; transition:border-color .2s;">
+                    <input type="file" id="doc-file-${i}" accept="image/*,.pdf" style="flex:1; min-width:150px;"
+                           onchange="showDocSelectedPreview(${i})">
+                    <span style="color:#8a8a90; font-size:0.72rem;">أو اسحب الصورة هنا</span>
                     <button type="button" class="router-reminder-btn" style="padding:6px 14px; background:#2E8B57;"
                             onclick="uploadSingleDoc(${i})">
                         <i class="fas fa-upload"></i> رفع
                     </button>
                 </div>
                 <div id="doc-status-${i}" style="font-size:0.78rem; color:#a0a0a5;"></div>
-                <div id="doc-preview-${i}"></div>
+                <div id="doc-preview-${i}" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;"></div>
             `;
             container.appendChild(docRow);
         }
@@ -2602,7 +2614,34 @@
         }
     }
 
-    // v28: رفع وثيقة واحدة فوراً — مستقل عن حفظ الحجز، وبيديك رد فوري بنجاح/فشل الرفع
+    // v29: السحب والإفلات على منطقة الرفع
+    function handleDocDrop(ev, i) {
+        ev.preventDefault();
+        ev.currentTarget.style.borderColor = '#3a3a45';
+        const dt = ev.dataTransfer;
+        if (!dt || !dt.files || !dt.files[0]) return;
+        const fileInput = document.getElementById('doc-file-' + i);
+        if (fileInput) {
+            fileInput.files = dt.files;
+            showDocSelectedPreview(i);
+        }
+    }
+
+    // v29: معاينة فورية للصورة المختارة قبل الرفع أصلاً
+    function showDocSelectedPreview(i) {
+        const fileInput = document.getElementById('doc-file-' + i);
+        const prev = document.getElementById('doc-preview-' + i);
+        const statusEl = document.getElementById('doc-status-' + i);
+        if (!fileInput || !fileInput.files[0] || !prev) return;
+        const file = fileInput.files[0];
+
+        prev.innerHTML = file.type.indexOf('image') === 0
+            ? `<img src="${URL.createObjectURL(file)}" style="max-width:110px; max-height:75px; border-radius:6px; border:1px solid #4a4a55;">`
+            : `<span style="color:#a0a0a5; font-size:0.78rem;">📄 ${file.name}</span>`;
+        if (statusEl) statusEl.innerHTML = 'جاهزة للرفع — دوس زر «رفع» 👆';
+    }
+
+    // v28/v29: رفع وثيقة واحدة فوراً — مستقل عن حفظ الحجز، وبيديك رد فوري بنجاح/فشل الرفع
     function uploadSingleDoc(i) {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
         const statusEl = document.getElementById('doc-status-' + i);
@@ -2630,18 +2669,29 @@
             .then(d => {
                 if (d.status === 'success' && d.url) {
                     uploadedDocLinks[i] = d.url;
-                    if (statusEl) statusEl.innerHTML = '✅ تم الرفع بنجاح!';
                     const prev = document.getElementById('doc-preview-' + i);
                     if (prev) {
-                        prev.innerHTML = file.type.indexOf('image') === 0
-                            ? `<a href="${d.url}" target="_blank"><img src="${URL.createObjectURL(file)}" style="max-width:120px; max-height:80px; border-radius:6px; border:1px solid var(--gold); margin-top:4px;"></a>`
-                            : `<a href="${d.url}" target="_blank" style="color:var(--gold-light); font-size:0.78rem;">📄 فتح الملف المرفوع</a>`;
+                        const thumb = file.type.indexOf('image') === 0
+                            ? `<img src="${URL.createObjectURL(file)}" style="max-width:110px; max-height:75px; border-radius:6px; border:1px solid var(--accent-green);">`
+                            : `<span style="color:#a0a0a5; font-size:0.78rem;">📄 ${file.name}</span>`;
+                        prev.innerHTML = thumb +
+                            `<a href="${d.url}" target="_blank" class="router-reminder-btn" style="background:#3498db; padding:6px 12px; font-size:0.75rem; text-decoration:none;">
+                                <i class="fas fa-eye"></i> معاينة
+                            </a>
+                            <span style="color:#2ecc71; font-size:1.1rem; font-weight:900;">✅</span>`;
                     }
+                    if (statusEl) statusEl.innerHTML = '<span style="color:#2ecc71;">تم الرفع بنجاح!</span>';
                 } else {
-                    if (statusEl) statusEl.innerHTML = '❌ ' + (d.message || 'فشل الرفع.');
+                    const prev = document.getElementById('doc-preview-' + i);
+                    if (prev) prev.innerHTML = '<span style="color:#e74c3c; font-size:1.1rem; font-weight:900;">✗</span>';
+                    if (statusEl) statusEl.innerHTML = '<span style="color:#e74c3c;">' + (d.message || 'فشل الرفع.') + '</span>';
                 }
             })
-            .catch(() => { if (statusEl) statusEl.innerHTML = '❌ خطأ في الاتصال أثناء الرفع.'; });
+            .catch(() => {
+                const prev = document.getElementById('doc-preview-' + i);
+                if (prev) prev.innerHTML = '<span style="color:#e74c3c; font-size:1.1rem; font-weight:900;">✗</span>';
+                if (statusEl) statusEl.innerHTML = '<span style="color:#e74c3c;">خطأ في الاتصال أثناء الرفع.</span>';
+            });
         };
         reader.readAsDataURL(file);
     }
@@ -2967,6 +3017,15 @@
     /* =========================================================
        v28: شعار الوحدة (اختياري)
        ========================================================= */
+    function handleLogoDrop(ev) {
+        ev.preventDefault();
+        ev.currentTarget.style.borderColor = '#3a3a45';
+        const dt = ev.dataTransfer;
+        if (!dt || !dt.files || !dt.files[0]) return;
+        const fileInput = document.getElementById('input-unit-logo');
+        if (fileInput) { fileInput.files = dt.files; uploadUnitLogo(); }
+    }
+
     function uploadUnitLogo() {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
         const fileInput = document.getElementById('input-unit-logo');
@@ -2975,7 +3034,7 @@
         if (!fileInput.files[0]) return;
 
         const file = fileInput.files[0];
-        if (preview) preview.innerHTML = '⏳ جاري رفع الشعار...';
+        if (preview) preview.innerHTML = '<span style="color:#a0a0a5;">⏳ جاري رفع الشعار...</span>';
 
         const reader = new FileReader();
         reader.onload = function (e) {
@@ -2986,10 +3045,13 @@
             .then(d => {
                 if (d.status === 'success' && d.url) {
                     saveSettingsToCloud({ unitLogoUrl: d.url });
-                    if (preview) preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-height:70px; border-radius:8px; border:1px solid var(--gold);"> <span style="color:#7fd7a5; font-size:0.8rem;">✅ اتحفظ</span>`;
-                } else if (preview) preview.innerHTML = '❌ ' + (d.message || 'فشل الرفع.');
+                    if (preview) preview.innerHTML =
+                        `<img src="${URL.createObjectURL(file)}" style="max-height:70px; border-radius:8px; border:1px solid var(--accent-green);">
+                         <a href="${d.url}" target="_blank" class="router-reminder-btn" style="background:#3498db; padding:6px 12px; font-size:0.75rem; text-decoration:none;"><i class="fas fa-eye"></i> معاينة</a>
+                         <span style="color:#2ecc71; font-size:1.1rem; font-weight:900;">✅</span>`;
+                } else if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ ' + (d.message || 'فشل الرفع.') + '</span>';
             })
-            .catch(() => { if (preview) preview.innerHTML = '❌ خطأ في الاتصال.'; });
+            .catch(() => { if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ خطأ في الاتصال.</span>'; });
         };
         reader.readAsDataURL(file);
     }
