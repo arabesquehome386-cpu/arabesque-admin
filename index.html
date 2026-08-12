@@ -1692,19 +1692,15 @@
                     <span style="color:#8a8a90; font-size:0.72rem; display:block; margin-top:4px;">أو اسحب الصورة هنا</span>
                 </div>
             </div>
-            <!-- v31: بيانات الشركة والموقع -->
-            <div class="admin-field">
-                <label>اسم الشركة (اختياري)</label>
-                <input type="text" id="input-company-name" placeholder="مثال: IDEA for Real Estate"
-                       onchange="saveSettingsToCloud({companyName: this.value}); unitBannerData.companyName = this.value; renderUnitBanner();">
-            </div>
-            <div class="admin-field">
-                <label>موقع الشركة (اختياري)</label>
-                <input type="url" id="input-company-website" placeholder="مثال: https://www.example.com"
-                       onchange="saveSettingsToCloud({companyWebsite: this.value}); unitBannerData.companyWebsite = this.value; renderUnitBanner();">
-            </div>
         </div>
         <div id="unit-logo-preview" style="margin-top:10px; display:flex; align-items:center; gap:10px;"></div>
+        <!-- v32: بيانات الشركة (IDEA-EG) ثابتة دايماً — مش قابلة للتعديل أو الإخفاء من هنا،
+             لإن البرنامج نفسه بيتباع كمنتج، فلازم اسم الشركة يفضل ظاهر مهما كانت بيانات الوحدة. -->
+        <div style="margin-top:12px; padding-top:10px; border-top:1px dashed #3a3a45; color:#8a8a90; font-size:0.78rem;">
+            <i class="fa-solid fa-circle-info"></i> بيانات الشركة المطوّرة للبرنامج (ثابتة، بتظهر أوتوماتيك في كل مكان):
+            <strong style="color:var(--gold-light);">IDEA-EG</strong> —
+            <a href="https://www.ideaeg.online" target="_blank" style="color:#7fc4ee;">www.ideaeg.online</a>
+        </div>
     </div>
 
     <!-- ===== v28: مضيف الشقة والمساعدين (Co-Host) ===== -->
@@ -3133,15 +3129,17 @@
     /* =========================================================
        v30: بانر الوحدة (شعار + اسم + مضيف) — بيظهر فوق تبويب إدارة الحجوزات بس
        ========================================================= */
-    let unitBannerData = { name: '', logo: '', hostName: '', hostPhone: '', companyName: '', companyWebsite: '' };
+    let unitBannerData = { name: '', logo: '', hostName: '', hostPhone: '' };
+
+    // v32: بيانات الشركة المطوّرة ثابتة دايماً (البرنامج بيتباع كمنتج، فمينفعش تتشال أو تتعدّل من هنا)
+    const FIXED_COMPANY_NAME    = 'IDEA-EG';
+    const FIXED_COMPANY_WEBSITE = 'https://www.ideaeg.online';
 
     function renderUnitBanner() {
         const box = document.getElementById('unit-banner');
         if (!box) return;
 
-        const hasContent = unitBannerData.name || unitBannerData.logo || unitBannerData.hostName || unitBannerData.companyName;
-        if (!hasContent) { box.style.display = 'none'; return; }
-
+        // v32: البانر بيظهر دايماً (حتى لو الوحدة لسه ملهاش اسم/شعار) عشان بيانات الشركة تفضل ظاهرة
         box.style.display = '';
         box.innerHTML = `
             <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:linear-gradient(135deg, rgba(197,168,92,0.12), rgba(197,168,92,0.04)); border:1px solid var(--gold); border-radius:14px; padding:14px 18px; margin-bottom:18px;">
@@ -3152,10 +3150,10 @@
                         <i class="fa-solid fa-user-tie"></i> ${unitBannerData.hostName}
                         ${unitBannerData.hostPhone ? ` • <i class="fa-solid fa-phone"></i> ${unitBannerData.hostPhone}` : ''}
                     </div>` : ''}
-                    ${unitBannerData.companyName ? `<div style="color:#8a8a90; font-size:0.75rem; margin-top:2px;">
-                        <i class="fa-solid fa-building"></i> ${unitBannerData.companyName}
-                        ${unitBannerData.companyWebsite ? ` • <a href="${unitBannerData.companyWebsite}" target="_blank" style="color:#7fc4ee;">${unitBannerData.companyWebsite}</a>` : ''}
-                    </div>` : ''}
+                    <div style="color:#8a8a90; font-size:0.72rem; margin-top:3px;">
+                        <i class="fa-solid fa-building"></i> ${FIXED_COMPANY_NAME} •
+                        <a href="${FIXED_COMPANY_WEBSITE}" target="_blank" style="color:#7fc4ee;">${FIXED_COMPANY_WEBSITE.replace('https://','')}</a>
+                    </div>
                 </div>
             </div>`;
     }
@@ -3340,8 +3338,9 @@
         .then(r => r.json())
         .then(d => {
             if (d.status === 'success') { credentialsCache = d.data || []; renderCredentials(); }
+            else showStatus('❌ تعذر تحميل صندوق البيانات: ' + (d.message || ''), 'error');
         })
-        .catch(() => {});
+        .catch(err => showStatus('❌ تعذر تحميل صندوق البيانات (اتصال): ' + err.message, 'error'));
     }
 
     function renderCredentials() {
@@ -3384,24 +3383,30 @@
     }
 
     function addCredentialGroup() {
-        credentialsCache.push({ id: '', title: 'مجموعة جديدة', fields: [{ label: '', value: '' }] });
-        renderCredentials();
+        try {
+            credentialsCache.push({ id: '', title: 'مجموعة جديدة', fields: [{ label: '', value: '' }] });
+            renderCredentials();
+            showStatus('✅ اتضافت مجموعة جديدة — املا بياناتها واضغط "حفظ المجموعة".', 'success');
+        } catch (e) { showStatus('🛑 تعذرت الإضافة: ' + e.message, 'error'); }
     }
 
     function saveCredentialGroup(gi) {
-        const gasUrl = document.getElementById('input-gas-url').value.trim();
-        const g = credentialsCache[gi];
-        if (!g) return;
-        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
-        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveCredential', groupId: g.id, title: g.title, fields: g.fields }) })
-        .then(r => r.json())
-        .then(d => {
-            if (d.status === 'success') {
-                g.id = d.groupId;
-                showStatus('✅ تم حفظ "' + g.title + '".', 'success');
-            } else showStatus('❌ ' + (d.message || 'تعذر الحفظ.'), 'error');
-        })
-        .catch(() => showStatus('❌ خطأ في الاتصال.', 'error'));
+        try {
+            const gasUrl = document.getElementById('input-gas-url').value.trim();
+            const g = credentialsCache[gi];
+            if (!g) { showStatus('🛑 المجموعة دي مش موجودة في الذاكرة (جرّب تعمل رفرش).', 'error'); return; }
+            if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+            showStatus('⏳ جاري الحفظ...', 'success');
+            fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveCredential', groupId: g.id, title: g.title, fields: g.fields }) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    g.id = d.groupId;
+                    showStatus('✅ تم حفظ "' + g.title + '".', 'success');
+                } else showStatus('❌ ' + (d.message || 'تعذر الحفظ.'), 'error');
+            })
+            .catch(err => showStatus('❌ خطأ في الاتصال: ' + err.message, 'error'));
+        } catch (e) { showStatus('🛑 خطأ غير متوقع: ' + e.message, 'error'); }
     }
 
     function deleteCredentialGroup(gi) {
@@ -3627,7 +3632,7 @@
         if (guideWrap) guideWrap.style.display = (tab === 'bookings') ? '' : 'none';
         // v30: البانر (شعار/اسم الوحدة/المضيف) يفضل ظاهر فوق تبويب إدارة الحجوزات بس
         const banner = document.getElementById('unit-banner');
-        if (banner) banner.style.display = (tab === 'bookings' && (unitBannerData.name || unitBannerData.logo || unitBannerData.hostName)) ? '' : 'none';
+        if (banner) banner.style.display = (tab === 'bookings') ? '' : 'none'; // v32: البانر بيظهر دايماً (بيانات الشركة ثابتة فيه)
         if (tab === 'reports') {
             fetchLiveUsdEgpRate().then(() => renderFinancialReport());  // v31: سعر حي بدل السجل اليدوي
             renderExpensesTable();
@@ -3802,7 +3807,9 @@
         if (cachedRates && cachedRates.rates) { liveRates = cachedRates.rates; liveRatesFetchedAt = cachedRates.at || 0; }
     } catch (e) {}
 
-    // بيرجع سعر الصرف الحي (كام جنيه في الدولار) — بيستخدم كاش لمدة ساعة عشان مايكررش الطلبات
+    // v32: بيرجع سعر الصرف الحي من سيرفر Apps Script بتاعنا (مش من متصفح المستخدم مباشرة) —
+    // عشان متصفحات كتير (خصوصاً في مصر) بترفض تتصل بمزوّدي أسعار الصرف مباشرة (حجب/فايروول)،
+    // بينما سيرفرات جوجل بتوصل بثبات. بيستخدم كاش لمدة ساعة عشان مايكررش الطلبات.
     function fetchLiveUsdEgpRate(forceRefresh) {
         const statusEl = document.getElementById('live-rate-status');
         const now = Date.now();
@@ -3810,25 +3817,26 @@
             updateLiveRateDisplay();
             return Promise.resolve(liveRates);
         }
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { if (statusEl) statusEl.textContent = '⚠️ أضف رابط Apps Script أولاً.'; return Promise.resolve(liveRates); }
         if (statusEl) statusEl.textContent = '⏳ جاري السحب...';
-        // frankfurter.app: API حي ومجاني وبدون مفتاح (بيانات البنك المركزي الأوروبي)
-        return fetch('https://api.frankfurter.app/latest?from=USD&to=' + CURATED_CURRENCIES.filter(c => c !== 'USD').join(','))
+        return fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=liveRates')
         .then(r => r.json())
         .then(d => {
-            if (d && d.rates) {
-                liveRates = Object.assign({ USD: 1 }, d.rates);
+            if (d && d.status === 'success' && d.rates) {
+                liveRates = d.rates;
                 liveRatesFetchedAt = now;
                 try { localStorage.setItem('arabesque_live_rates', JSON.stringify({ rates: liveRates, at: now })); } catch (e) {}
                 if (statusEl) statusEl.textContent = '✅ آخر تحديث: ' + new Date(now).toLocaleTimeString('ar-EG');
             } else if (statusEl) {
-                statusEl.textContent = '⚠️ تعذر جلب السعر — هنستخدم آخر سعر معروف.';
+                statusEl.textContent = '⚠️ ' + (d.message || 'تعذر جلب السعر — هنستخدم آخر سعر معروف.');
             }
             updateLiveRateDisplay();
             renderCurrencyConversion();
             return liveRates;
         })
         .catch(() => {
-            if (statusEl) statusEl.textContent = '⚠️ تعذر الاتصال بمزوّد سعر الصرف.';
+            if (statusEl) statusEl.textContent = '⚠️ تعذر الاتصال بسيرفر Apps Script لجلب السعر.';
             updateLiveRateDisplay();
             return liveRates;
         });
@@ -4620,6 +4628,12 @@
         setTimeout(() => { el.className = 'status-msg'; }, 5000);
     }
 
+    // v32: أي خطأ JS غير متوقع بيظهر دلوقتي بدل ما "يبلع" بصمت — لو ضغطة معينة مش
+    // بتعمل حاجة تاني، هيظهر السبب هنا بالظبط بدل ما نفضل نخمّن.
+    window.addEventListener('error', function (ev) {
+        try { showStatus('🛑 خطأ برمجي: ' + (ev.message || ev.error || 'غير معروف') + (ev.lineno ? (' (سطر ' + ev.lineno + ')') : ''), 'error'); } catch (e) {}
+    });
+
     /* دالتين للتحكم في نافذة التأكيد البديلة لـ confirm() */
     function showConfirmModal() {
         document.getElementById('custom-confirm-modal').style.display = 'flex';
@@ -5274,11 +5288,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             if (s.unitName && document.getElementById('input-unit-name')) document.getElementById('input-unit-name').value = s.unitName;
             unitBannerData.name = s.unitName || '';
             unitBannerData.logo = s.unitLogoUrl || '';
-            // v31: بيانات الشركة والموقع
-            if (s.companyName && document.getElementById('input-company-name')) document.getElementById('input-company-name').value = s.companyName;
-            if (s.companyWebsite && document.getElementById('input-company-website')) document.getElementById('input-company-website').value = s.companyWebsite;
-            unitBannerData.companyName = s.companyName || '';
-            unitBannerData.companyWebsite = s.companyWebsite || '';
+            // v32: بيانات الشركة (IDEA-EG) بقت ثابتة في الكود نفسه — مفيش حاجة تتحمّل من هنا
             if (s.unitLogoUrl && document.getElementById('unit-logo-preview')) {
                 renderUnitLogoPreview(s.unitLogoUrl, null);
             }
