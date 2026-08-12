@@ -1351,7 +1351,22 @@
                     <span id="live-rate-display">1$ = ... ج.م</span>
                 </div>
                 <button class="router-reminder-btn" style="padding:7px 14px;" onclick="fetchLiveUsdEgpRate(true)"><i class="fas fa-rotate"></i> تحديث السعر</button>
+                <button class="router-reminder-btn" style="padding:7px 14px; background:#8e44ad;" onclick="pinCurrentRateToMonth()"><i class="fas fa-thumbtack"></i> ثبّت السعر ده للشهر ده</button>
                 <span id="live-rate-status" style="color:#8a8a90; font-size:0.75rem;"></span>
+            </div>
+
+            <!-- v34: سجل أسعار شهرية مثبّتة + معرفة سعر تاريخ معيّن -->
+            <div style="margin-top:14px; border-top:1px solid #2a2a35; padding-top:12px;">
+                <div style="color:#c5c5ca; font-weight:700; font-size:0.85rem; margin-bottom:8px;"><i class="fa-solid fa-clock-rotate-left"></i> اعرف سعر الصرف في تاريخ سابق</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end;">
+                    <div class="admin-field" style="max-width:180px;">
+                        <label>التاريخ</label>
+                        <input type="date" id="rate-lookup-date">
+                    </div>
+                    <button class="router-reminder-btn" style="padding:8px 16px;" onclick="lookupHistoricalRate()"><i class="fas fa-magnifying-glass"></i> اعرف السعر</button>
+                </div>
+                <div id="rate-lookup-result" style="margin-top:8px; color:var(--gold-light); font-weight:800; font-size:0.9rem;"></div>
+                <div id="pinned-rates-list" style="margin-top:10px; font-size:0.78rem; color:#8a8a90;"></div>
             </div>
 
             <!-- محول عملات مصغّر — قائمة مختصرة لأشهر العملات فقط -->
@@ -1476,7 +1491,14 @@
                 </div>
                 <div class="admin-field" id="exp-custom-category-field" style="display:none;">
                     <label>اسم الفئة المخصصة</label>
-                    <input type="text" id="exp-custom-category" placeholder="مثال: ضرائب">
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" id="exp-custom-category" placeholder="مثال: ضرائب" style="flex:1;">
+                        <button type="button" onclick="addCustomExpenseCategory()" class="router-reminder-btn"
+                                style="background:#3498db; padding:8px 12px; font-size:0.78rem; white-space:nowrap;"
+                                title="ضيف الفئة دي للقائمة الرئيسية عشان تلاقيها جاهزة المرة الجاية">
+                            <i class="fas fa-plus"></i> أضف للقائمة
+                        </button>
+                    </div>
                 </div>
                 <div class="admin-field">
                     <label id="exp-amount-label">المبلغ (EGP)</label>
@@ -1492,6 +1514,15 @@
                     <select id="exp-linked-booking">
                         <option value="">— بدون ربط —</option>
                     </select>
+                </div>
+                <!-- v34: رفع مرفق (فاتورة/إيصال/ضمان) وربطه بالمصروف -->
+                <div class="admin-field" style="grid-column: 1 / -1;">
+                    <label>مرفق المصروف (فاتورة / إيصال / صورة ضمان — اختياري)</label>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <input type="file" id="exp-attachment-file" accept="image/*,application/pdf" onchange="uploadExpenseAttachment()">
+                        <span id="exp-attachment-status" style="font-size:0.78rem; color:#8a8a90;"></span>
+                    </div>
+                    <div id="exp-attachment-preview" style="margin-top:8px;"></div>
                 </div>
             </div>
             <div style="margin-top:12px;">
@@ -1538,11 +1569,12 @@
                             <th style="padding:8px; text-align:right; border-bottom:1px solid #3a3a45;">الوصف</th>
                             <th style="padding:8px; text-align:right; border-bottom:1px solid #3a3a45;">مرتبط بحجز</th>
                             <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">المبلغ</th>
+                            <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">مرفق</th>
                             <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;"></th>
                         </tr>
                     </thead>
                     <tbody id="expenses-table-body">
-                        <tr><td colspan="5" style="padding:14px; text-align:center; color:#888;">لا توجد مصروفات مسجلة بعد</td></tr>
+                        <tr><td colspan="7" style="padding:14px; text-align:center; color:#888;">لا توجد مصروفات مسجلة بعد</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -3350,7 +3382,7 @@
                 if (!list.length) { box.innerHTML = '<p style="color:#8a8a90; font-size:0.8rem;">مفيش مشتركين مسجلين لسه.</p>'; return; }
                 box.innerHTML = list.slice().reverse().map(s => `
                     <div style="display:flex; justify-content:space-between; gap:8px; padding:6px 8px; border-bottom:1px solid #2a2a35; font-size:0.8rem;">
-                        <span style="color:#e8e8ea;">${s.name || 'بدون اسم'} ${s.username ? '<span style="color:#8a8a90;">(' + s.username + ')</span>' : ''}</span>
+                        <span style="color:#e8e8ea;">${s.name || ('#' + s.chatId)} ${s.username ? '<span style="color:#8a8a90;">(' + s.username + ')</span>' : ''}</span>
                         <span style="color:#5a5a62;">${s.firstSeen || ''}</span>
                     </div>`).join('');
             })
@@ -3381,7 +3413,39 @@
             return;
         }
 
-        box.innerHTML = credentialsCache.map((g, gi) => `
+        box.innerHTML = credentialsCache.map((g, gi) => {
+            // v34: أي مجموعة محفوظة (عندها id) ومش في وضع تعديل، بتتعرض كجدول أنيق للقراءة
+            // بس — القيمة نفسها بتتنسخ بلمسة واحدة. المجموعة الجديدة أو اللي ضغطت "تعديل" عليها
+            // بتفضل في وضع الكتابة العادي.
+            const isReadView = g.id && !g._editing;
+
+            if (isReadView) {
+                return `
+                <div style="background:rgba(0,0,0,0.25); border-radius:10px; padding:12px; margin-bottom:12px;">
+                    <div style="display:flex; gap:8px; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                        <span style="color:var(--gold-light); font-weight:800; font-size:0.95rem;"><i class="fa-solid fa-folder-open"></i> ${String(g.title||'').replace(/</g,'&lt;')}</span>
+                        <div style="display:flex; gap:6px;">
+                            <button onclick="credentialsCache[${gi}]._editing = true; renderCredentials();"
+                                    class="router-reminder-btn" style="background:#3498db; padding:5px 10px; font-size:0.72rem;"><i class="fas fa-pen"></i> تعديل</button>
+                            <button onclick="deleteCredentialGroup(${gi})" style="background:#B22222; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.72rem;"><i class="fas fa-trash"></i> حذف</button>
+                        </div>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <tbody>
+                        ${(g.fields||[]).map((f, fi) => `
+                            <tr style="border-bottom:1px solid #2a2a35;">
+                                <td style="padding:6px 8px; color:#8a8a90; white-space:nowrap; width:1%;">${String(f.label||'').replace(/</g,'&lt;')}</td>
+                                <td style="padding:6px 8px; color:#e8e8ea; cursor:pointer; word-break:break-all;"
+                                    onclick="copyCredentialValue(event, ${JSON.stringify(String(f.value||'')).replace(/"/g,'&quot;')})" title="اضغط للنسخ">
+                                    ${String(f.value||'').replace(/</g,'&lt;')} <i class="fa-regular fa-copy" style="color:#5a5a62; margin-inline-start:6px;"></i>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+            }
+
+            return `
             <div style="background:rgba(0,0,0,0.25); border-radius:10px; padding:12px; margin-bottom:12px;">
                 <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
                     <input type="text" value="${String(g.title||'').replace(/"/g,'&quot;')}" placeholder="اسم المجموعة (مثال: بيانات الراوتر)"
@@ -3408,7 +3472,8 @@
                         class="router-reminder-btn" style="background:#3498db; padding:6px 12px; font-size:0.78rem;">+ إضافة حقل</button>
                 <button onclick="saveCredentialGroup(${gi})"
                         class="router-reminder-btn" style="padding:6px 14px; font-size:0.78rem; margin-inline-start:6px;">💾 حفظ المجموعة</button>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     }
 
     function addCredentialGroup() {
@@ -3431,6 +3496,8 @@
             .then(d => {
                 if (d.status === 'success') {
                     g.id = d.groupId;
+                    g._editing = false; // v34: بعد الحفظ، ارجع لوضع العرض الأنيق للقراءة والنسخ
+                    renderCredentials();
                     showStatus('✅ تم حفظ "' + g.title + '".', 'success');
                 } else showStatus('❌ ' + (d.message || 'تعذر الحفظ.'), 'error');
             })
@@ -3668,6 +3735,7 @@
             renderIncomeTable();
             loadInventory();          // v26
             populateExpenseBookingDropdown();  // v30
+            renderPinnedRatesList();  // v34
         }
         if (tab === 'settings') {     // v26 / v27 / v28
             applyTimeFormatToUI();
@@ -3892,9 +3960,68 @@
         const resEl    = document.getElementById('conv-result');
         if (!amountEl || !resEl) return;
         if (!liveRates) { resEl.textContent = 'جاري سحب أسعار الصرف...'; return; }
+        // v34: تحذير دفاعي — لو عملة من الاتنين ناقصة من أسعار الصرف المسحوبة، نوضح بدل ما نطلع رقم غلط بصمت
+        if ((fromEl.value !== 'USD' && !liveRates[fromEl.value]) || (toEl.value !== 'USD' && !liveRates[toEl.value])) {
+            resEl.innerHTML = '<span style="color:#e74c3c;">⚠️ سعر صرف ' + (liveRates[fromEl.value] ? toEl.value : fromEl.value) + ' مش متوفر حالياً من المزوّد — جرّب "تحديث السعر".</span>';
+            return;
+        }
         const result = convertCurrency(amountEl.value, fromEl.value, toEl.value);
         resEl.textContent = (parseFloat(amountEl.value) || 0).toLocaleString() + ' ' + fromEl.value +
             ' = ' + result.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + toEl.value;
+    }
+
+    // v34: بيثبّت سعر الصرف الحالي (دولار←جنيه) بتاريخ النهارده في سجل الأسعار — عشان تقدر ترجع
+    // تعرف بعدين كان السعر كام لما سجّلت مصروفات/حجوزات الشهر ده بالظبط.
+    function pinCurrentRateToMonth() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (!liveRates || !liveRates.EGP) { showStatus('⚠️ استنى لحد ما السعر الحي يتحمّل الأول.', 'error'); return; }
+        const today = new Date().toISOString().split('T')[0];
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveExchangeRate', date: today, rate: liveRates.EGP }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                showStatus('📌 اتثبّت سعر ' + liveRates.EGP.toFixed(2) + ' ج.م لتاريخ ' + today + '.', 'success');
+                renderPinnedRatesList();
+            } else showStatus('❌ ' + (d.message || 'تعذر التثبيت.'), 'error');
+        })
+        .catch(err => showStatus('❌ خطأ في الاتصال: ' + err.message, 'error'));
+    }
+
+    // بيدوّر في السجل المثبّت عن أقرب سعر بتاريخ أقل من أو يساوي التاريخ المطلوب
+    function lookupHistoricalRate() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const dateEl = document.getElementById('rate-lookup-date');
+        const resEl  = document.getElementById('rate-lookup-result');
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (!dateEl.value) { resEl.textContent = '⚠️ اختر تاريخ الأول.'; return; }
+        resEl.textContent = '⏳ جاري البحث...';
+        fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=exchangeRates')
+        .then(r => r.json())
+        .then(d => {
+            if (d.status !== 'success' || !d.data || !d.data.length) { resEl.textContent = 'مفيش أي سعر متثبّت لسه — دوس "ثبّت السعر ده للشهر ده" الأول.'; return; }
+            const target = new Date(dateEl.value).getTime();
+            const sorted = [...d.data].sort((a,b) => new Date(a.date) - new Date(b.date));
+            let best = null;
+            for (const r of sorted) { if (new Date(r.date).getTime() <= target) best = r; else break; }
+            if (!best) { resEl.textContent = 'مفيش سعر متثبّت قبل أو في ' + dateEl.value + ' — أقدم سعر متسجل هو ' + sorted[0].date + '.'; return; }
+            resEl.textContent = 'سعر ' + best.date + ' (آخر سعر متثبّت قبل أو في التاريخ ده): 1$ = ' + best.rate + ' ج.م';
+        })
+        .catch(err => { resEl.textContent = '❌ خطأ اتصال: ' + err.message; });
+    }
+
+    function renderPinnedRatesList() {
+        const box = document.getElementById('pinned-rates-list');
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!box || !gasUrl) return;
+        fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=exchangeRates')
+        .then(r => r.json())
+        .then(d => {
+            if (d.status !== 'success' || !d.data || !d.data.length) { box.textContent = ''; return; }
+            const sorted = [...d.data].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 6);
+            box.innerHTML = 'آخر أسعار مثبّتة: ' + sorted.map(r => r.date + ' = ' + r.rate).join(' • ');
+        })
+        .catch(() => {});
     }
 
     // بيحول أي مبلغ لجنيه مصري بالسعر الحي الحالي (يُستخدم بس لما سوتش "المكافئ بالجنيه" مفعّل)
@@ -3914,6 +4041,47 @@
     function toggleCustomCategory() {
         const sel = document.getElementById('exp-category').value;
         document.getElementById('exp-custom-category-field').style.display = (sel === 'other') ? '' : 'none';
+    }
+
+    /* =========================================================
+       v34: فئات مصروفات مخصصة — أي فئة تكتبها في "فئة أخرى" تقدر
+       تضيفها للقائمة الرئيسية بضغطة، وهتفضل محفوظة للمرات الجاية
+       (وبتتظهر في قايمة فئات البوت كمان).
+       ========================================================= */
+    let customExpenseCategories = [];
+
+    function populateExpenseCategoryOptions() {
+        const sel = document.getElementById('exp-category');
+        if (!sel) return;
+        const otherOpt = sel.querySelector('option[value="other"]');
+        // امسح أي فئات مخصصة اتضافت قبل كده في الجلسة دي عشان منكررش
+        sel.querySelectorAll('option[data-custom="1"]').forEach(o => o.remove());
+        customExpenseCategories.forEach(cat => {
+            if (sel.querySelector('option[value="' + CSS.escape(cat) + '"]')) return;
+            const opt = document.createElement('option');
+            opt.value = cat; opt.textContent = cat; opt.setAttribute('data-custom', '1');
+            sel.insertBefore(opt, otherOpt);
+        });
+    }
+
+    function addCustomExpenseCategory() {
+        const name = document.getElementById('exp-custom-category').value.trim();
+        if (!name) { showStatus('⚠️ اكتب اسم الفئة الأول.', 'error'); return; }
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (customExpenseCategories.includes(name)) {
+            showStatus('ℹ️ الفئة دي موجودة في القائمة بالفعل.', 'success');
+        } else {
+            customExpenseCategories.push(name);
+        }
+        populateExpenseCategoryOptions();
+        document.getElementById('exp-category').value = name;
+        toggleCustomCategory();
+        saveSettingsToCloud({ customExpenseCategories: JSON.stringify(customExpenseCategories) }, () => {
+            showStatus('✅ اتضافت فئة "' + name + '" للقائمة الرئيسية.', 'success');
+        }, () => {
+            showStatus('❌ تعذر حفظ الفئة الجديدة على السحابة.', 'error');
+        });
     }
 
     function loadExpensesFromSheets() {
@@ -3962,6 +4130,39 @@
     }
 
     let editingExpenseId = null;   // v30: null = وضع إضافة، غير null = وضع تعديل
+    let uploadedExpenseAttachmentUrl = ''; // v34: رابط مرفق المصروف (فاتورة/إيصال) بعد الرفع
+
+    // v34: رفع مرفق المصروف (فاتورة/إيصال/ضمان) على Supabase — بنفس آلية رفع مستندات الحجز
+    function uploadExpenseAttachment() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const statusEl = document.getElementById('exp-attachment-status');
+        const fileInput = document.getElementById('exp-attachment-file');
+        if (!gasUrl) { if (statusEl) statusEl.textContent = '⚠️ أضف رابط Apps Script أولاً.'; return; }
+        if (!fileInput || !fileInput.files[0]) return;
+        const file = fileInput.files[0];
+        if (statusEl) statusEl.textContent = '⏳ جاري الرفع...';
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            fetch(gasUrl, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'uploadDocument', fileName: 'Expense_' + Date.now() + '_' + file.name, fileType: file.type, fileData: e.target.result })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success' && d.url) {
+                    uploadedExpenseAttachmentUrl = d.url;
+                    if (statusEl) statusEl.textContent = '';
+                    const prev = document.getElementById('exp-attachment-preview');
+                    if (prev) prev.innerHTML = '<a href="' + d.url + '" target="_blank" class="router-reminder-btn" style="background:#3498db; padding:6px 12px; font-size:0.75rem; text-decoration:none;"><i class="fas fa-eye"></i> معاينة المرفق</a> <span style="color:#2ecc71;">✅ اترفع</span>';
+                } else if (statusEl) {
+                    statusEl.textContent = '❌ ' + (d.message || 'تعذر الرفع.');
+                }
+            })
+            .catch(err => { if (statusEl) statusEl.textContent = '❌ خطأ اتصال: ' + err.message; });
+        };
+        reader.readAsDataURL(file);
+    }
 
     function addExpense() {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
@@ -3990,7 +4191,7 @@
             action: isEdit ? 'updateExpense' : 'addExpense',
             expenseId: editingExpenseId,
             date: date, category: category, amount: amount, description: desc,
-            currency: currency, bookingId: linkedBooking
+            currency: currency, bookingId: linkedBooking, attachmentUrl: uploadedExpenseAttachmentUrl
         };
 
         showStatus(isEdit ? '⏳ جاري تعديل المصروف...' : '⏳ جاري إضافة المصروف...', 'success');
@@ -4027,6 +4228,15 @@
         populateExpenseBookingDropdown();
         if (document.getElementById('exp-linked-booking')) document.getElementById('exp-linked-booking').value = e.bookingId || '';
 
+        // v34: لو المصروف ده عنده مرفق قبل كده، نوريه في المعاينة
+        uploadedExpenseAttachmentUrl = e.attachmentUrl || '';
+        const prev = document.getElementById('exp-attachment-preview');
+        if (prev) {
+            prev.innerHTML = e.attachmentUrl
+                ? '<a href="' + e.attachmentUrl + '" target="_blank" class="router-reminder-btn" style="background:#3498db; padding:6px 12px; font-size:0.75rem; text-decoration:none;"><i class="fas fa-eye"></i> معاينة المرفق الحالي</a>'
+                : '';
+        }
+
         document.getElementById('exp-submit-btn').innerHTML = '<i class="fa-solid fa-save"></i> حفظ التعديل';
         document.getElementById('exp-cancel-edit-btn').style.display = '';
         document.getElementById('exp-date').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4037,6 +4247,13 @@
         document.getElementById('exp-amount').value = '';
         document.getElementById('exp-desc').value = '';
         if (document.getElementById('exp-linked-booking')) document.getElementById('exp-linked-booking').value = '';
+        uploadedExpenseAttachmentUrl = '';
+        const attFile = document.getElementById('exp-attachment-file');
+        if (attFile) attFile.value = '';
+        const attPrev = document.getElementById('exp-attachment-preview');
+        if (attPrev) attPrev.innerHTML = '';
+        const attStatus = document.getElementById('exp-attachment-status');
+        if (attStatus) attStatus.textContent = '';
         document.getElementById('exp-submit-btn').innerHTML = '<i class="fa-solid fa-plus"></i> إضافة المصروف';
         document.getElementById('exp-cancel-edit-btn').style.display = 'none';
     }
@@ -4141,7 +4358,7 @@
         populateExpenseFilterYears();
 
         if (!localExpensesCache.length) {
-            tbody.innerHTML = '<tr><td colspan="5" style="padding:14px; text-align:center; color:#888;">لا توجد مصروفات مسجلة بعد</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="padding:14px; text-align:center; color:#888;">لا توجد مصروفات مسجلة بعد</td></tr>';
             return;
         }
 
@@ -4163,7 +4380,7 @@
         }
 
         if (!filtered.length) {
-            tbody.innerHTML = '<tr><td colspan="5" style="padding:14px; text-align:center; color:#888;">لا توجد مصروفات مطابقة للفلتر</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="padding:14px; text-align:center; color:#888;">لا توجد مصروفات مطابقة للفلتر</td></tr>';
             return;
         }
 
@@ -4177,6 +4394,7 @@
                 <td style="padding:8px; color:#a0a0a5;">${e.description || '-'}</td>
                 <td style="padding:8px;">${linked ? `<span style="color:#7fc4ee; cursor:pointer;" onclick="editIncomeBooking('${linked.bookingID}')" title="افتح الحجز">👤 ${linked.guestName}</span>` : '<span style="color:#5a5a62;">—</span>'}</td>
                 <td style="padding:8px; text-align:center; font-weight:700; color:#e74c3c;">${e.amount} ${e.currency === 'USD' ? '$' : 'ج.م'}</td>
+                <td style="padding:8px; text-align:center;">${e.attachmentUrl ? `<a href="${e.attachmentUrl}" target="_blank" title="عرض المرفق" style="color:#7fc4ee;"><i class="fa-solid fa-paperclip"></i></a>` : '<span style="color:#5a5a62;">—</span>'}</td>
                 <td style="padding:8px; text-align:center; white-space:nowrap;">
                     <button onclick="editExpense('${e.expenseId}')" style="background:#2980b9; border:none; color:white; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:0.75rem; margin-inline-end:4px;" title="تعديل">
                         <i class="fa-solid fa-pen"></i>
@@ -4600,6 +4818,29 @@
     function copyDirectText(e, text) {
         e.preventDefault();
         copyToClipboard(text, e.currentTarget, '<i class="fas fa-check"></i> تم نسخ البيانات!', '<i class="fas fa-copy"></i> نسخ');
+    }
+
+    // v34: نسخ قيمة من جدول صندوق البيانات (القراءة فقط) — من غير ما نمسح النص المعروض في الخانة
+    // (على عكس copyDirectText اللي بيستبدل محتوى العنصر مؤقتاً، وده مناسب للأزرار مش لخانة بتعرض القيمة نفسها)
+    function copyCredentialValue(e, text) {
+        e.preventDefault();
+        const el = e.currentTarget;
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            const prevBg = el.style.background;
+            el.style.background = 'rgba(46,139,87,0.35)';
+            setTimeout(() => { el.style.background = prevBg; }, 700);
+            showStatus('✅ اتنسخت القيمة.', 'success');
+        } catch (err) {
+            prompt('انسخ النص التالي:', text);
+        }
+        document.body.removeChild(textarea);
     }
 
     function copyGPSCoordinates(e) {
@@ -5318,6 +5559,10 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             unitBannerData.name = s.unitName || '';
             unitBannerData.logo = s.unitLogoUrl || '';
             // v32: بيانات الشركة (IDEA-EG) بقت ثابتة في الكود نفسه — مفيش حاجة تتحمّل من هنا
+            // v34: فئات المصروفات المخصصة
+            if (s.customExpenseCategories) {
+                try { customExpenseCategories = JSON.parse(s.customExpenseCategories) || []; populateExpenseCategoryOptions(); } catch (e) {}
+            }
             if (s.unitLogoUrl && document.getElementById('unit-logo-preview')) {
                 renderUnitLogoPreview(s.unitLogoUrl, null);
             }
