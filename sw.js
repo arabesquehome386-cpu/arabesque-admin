@@ -4,7 +4,7 @@
 // كده أي تعديل تعمله في index.html هيظهر فوراً لأي حد فاتح النت، من غير ما تستنى الكاش يتحدّث.
 
 // ⚠️ زوّد الرقم ده (v1 -> v2 -> ...) لو حبيت تجبر تنظيف كامل للكاش القديم بعد تحديث كبير
-const CACHE_NAME = 'arabesque-pwa-v27';
+const CACHE_NAME = 'arabesque-pwa-v28';
 const CORE_ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (event) => {

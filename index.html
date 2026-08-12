@@ -1405,7 +1405,7 @@
                     <input type="text" id="exp-custom-category" placeholder="مثال: ضرائب">
                 </div>
                 <div class="admin-field">
-                    <label>المبلغ (EGP)</label>
+                    <label id="exp-amount-label">المبلغ (EGP)</label>
                     <input type="number" id="exp-amount" placeholder="0">
                 </div>
                 <div class="admin-field" style="grid-column: 1 / -1;">
@@ -1420,9 +1420,16 @@
 
         <!-- قائمة المصروفات -->
         <div class="bookings-dropdown-container">
-            <div class="bookings-dropdown-title">
-                <i class="fa-solid fa-list"></i>
-                <span>سجل المصروفات</span>
+            <div class="bookings-dropdown-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div><i class="fa-solid fa-list"></i> <span>سجل المصروفات</span></div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:400;">
+                    <span style="color:#a0a0a5;">عملة المصروفات:</span>
+                    <select id="input-expense-currency" onchange="setExpenseCurrency(this.value)"
+                            style="padding:5px 10px; background:#1e1e24; color:white; border:1px solid var(--gold); border-radius:6px; font-family:inherit;">
+                        <option value="EGP">ج.م (الافتراضي)</option>
+                        <option value="USD">$</option>
+                    </select>
+                </div>
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse: collapse; color:#d1d1d6; font-size:0.85rem; min-width: 500px;">
@@ -1566,46 +1573,97 @@
     <!-- ===== v25: تبويب الإعدادات والربط ===== -->
     <div id="admin-tab-settings" style="display:none;">
 
-    <!-- صندوق الحسابات الفنية الموحد الفاخر للمضيف (مخفي عن الضيوف) -->
-    <div class="router-reminder-box" style="background: rgba(142, 68, 173, 0.15); border-color: #8e44ad; padding: 15px; margin-bottom: 20px; border-radius: 12px; display: block;">
-        <div class="router-reminder-title" style="color: #bb8fce; margin-bottom: 12px; font-size: 1rem; font-weight: 800;">
-            <i class="fa-solid fa-user-shield"></i>
-            <span>صندوق الحسابات الفنية الموحد للمضيف (بيانات الراوتر، حساب جوجل، تفاصيل البوت)</span>
+    <!-- ===== v28: بيانات الوحدة واللوجو (اختياري) ===== -->
+    <div class="router-reminder-box" style="background: rgba(197,168,92,0.10); border-color: var(--gold); padding: 15px; margin-bottom: 20px; border-radius: 12px;">
+        <div class="router-reminder-title" style="color: var(--gold-light); margin-bottom: 12px; font-size: 1rem; font-weight: 800;">
+            <i class="fa-solid fa-building"></i>
+            <span>بيانات الوحدة</span>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 10px;">
-            <!-- مستخدم الراوتر -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>مستخدم الراوتر:</strong> admin</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'admin')">نسخ</button>
+        <div class="admin-grid" style="align-items:end;">
+            <div class="admin-field">
+                <label>اسم الوحدة</label>
+                <input type="text" id="input-unit-name" placeholder="مثال: أرابيسك ريزيدنس" onchange="saveSettingsToCloud({unitName: this.value});">
             </div>
-            <!-- باسورد الراوتر -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>باسورد الراوتر:</strong> Stay@Arabesque24</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'Stay@Arabesque24')">نسخ</button>
-            </div>
-            <!-- حساب جوجل للمضيف -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>حساب جوجل للمضيف:</strong> arabesquehome386@gmail.com</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'arabesquehome386@gmail.com')">نسخ</button>
-            </div>
-            <!-- رمز حساب جوجل للمضيف -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>رمز حساب جوجل للمضيف:</strong> Karim_4120096</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, 'Karim_4120096')">نسخ</button>
-            </div>
-            <!-- توكن تليجرام البوت المطور -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; grid-column: span 1;">
-                <span style="font-size: 0.82rem; color: #d1d1d6; word-break: break-all; font-family: monospace;"><strong>Token:</strong> 8660063702:AAH9PnvHbkVOoZcoGDpg4Kp_HlUZqOAm5FM</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem; margin-right: 10px;" onclick="copyDirectText(event, '8660063702:AAH9PnvHbkVOoZcoGDpg4Kp_HlUZqOAm5FM')">نسخ</button>
-            </div>
-            <!-- الـ Chat ID المعتمد -->
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px;">
-                <span style="font-size: 0.85rem; color: #d1d1d6;"><strong>Chat ID:</strong> 8987938583</span>
-                <button class="router-reminder-btn" style="background:#512da8; padding: 4px 8px; font-size: 0.72rem;" onclick="copyDirectText(event, '8987938583')">نسخ</button>
+            <div class="admin-field">
+                <label>شعار الوحدة (اختياري)</label>
+                <input type="file" id="input-unit-logo" accept="image/*" onchange="uploadUnitLogo()">
             </div>
         </div>
+        <div id="unit-logo-preview" style="margin-top:10px;"></div>
     </div>
-    
+
+    <!-- ===== v28: مضيف الشقة والمساعدين (Co-Host) ===== -->
+    <div class="router-reminder-box" style="background: rgba(52,152,219,0.10); border-color: #3498db; padding: 15px; margin-bottom: 20px; border-radius: 12px;">
+        <div class="router-reminder-title" style="color: #7fc4ee; margin-bottom: 12px; font-size: 1rem; font-weight: 800;">
+            <i class="fa-solid fa-user-tie"></i>
+            <span>المضيف والمساعدين (Co-Host)</span>
+        </div>
+        <div class="admin-grid">
+            <div class="admin-field">
+                <label>اسم المضيف الأساسي (Host)</label>
+                <input type="text" id="input-host-name" placeholder="مثال: كريم الحكيم">
+            </div>
+            <div class="admin-field">
+                <label>رقم تليفون المضيف</label>
+                <input type="text" id="input-host-phone" placeholder="مثال: 201061888636">
+            </div>
+        </div>
+        <div id="cohosts-container" style="margin-top:10px;"></div>
+        <button class="router-reminder-btn" style="margin-top:10px; background:#3498db; padding:7px 16px;" onclick="addCohostRow()">
+            <i class="fas fa-user-plus"></i> إضافة مساعد (Co-Host)
+        </button>
+        <button class="router-reminder-btn" style="margin-top:10px; padding:7px 16px;" onclick="saveHostInfo()">
+            <i class="fas fa-save"></i> 💾 حفظ بيانات المضيف والمساعدين
+        </button>
+    </div>
+
+    <!-- ===== v28: صندوق البيانات الديناميكي (بديل الباسوردات الثابتة) ===== -->
+    <div class="router-reminder-box" style="background: rgba(142, 68, 173, 0.15); border-color: #8e44ad; padding: 15px; margin-bottom: 20px; border-radius: 12px;">
+        <div class="router-reminder-title" style="color: #bb8fce; margin-bottom: 12px; font-size: 1rem; font-weight: 800; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div><i class="fa-solid fa-user-shield"></i> <span>صندوق البيانات الخاصة (باسوردات، حسابات، أي حاجة تحب تفتكرها)</span></div>
+            <button class="router-reminder-btn" style="background:#512da8; padding:6px 14px;" onclick="addCredentialGroup()">
+                <i class="fas fa-plus"></i> إضافة مجموعة جديدة
+            </button>
+        </div>
+        <p style="color:#a0a0a5; font-size:0.78rem; margin-bottom:12px;">
+            سمّي المجموعة زي ما تحب (مثال: "بيانات الراوتر"، "حساب جوجل")، وضيف تحتها أي عدد من الحقول (يوزر، باسورد، اسم، تليفون، رقم حساب...).
+        </p>
+        <div id="credentials-container"></div>
+    </div>
+
+    <!-- ===== v28: معالج ربط البوت — لسهولة إعداده لأي نسخة جديدة ===== -->
+    <div class="router-reminder-box" style="background: rgba(46,139,87,0.10); border-color: var(--accent-green); padding: 15px; margin-bottom: 20px; border-radius: 12px;">
+        <div class="router-reminder-title" style="color: #7fd7a5; margin-bottom: 6px; font-size: 1rem; font-weight: 800;">
+            <i class="fa-brands fa-telegram"></i>
+            <span>معالج ربط بوت التليجرام</span>
+        </div>
+        <p style="color:#a0a0a5; font-size:0.78rem; line-height:1.9; margin-bottom:12px;">
+            لو بتشغّل نسخة جديدة من البرنامج، هنا تحط بيانات بوتك الخاص من غير ما تفتح محرر Apps Script.
+            <br>1) افتح تليجرام وابحث عن <strong>@BotFather</strong> واعمل <code>/newbot</code> وسمّي بوتك.
+            <br>2) هيديك <strong>Token</strong> — الصقه هنا.
+            <br>3) ابعت أي رسالة لبوتك، وافتح الرابط ده في المتصفح (بدّل TOKEN):
+            <span style="direction:ltr; display:inline-block; font-family:monospace; font-size:0.72rem;">https://api.telegram.org/botTOKEN/getUpdates</span>
+            وهتلاقي رقم <strong>chat.id</strong> — ده الـ Chat ID بتاعك.
+        </p>
+        <div class="admin-grid">
+            <div class="admin-field" style="grid-column: 1 / -1;">
+                <label>Bot Token</label>
+                <input type="text" id="input-bot-token" placeholder="مثال: 8660063702:AAH9Pn..." style="font-family:monospace; direction:ltr;">
+            </div>
+            <div class="admin-field">
+                <label>Chat ID (المضيف)</label>
+                <input type="text" id="input-bot-chatid" placeholder="مثال: 8987938583">
+            </div>
+            <div class="admin-field">
+                <label>يوزر نيم البوت (من غير @)</label>
+                <input type="text" id="input-bot-username" placeholder="مثال: arabesque_Residence_alerts_bot">
+            </div>
+        </div>
+        <button class="router-reminder-btn" style="margin-top:10px; background:#2E8B57; padding:8px 18px;" onclick="saveBotConfig()">
+            <i class="fas fa-check"></i> حفظ واختبار الاتصال بالبوت
+        </button>
+        <div id="bot-config-status" style="margin-top:8px; font-size:0.82rem;"></div>
+    </div>
 
         <!-- ===== v27: تفضيلات العرض ===== -->
         <div style="background: rgba(197,168,92,0.07); border: 1px solid var(--gold); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
@@ -1738,8 +1796,8 @@
     </div> <!-- end admin-tab-settings -->
 </div>
 
-<!-- ===== دليل الإقامة والصفحات الفاخرة للضيف ===== -->
-<div class="content-wrapper">
+<!-- ===== دليل الإقامة والصفحات الفاخرة للضيف — يظهر بس في تبويب "إدارة الحجوزات" ===== -->
+<div class="content-wrapper" id="guide-wrapper">
     <div class="container">
         
         <!-- =======================================================
@@ -2319,6 +2377,7 @@
 
     </div>
 </div>
+<!-- end guide-wrapper -->
 
 <!-- ===== البرمجيات الفائقة والمنطق الذكي لإدارة الحجوزات سحابياً ومحلياً ===== -->
 <script>
@@ -2485,25 +2544,106 @@
         return parts.join(' + ') || '';
     }
 
+    // v28: روابط الوثائق اللي اترفعت فعلياً (منفصلة عن اختيار الملف)، بتتبعت مع الحجز عند الحفظ
+    let uploadedDocLinks = {};   // { 1: "https://drive.google.com/...", 2: "..." }
+
+    // v28: هل نعرض خانة رفع جواز للأطفال؟ افتراضياً لأ — الأطفال عادة مالهمش جوازات
+    let showChildrenDocs = false;
+
     function generateGuestDocsFields(count) {
         const container = document.getElementById('guest-docs-container');
         container.innerHTML = '';
-        const num = parseInt(count) || 1;
-        
+        uploadedDocLinks = {};
+
+        const adultsEl = document.getElementById('input-guests-adults');
+        const adultsCount = adultsEl ? (parseInt(adultsEl.value) || parseInt(count) || 1) : (parseInt(count) || 1);
+        const totalCount  = parseInt(count) || adultsCount;
+
+        // v28: افتراضياً نعرض خانات للبالغين بس. لو المستخدم فعّل سويتش "صور جوازات الأطفال" كمان نعرض الباقي.
+        const num = showChildrenDocs ? totalCount : Math.min(adultsCount, totalCount);
+
         for (let i = 1; i <= num; i++) {
             const docRow = document.createElement('div');
             docRow.className = 'guest-doc-row';
+            docRow.style.cssText = 'flex-direction:column; align-items:stretch; gap:8px;';
             docRow.innerHTML = `
-                <label>الضيف ${i}:</label>
-                <select id="doc-type-${i}" style="padding: 6px; font-size:0.85rem;">
-                    <option value="بطاقة شخصية">بطاقة شخصية</option>
-                    <option value="جواز سفر">جواز سفر</option>
-                </select>
-                <input type="text" id="doc-number-${i}" placeholder="رقم الوثيقة" style="padding: 6px; font-size:0.85rem; flex: 1; min-width: 120px;">
-                <input type="file" id="doc-file-${i}" style="width: auto;">
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <label style="min-width:60px;">الضيف ${i}:</label>
+                    <select id="doc-type-${i}" style="padding: 6px; font-size:0.85rem;">
+                        <option value="بطاقة شخصية">بطاقة شخصية</option>
+                        <option value="جواز سفر">جواز سفر</option>
+                    </select>
+                    <input type="text" id="doc-number-${i}" placeholder="رقم الوثيقة" style="padding: 6px; font-size:0.85rem; flex: 1; min-width: 120px;">
+                    <input type="file" id="doc-file-${i}" accept="image/*,.pdf" style="width: auto;">
+                    <button type="button" class="router-reminder-btn" style="padding:6px 14px; background:#2E8B57;"
+                            onclick="uploadSingleDoc(${i})">
+                        <i class="fas fa-upload"></i> رفع
+                    </button>
+                </div>
+                <div id="doc-status-${i}" style="font-size:0.78rem; color:#a0a0a5;"></div>
+                <div id="doc-preview-${i}"></div>
             `;
             container.appendChild(docRow);
         }
+
+        // زودنا سويتش إظهار جوازات الأطفال لو فيه أطفال في الحجز فعلاً
+        const childrenEl = document.getElementById('input-guests-children');
+        const childrenCount = childrenEl ? (parseInt(childrenEl.value) || 0) : 0;
+        if (childrenCount > 0 && totalCount > adultsCount) {
+            const sw = document.createElement('div');
+            sw.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:10px; border-top:1px dashed #3a3a45;';
+            sw.innerHTML = `
+                <input type="checkbox" class="gold-switch" id="chk-children-docs" ${showChildrenDocs ? 'checked' : ''}
+                       onchange="showChildrenDocs = this.checked; generateGuestDocsFields(${totalCount});">
+                <label for="chk-children-docs" style="margin:0; cursor:pointer; font-size:0.82rem;">
+                    إضافة صور جوازات/بطاقات الأطفال كمان (اختياري — الأطفال عادة مالهمش جوازات مستقلة)
+                </label>`;
+            container.appendChild(sw);
+        }
+    }
+
+    // v28: رفع وثيقة واحدة فوراً — مستقل عن حفظ الحجز، وبيديك رد فوري بنجاح/فشل الرفع
+    function uploadSingleDoc(i) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const statusEl = document.getElementById('doc-status-' + i);
+        const fileInput = document.getElementById('doc-file-' + i);
+        const guestName = document.getElementById('input-guest').value.trim() || 'ضيف';
+
+        if (!gasUrl) { if (statusEl) statusEl.innerHTML = '⚠️ أضف رابط Apps Script أولاً.'; return; }
+        if (!fileInput || !fileInput.files[0]) { if (statusEl) statusEl.innerHTML = '⚠️ اختر صورة أو ملف الأول.'; return; }
+
+        const file = fileInput.files[0];
+        if (statusEl) statusEl.innerHTML = '⏳ جاري رفع الملف...';
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            fetch(gasUrl, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'uploadDocument',
+                    fileName: `Document_${i}_${guestName}_${file.name}`,
+                    fileType: file.type,
+                    fileData: e.target.result
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success' && d.url) {
+                    uploadedDocLinks[i] = d.url;
+                    if (statusEl) statusEl.innerHTML = '✅ تم الرفع بنجاح!';
+                    const prev = document.getElementById('doc-preview-' + i);
+                    if (prev) {
+                        prev.innerHTML = file.type.indexOf('image') === 0
+                            ? `<a href="${d.url}" target="_blank"><img src="${URL.createObjectURL(file)}" style="max-width:120px; max-height:80px; border-radius:6px; border:1px solid var(--gold); margin-top:4px;"></a>`
+                            : `<a href="${d.url}" target="_blank" style="color:var(--gold-light); font-size:0.78rem;">📄 فتح الملف المرفوع</a>`;
+                    }
+                } else {
+                    if (statusEl) statusEl.innerHTML = '❌ ' + (d.message || 'فشل الرفع.');
+                }
+            })
+            .catch(() => { if (statusEl) statusEl.innerHTML = '❌ خطأ في الاتصال أثناء الرفع.'; });
+        };
+        reader.readAsDataURL(file);
     }
 
     // قراءة الحجوزات من جوجل شيت لبناء الـ Dropdown والتأكد من التداخل
@@ -2825,6 +2965,182 @@
     }
 
     /* =========================================================
+       v28: شعار الوحدة (اختياري)
+       ========================================================= */
+    function uploadUnitLogo() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const fileInput = document.getElementById('input-unit-logo');
+        const preview = document.getElementById('unit-logo-preview');
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (!fileInput.files[0]) return;
+
+        const file = fileInput.files[0];
+        if (preview) preview.innerHTML = '⏳ جاري رفع الشعار...';
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            fetch(gasUrl, { method: 'POST', body: JSON.stringify({
+                action: 'uploadDocument', fileName: 'UnitLogo_' + file.name, fileType: file.type, fileData: e.target.result
+            })})
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success' && d.url) {
+                    saveSettingsToCloud({ unitLogoUrl: d.url });
+                    if (preview) preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-height:70px; border-radius:8px; border:1px solid var(--gold);"> <span style="color:#7fd7a5; font-size:0.8rem;">✅ اتحفظ</span>`;
+                } else if (preview) preview.innerHTML = '❌ ' + (d.message || 'فشل الرفع.');
+            })
+            .catch(() => { if (preview) preview.innerHTML = '❌ خطأ في الاتصال.'; });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /* =========================================================
+       v28: بيانات المضيف والمساعدين (Co-Host)
+       ========================================================= */
+    let cohostsCache = [];
+
+    function renderCohosts() {
+        const box = document.getElementById('cohosts-container');
+        if (!box) return;
+        box.innerHTML = cohostsCache.map((c, i) => `
+            <div class="admin-grid" style="margin-top:8px; align-items:end;">
+                <div class="admin-field">
+                    <label>اسم المساعد ${i + 1}</label>
+                    <input type="text" value="${(c.name||'').replace(/"/g,'&quot;')}" oninput="cohostsCache[${i}].name = this.value;">
+                </div>
+                <div class="admin-field">
+                    <label>رقم تليفون المساعد ${i + 1}</label>
+                    <input type="text" value="${(c.phone||'').replace(/"/g,'&quot;')}" oninput="cohostsCache[${i}].phone = this.value;">
+                </div>
+                <button onclick="cohostsCache.splice(${i},1); renderCohosts();"
+                        style="background:#B22222; color:#fff; border:none; padding:9px 14px; border-radius:6px; cursor:pointer; height:fit-content;">🗑️</button>
+            </div>`).join('');
+    }
+
+    function addCohostRow() {
+        cohostsCache.push({ name: '', phone: '' });
+        renderCohosts();
+    }
+
+    function saveHostInfo() {
+        const hostName  = document.getElementById('input-host-name').value.trim();
+        const hostPhone = document.getElementById('input-host-phone').value.trim();
+        saveSettingsToCloud({
+            hostName: hostName, hostPhone: hostPhone,
+            cohosts: JSON.stringify(cohostsCache.filter(c => c.name.trim()))
+        });
+        showStatus('✅ تم حفظ بيانات المضيف والمساعدين.', 'success');
+    }
+
+    /* =========================================================
+       v28: صندوق البيانات الديناميكي (بديل الباسوردات الثابتة)
+       ========================================================= */
+    let credentialsCache = [];
+
+    function loadCredentials() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) return;
+        fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=credentials')
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') { credentialsCache = d.data || []; renderCredentials(); }
+        })
+        .catch(() => {});
+    }
+
+    function renderCredentials() {
+        const box = document.getElementById('credentials-container');
+        if (!box) return;
+
+        if (!credentialsCache.length) {
+            box.innerHTML = '<p style="color:#8a8a90; font-size:0.82rem;">مفيش مجموعات لسه. اضغط "إضافة مجموعة جديدة" فوق.</p>';
+            return;
+        }
+
+        box.innerHTML = credentialsCache.map((g, gi) => `
+            <div style="background:rgba(0,0,0,0.25); border-radius:10px; padding:12px; margin-bottom:12px;">
+                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
+                    <input type="text" value="${(g.title||'').replace(/"/g,'&quot;')}" placeholder="اسم المجموعة (مثال: بيانات الراوتر)"
+                           style="flex:1; min-width:160px; padding:8px; background:#1e1e24; color:var(--gold-light); font-weight:800; border:1px solid #3a3a45; border-radius:6px;"
+                           oninput="credentialsCache[${gi}].title = this.value;">
+                    <button onclick="deleteCredentialGroup(${gi})" style="background:#B22222; color:#fff; border:none; padding:7px 12px; border-radius:6px; cursor:pointer;">🗑️ حذف المجموعة</button>
+                </div>
+                <div id="cred-fields-${gi}">
+                    ${(g.fields||[]).map((f, fi) => `
+                        <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                            <input type="text" value="${(f.label||'').replace(/"/g,'&quot;')}" placeholder="اسم الحقل (مثال: يوزر)"
+                                   style="width:150px; padding:7px; font-size:0.82rem;"
+                                   oninput="credentialsCache[${gi}].fields[${fi}].label = this.value;">
+                            <input type="text" value="${(f.value||'').replace(/"/g,'&quot;')}" placeholder="القيمة"
+                                   style="flex:1; min-width:150px; padding:7px; font-size:0.82rem;"
+                                   oninput="credentialsCache[${gi}].fields[${fi}].value = this.value;">
+                            <button onclick="copyDirectText(event, credentialsCache[${gi}].fields[${fi}].value)"
+                                    class="router-reminder-btn" style="background:#512da8; padding:6px 10px; font-size:0.72rem;">نسخ</button>
+                            <button onclick="credentialsCache[${gi}].fields.splice(${fi},1); renderCredentials();"
+                                    style="background:none; border:none; color:#B22222; cursor:pointer;">✕</button>
+                        </div>`).join('')}
+                </div>
+                <button onclick="credentialsCache[${gi}].fields.push({label:'', value:''}); renderCredentials();"
+                        class="router-reminder-btn" style="background:#3498db; padding:6px 12px; font-size:0.78rem;">+ إضافة حقل</button>
+                <button onclick="saveCredentialGroup(${gi})"
+                        class="router-reminder-btn" style="padding:6px 14px; font-size:0.78rem; margin-inline-start:6px;">💾 حفظ المجموعة</button>
+            </div>`).join('');
+    }
+
+    function addCredentialGroup() {
+        credentialsCache.push({ id: '', title: 'مجموعة جديدة', fields: [{ label: '', value: '' }] });
+        renderCredentials();
+    }
+
+    function saveCredentialGroup(gi) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const g = credentialsCache[gi];
+        if (!gasUrl || !g) return;
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveCredential', groupId: g.id, title: g.title, fields: g.fields }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                g.id = d.groupId;
+                showStatus('✅ تم حفظ "' + g.title + '".', 'success');
+            } else showStatus('❌ ' + (d.message || 'تعذر الحفظ.'), 'error');
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال.', 'error'));
+    }
+
+    function deleteCredentialGroup(gi) {
+        const g = credentialsCache[gi];
+        if (!confirm('حذف مجموعة "' + g.title + '" نهائياً؟')) return;
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (g.id && gasUrl) {
+            fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'deleteCredential', groupId: g.id }) }).catch(() => {});
+        }
+        credentialsCache.splice(gi, 1);
+        renderCredentials();
+    }
+
+    /* =========================================================
+       v28: معالج ربط البوت
+       ========================================================= */
+    function saveBotConfig() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const token = document.getElementById('input-bot-token').value.trim();
+        const chatId = document.getElementById('input-bot-chatid').value.trim();
+        const username = document.getElementById('input-bot-username').value.trim();
+        const statusEl = document.getElementById('bot-config-status');
+
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (!token || !chatId) { if (statusEl) statusEl.innerHTML = '⚠️ لازم تدخل التوكن والـ Chat ID على الأقل.'; return; }
+
+        if (statusEl) statusEl.innerHTML = '⏳ جاري الحفظ والاختبار...';
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveBotConfig', token: token, chatId: chatId, username: username }) })
+        .then(r => r.json())
+        .then(d => {
+            if (statusEl) statusEl.innerHTML = (d.status === 'success' ? '✅ ' : '❌ ') + (d.message || '');
+        })
+        .catch(() => { if (statusEl) statusEl.innerHTML = '❌ خطأ في الاتصال.'; });
+    }
+
+    /* =========================================================
        v25: تبويب الإعدادات — روابط التقويمات
        ========================================================= */
     function saveIcalSettings() {
@@ -3009,15 +3325,20 @@
             if (content) content.style.display = (t === tab) ? '' : 'none';
             if (btn)     btn.classList.toggle('admin-tab-active', t === tab);
         });
+        // v28: الدليل بتاع الضيف يظهر بس تحت تبويب "إدارة الحجوزات" — باقي التبويبات مالهاش لازمة فيه
+        const guideWrap = document.getElementById('guide-wrapper');
+        if (guideWrap) guideWrap.style.display = (tab === 'bookings') ? '' : 'none';
         if (tab === 'reports') {
             renderFinancialReport();
             renderExpensesTable();
             renderIncomeTable();
             loadInventory();          // v26
         }
-        if (tab === 'settings') {     // v26 / v27
+        if (tab === 'settings') {     // v26 / v27 / v28
             applyTimeFormatToUI();
             renderMsgTemplates();
+            loadCredentials();
+            renderCohosts();
         }
         if (tab === 'rules') {
             loadRulesFromStorage();
@@ -3184,6 +3505,14 @@
         showStatus('🔄 جاري تحديث بيانات التقرير...', 'success');
     }
 
+    // v28: عملة المصروفات — منفصلة عن عملة سعر الحجز، بتتحفظ كإعداد عام
+    function setExpenseCurrency(cur) {
+        const label = document.getElementById('exp-amount-label');
+        if (label) label.textContent = 'المبلغ (' + (cur === 'USD' ? 'USD $' : 'EGP ج.م') + ')';
+        saveSettingsToCloud({ expenseCurrency: cur });
+        try { localStorage.setItem('arabesque_expense_currency', cur); } catch (e) {}
+    }
+
     function addExpense() {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
         if (!gasUrl) {
@@ -3204,7 +3533,8 @@
             return;
         }
 
-        const payload = { action: 'addExpense', date: date, category: category, amount: amount, description: desc };
+        const currency = (document.getElementById('input-expense-currency') || {}).value || 'EGP';
+        const payload = { action: 'addExpense', date: date, category: category, amount: amount, description: desc, currency: currency };
 
         showStatus('⏳ جاري إضافة المصروف...', 'success');
         fetch(gasUrl, {
@@ -3319,7 +3649,7 @@
                 <td style="padding:8px;">${e.date}</td>
                 <td style="padding:8px;">${e.category}</td>
                 <td style="padding:8px; color:#a0a0a5;">${e.description || '-'}</td>
-                <td style="padding:8px; text-align:center; font-weight:700; color:#e74c3c;">${e.amount}</td>
+                <td style="padding:8px; text-align:center; font-weight:700; color:#e74c3c;">${e.amount} ${e.currency === 'USD' ? '$' : 'ج.م'}</td>
                 <td style="padding:8px; text-align:center;">
                     <button onclick="deleteExpense('${e.expenseId}')" style="background:#B22222; border:none; color:white; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:0.75rem;">
                         <i class="fa-solid fa-trash"></i>
@@ -3388,7 +3718,8 @@
                     <td style="padding:8px;">${REPORT_MONTH_NAMES[idx]}</td>
                     <td style="padding:8px; text-align:center;">${m.count}</td>
                     <td style="padding:8px; text-align:center;">${m.nights}</td>
-                    <td style="padding:8px; text-align:center; color:#2ecc71;">${m.income.toLocaleString()}</td>
+                    <td style="padding:8px; text-align:center; color:#2ecc71; cursor:pointer; text-decoration:underline dotted;"
+                        onclick="showIncomeBreakdown(${year}, ${idx})" title="اضغط لعرض تفاصيل الحجوزات">${m.income.toLocaleString()}</td>
                     <td style="padding:8px; text-align:center; color:#e74c3c;">${m.expenses.toLocaleString()}</td>
                     <td style="padding:8px; text-align:center; font-weight:800; color:${netColor};">${net.toLocaleString()}</td>
                 </tr>`;
@@ -3408,6 +3739,62 @@
         tbody.innerHTML = rows + totalRow;
     }
 
+
+    // v28: مودال تفصيل دخل شهر معيّن — مين حجز وكل واحد دفع كام
+    function showIncomeBreakdown(year, monthIdx) {
+        const rows = localBookingsCache.filter(b => {
+            if (!b.checkIn) return false;
+            const d = new Date(b.checkIn);
+            return d.getFullYear() === year && d.getMonth() === monthIdx;
+        }).sort((a,b) => new Date(a.checkIn) - new Date(b.checkIn));
+
+        let modal = document.getElementById('income-breakdown-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'income-breakdown-modal';
+            modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; align-items:center; justify-content:center; padding:16px;';
+            document.body.appendChild(modal);
+        }
+
+        if (!rows.length) {
+            modal.innerHTML = `<div style="background:#1e1e24; border:1px solid var(--gold); border-radius:12px; padding:20px; max-width:420px; text-align:center;">
+                <p style="color:#a0a0a5;">مفيش حجوزات في ${REPORT_MONTH_NAMES[monthIdx]} ${year}</p>
+                <button onclick="document.getElementById('income-breakdown-modal').style.display='none';"
+                        style="margin-top:10px; background:var(--gold); border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-family:inherit; font-weight:700;">إغلاق</button>
+            </div>`;
+            modal.style.display = 'flex';
+            return;
+        }
+
+        const total = rows.reduce((s, b) => s + (parseFloat(b.totalPrice) || 0), 0);
+
+        modal.innerHTML = `
+            <div style="background:#1e1e24; border:1px solid var(--gold); border-radius:12px; padding:20px; max-width:520px; width:100%; max-height:80vh; overflow-y:auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <h3 style="color:var(--gold-light); margin:0; font-size:1rem;">💰 تفاصيل دخل ${REPORT_MONTH_NAMES[monthIdx]} ${year}</h3>
+                    <button onclick="document.getElementById('income-breakdown-modal').style.display='none';"
+                            style="background:none; border:none; color:#a0a0a5; font-size:1.2rem; cursor:pointer;">✕</button>
+                </div>
+                ${rows.map(b => `
+                    <div style="background:#2a2a35; border-radius:8px; padding:10px 12px; margin-bottom:8px; cursor:pointer;"
+                         onclick="document.getElementById('income-breakdown-modal').style.display='none'; editIncomeBooking('${b.bookingID}');">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <div>
+                                <strong style="color:#e8e8ea;">${b.guestName}</strong>${b.locked ? ' 🔒' : ''}
+                                <div style="color:#8a8a90; font-size:0.76rem; margin-top:2px;">
+                                    ${b.checkIn} ➔ ${b.checkOut} • ${b.bookingSource || '—'}
+                                </div>
+                            </div>
+                            <div style="color:#2ecc71; font-weight:800;">${(parseFloat(b.totalPrice)||0).toLocaleString()} ${b.currency||''}</div>
+                        </div>
+                    </div>`).join('')}
+                <div style="border-top:1px solid #3a3a45; margin-top:10px; padding-top:10px; text-align:center; color:var(--gold-light); font-weight:800;">
+                    الإجمالي: ${total.toLocaleString()} (${rows.length} حجز)
+                </div>
+                <p style="color:#6a6a72; font-size:0.72rem; text-align:center; margin-top:8px;">اضغط على أي حجز لفتحه وتعديله</p>
+            </div>`;
+        modal.style.display = 'flex';
+    }
 
     // تحميل بيانات الحجز المحدد من القائمة المنسدلة إلى الخانات للتعديل
     function loadSelectedBookingData(bookingId) {
@@ -3788,18 +4175,23 @@
         const bookingSource = sourceElement ? sourceElement.value : "غير محدد";
 
         // تجميع تفاصيل وثائق الهوية
+        // v28: لو الوثيقة اترفعت قبل كده بزر "رفع" المخصص، بنستخدم رابطها الجاهز من uploadedDocLinks
+        //      وما بنرفعهاش تاني. لو حد نسي يضغط رفع، بنرفعها هنا زي الأول كخطة بديلة.
         const guestDocuments = [];
         const filesPromises = [];
-        
+        const alreadyUploadedLinks = [];
+
         for (let i = 1; i <= guestsCount; i++) {
             if (document.getElementById(`doc-type-${i}`)) {
                 const type = document.getElementById(`doc-type-${i}`).value;
                 const number = document.getElementById(`doc-number-${i}`).value;
                 const fileInput = document.getElementById(`doc-file-${i}`);
-                
+
                 guestDocuments.push({ type, number });
-                
-                if (fileInput && fileInput.files[0]) {
+
+                if (uploadedDocLinks && uploadedDocLinks[i]) {
+                    alreadyUploadedLinks.push(uploadedDocLinks[i]);
+                } else if (fileInput && fileInput.files[0]) {
                     const file = fileInput.files[0];
                     filesPromises.push(new Promise((resolve) => {
                         const reader = new FileReader();
@@ -3816,8 +4208,8 @@
             }
         }
 
-        showStatus('⏳ جاري معالجة ورفع الوثائق وإرسال بيانات الحجز لجوجل شيت وتليجرام...', 'success');
-        
+        showStatus('⏳ جاري إرسال بيانات الحجز لجوجل شيت وتليجرام...', 'success');
+
         const filesData = await Promise.all(filesPromises);
 
         const today = new Date();
@@ -3845,7 +4237,8 @@
             wifiName: wifiNameVal,
             wifiPassword: wifiPassVal,
             guestDocuments: guestDocuments,
-            files: filesData
+            files: filesData,
+            preUploadedLinks: alreadyUploadedLinks   // v28: روابط اترفعت مسبقاً بزر "رفع" المخصص
         };
 
         // v21: شلنا mode:'no-cors' عشان نقدر نقرأ رد السيرفر الحقيقي (نجاح/فشل/تداخل تواريخ) بدل ما نفترض النجاح دايماً.
@@ -4355,6 +4748,23 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             }
             if (s.icalBooking && document.getElementById('input-ical-booking')) {
                 document.getElementById('input-ical-booking').value = s.icalBooking;
+            }
+            // v28: بيانات الوحدة
+            if (s.unitName && document.getElementById('input-unit-name')) document.getElementById('input-unit-name').value = s.unitName;
+            if (s.unitLogoUrl) {
+                const p = document.getElementById('unit-logo-preview');
+                if (p) p.innerHTML = `<img src="${s.unitLogoUrl}" style="max-height:70px; border-radius:8px; border:1px solid var(--gold);">`;
+            }
+            // v28: بيانات المضيف والمساعدين
+            if (s.hostName && document.getElementById('input-host-name')) document.getElementById('input-host-name').value = s.hostName;
+            if (s.hostPhone && document.getElementById('input-host-phone')) document.getElementById('input-host-phone').value = s.hostPhone;
+            if (s.cohosts) {
+                try { cohostsCache = JSON.parse(s.cohosts) || []; renderCohosts(); } catch (e) {}
+            }
+            // v28: عملة المصروفات
+            if (s.expenseCurrency && document.getElementById('input-expense-currency')) {
+                document.getElementById('input-expense-currency').value = s.expenseCurrency;
+                setExpenseCurrency(s.expenseCurrency);
             }
             // v27: نظام الساعة
             if (s.timeFormat === '12' || s.timeFormat === '24') {
