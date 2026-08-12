@@ -1047,6 +1047,9 @@
 
 <!-- ===== لوحة تحكم المضيف الرقمية والمطورة بالكامل ===== -->
 <div id="admin-panel">
+    <!-- v30: بانر الوحدة — شعار + اسم الوحدة + المضيف ورقمه، بيظهر بس فوق تبويب إدارة الحجوزات -->
+    <div id="unit-banner" style="display:none;"></div>
+
     <h2><i class="fas fa-sliders"></i> لوحة تحكم المضيف الرقمية - Host Admin Panel</h2>
     <p class="panel-subtitle">البيانات تُحفظ تلقائياً في المتصفح • يتم جلب الحجوزات النشطة وتعديلها بسهولة من جوجل شيت</p>
 
@@ -1321,6 +1324,31 @@
     <!-- ===== تبويب المصروفات والتقارير المالية ===== -->
     <div id="admin-tab-reports" style="display:none;">
 
+        <!-- ===== v30: سعر الصرف — عشان صافي الربح يحسب صح لما فيه دخل/مصروف بالدولار ===== -->
+        <div style="background: rgba(46,139,87,0.08); border: 1px solid var(--accent-green); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+            <div style="color: #7fd7a5; font-weight: 800; font-size: 1rem; margin-bottom: 6px;">
+                <i class="fa-solid fa-money-bill-transfer"></i> سعر الصرف (دولار ← جنيه)
+            </div>
+            <p style="color:#a0a0a5; font-size:0.8rem; line-height:1.8; margin-bottom:12px;">
+                التقرير المالي بيحسب صافي الربح بالجنيه دايماً. أي حجز أو مصروف بالدولار بيتحول للجنيه
+                بالسعر اللي كان مسجّل في نفس تاريخه — سجّل هنا أي سعر جديد بتاريخه وقت ما يتغيّر.
+            </p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end;">
+                <div class="admin-field" style="max-width:180px;">
+                    <label>التاريخ</label>
+                    <input type="date" id="input-rate-date">
+                </div>
+                <div class="admin-field" style="max-width:160px;">
+                    <label>1 دولار = كام جنيه</label>
+                    <input type="number" id="input-rate-value" placeholder="مثال: 50">
+                </div>
+                <button class="router-reminder-btn" style="padding:9px 18px;" onclick="saveExchangeRate()">
+                    <i class="fas fa-save"></i> حفظ السعر
+                </button>
+            </div>
+            <div id="exchange-rates-list" style="margin-top:12px;"></div>
+        </div>
+
         <!-- التقرير المالي الشهري -->
         <div class="bookings-dropdown-container" style="margin-bottom: 20px;">
             <div class="bookings-dropdown-title">
@@ -1412,9 +1440,17 @@
                     <label>ملاحظات / وصف</label>
                     <input type="text" id="exp-desc" placeholder="تفاصيل إضافية (اختياري)">
                 </div>
+                <!-- v30: ربط المصروف بحجز معيّن — عشان تعرف اتصرفت لمين بالظبط -->
+                <div class="admin-field" style="grid-column: 1 / -1;">
+                    <label>اربط المصروف بحجز (اختياري)</label>
+                    <select id="exp-linked-booking">
+                        <option value="">— بدون ربط —</option>
+                    </select>
+                </div>
             </div>
             <div style="margin-top:12px;">
-                <button class="btn-panel" style="width:auto; padding: 10px 24px;" onclick="addExpense()"><i class="fa-solid fa-plus"></i> إضافة المصروف</button>
+                <button id="exp-submit-btn" class="btn-panel" style="width:auto; padding: 10px 24px;" onclick="addExpense()"><i class="fa-solid fa-plus"></i> إضافة المصروف</button>
+                <button id="exp-cancel-edit-btn" class="btn-panel" style="width:auto; padding: 10px 24px; display:none; background:#6b6b75;" onclick="cancelEditExpense()">إلغاء التعديل</button>
             </div>
         </div>
 
@@ -1438,6 +1474,7 @@
                             <th style="padding:8px; text-align:right; border-bottom:1px solid #3a3a45;">التاريخ</th>
                             <th style="padding:8px; text-align:right; border-bottom:1px solid #3a3a45;">الفئة</th>
                             <th style="padding:8px; text-align:right; border-bottom:1px solid #3a3a45;">الوصف</th>
+                            <th style="padding:8px; text-align:right; border-bottom:1px solid #3a3a45;">مرتبط بحجز</th>
                             <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">المبلغ</th>
                             <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;"></th>
                         </tr>
@@ -1582,7 +1619,7 @@
         <div class="admin-grid" style="align-items:end;">
             <div class="admin-field">
                 <label>اسم الوحدة</label>
-                <input type="text" id="input-unit-name" placeholder="مثال: أرابيسك ريزيدنس" onchange="saveSettingsToCloud({unitName: this.value});">
+                <input type="text" id="input-unit-name" placeholder="مثال: أرابيسك ريزيدنس" onchange="saveSettingsToCloud({unitName: this.value}); unitBannerData.name = this.value; renderUnitBanner();">
             </div>
             <div class="admin-field">
                 <label>شعار الوحدة (اختياري)</label>
@@ -3015,8 +3052,56 @@
     }
 
     /* =========================================================
+       v30: بانر الوحدة (شعار + اسم + مضيف) — بيظهر فوق تبويب إدارة الحجوزات بس
+       ========================================================= */
+    let unitBannerData = { name: '', logo: '', hostName: '', hostPhone: '' };
+
+    function renderUnitBanner() {
+        const box = document.getElementById('unit-banner');
+        if (!box) return;
+
+        const hasContent = unitBannerData.name || unitBannerData.logo || unitBannerData.hostName;
+        if (!hasContent) { box.style.display = 'none'; return; }
+
+        box.style.display = '';
+        box.innerHTML = `
+            <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:linear-gradient(135deg, rgba(197,168,92,0.12), rgba(197,168,92,0.04)); border:1px solid var(--gold); border-radius:14px; padding:14px 18px; margin-bottom:18px;">
+                ${unitBannerData.logo ? `<img src="${unitBannerData.logo}" style="width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid var(--gold);">` : ''}
+                <div style="flex:1; min-width:180px;">
+                    ${unitBannerData.name ? `<div style="color:var(--gold-light); font-weight:900; font-size:1.15rem;">${unitBannerData.name}</div>` : ''}
+                    ${unitBannerData.hostName ? `<div style="color:#c5c5ca; font-size:0.85rem; margin-top:2px;">
+                        <i class="fa-solid fa-user-tie"></i> ${unitBannerData.hostName}
+                        ${unitBannerData.hostPhone ? ` • <i class="fa-solid fa-phone"></i> ${unitBannerData.hostPhone}` : ''}
+                    </div>` : ''}
+                </div>
+            </div>`;
+    }
+
+    /* =========================================================
        v28: شعار الوحدة (اختياري)
        ========================================================= */
+    function renderUnitLogoPreview(url, file) {
+        const preview = document.getElementById('unit-logo-preview');
+        if (!preview) return;
+        const imgSrc = file ? URL.createObjectURL(file) : url;
+        preview.innerHTML =
+            `<img src="${imgSrc}" style="max-height:70px; border-radius:8px; border:1px solid var(--accent-green);">
+             <a href="${url}" target="_blank" class="router-reminder-btn" style="background:#3498db; padding:6px 12px; font-size:0.75rem; text-decoration:none;"><i class="fas fa-eye"></i> معاينة</a>
+             <button onclick="deleteUnitLogo()" class="router-reminder-btn" style="background:#B22222; padding:6px 12px; font-size:0.75rem;"><i class="fas fa-trash"></i> حذف</button>
+             <span style="color:#2ecc71; font-size:1.1rem; font-weight:900;">✅</span>`;
+    }
+
+    function deleteUnitLogo() {
+        if (!confirm('حذف شعار الوحدة؟')) return;
+        saveSettingsToCloud({ unitLogoUrl: '' });
+        const preview = document.getElementById('unit-logo-preview');
+        if (preview) preview.innerHTML = '<span style="color:#8a8a90; font-size:0.8rem;">مفيش شعار حالياً.</span>';
+        const fileInput = document.getElementById('input-unit-logo');
+        if (fileInput) fileInput.value = '';
+        renderUnitBanner();
+        showStatus('🗑️ تم حذف الشعار.', 'success');
+    }
+
     function handleLogoDrop(ev) {
         ev.preventDefault();
         ev.currentTarget.style.borderColor = '#3a3a45';
@@ -3045,10 +3130,8 @@
             .then(d => {
                 if (d.status === 'success' && d.url) {
                     saveSettingsToCloud({ unitLogoUrl: d.url });
-                    if (preview) preview.innerHTML =
-                        `<img src="${URL.createObjectURL(file)}" style="max-height:70px; border-radius:8px; border:1px solid var(--accent-green);">
-                         <a href="${d.url}" target="_blank" class="router-reminder-btn" style="background:#3498db; padding:6px 12px; font-size:0.75rem; text-decoration:none;"><i class="fas fa-eye"></i> معاينة</a>
-                         <span style="color:#2ecc71; font-size:1.1rem; font-weight:900;">✅</span>`;
+                    renderUnitLogoPreview(d.url, file);
+                    renderUnitBanner();
                 } else if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ ' + (d.message || 'فشل الرفع.') + '</span>';
             })
             .catch(() => { if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ خطأ في الاتصال.</span>'; });
@@ -3091,6 +3174,9 @@
             hostName: hostName, hostPhone: hostPhone,
             cohosts: JSON.stringify(cohostsCache.filter(c => c.name.trim()))
         });
+        unitBannerData.hostName = hostName;
+        unitBannerData.hostPhone = hostPhone;
+        renderUnitBanner();  // v30: يتحدث فوراً من غير ما تحتاج تعمل Refresh
         showStatus('✅ تم حفظ بيانات المضيف والمساعدين.', 'success');
     }
 
@@ -3390,11 +3476,15 @@
         // v28: الدليل بتاع الضيف يظهر بس تحت تبويب "إدارة الحجوزات" — باقي التبويبات مالهاش لازمة فيه
         const guideWrap = document.getElementById('guide-wrapper');
         if (guideWrap) guideWrap.style.display = (tab === 'bookings') ? '' : 'none';
+        // v30: البانر (شعار/اسم الوحدة/المضيف) يفضل ظاهر فوق تبويب إدارة الحجوزات بس
+        const banner = document.getElementById('unit-banner');
+        if (banner) banner.style.display = (tab === 'bookings' && (unitBannerData.name || unitBannerData.logo || unitBannerData.hostName)) ? '' : 'none';
         if (tab === 'reports') {
-            renderFinancialReport();
+            loadExchangeRates().then(() => renderFinancialReport());  // v30
             renderExpensesTable();
             renderIncomeTable();
             loadInventory();          // v26
+            populateExpenseBookingDropdown();  // v30
         }
         if (tab === 'settings') {     // v26 / v27 / v28
             applyTimeFormatToUI();
@@ -3541,6 +3631,69 @@
     /* ===== المصروفات والتقارير المالية ===== */
     let localExpensesCache = [];
 
+    /* =========================================================
+       v30: سجل أسعار الصرف — بيتحول بيه أي مبلغ بالدولار لجنيه
+       بالسعر اللي كان معمول بيه فعلياً في تاريخ العملية، مش سعر النهاردة
+       ========================================================= */
+    let exchangeRatesCache = [];  // [{date, rate}] مرتبة تصاعدياً
+
+    function loadExchangeRates() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) return Promise.resolve();
+        return fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=exchangeRates')
+        .then(r => r.json())
+        .then(d => { if (d.status === 'success') { exchangeRatesCache = d.data || []; renderExchangeRatesUI(); } })
+        .catch(() => {});
+    }
+
+    // بيرجع سعر الصرف اللي كان معمول بيه في تاريخ معيّن (آخر سعر مسجّل قبل أو يساوي التاريخ ده)
+    function getRateForDate(dateStr) {
+        if (!exchangeRatesCache.length) return 50; // احتياطي لو مفيش سجل خالص
+        const target = new Date(dateStr).getTime();
+        let best = exchangeRatesCache[0];
+        for (const r of exchangeRatesCache) {
+            if (new Date(r.date).getTime() <= target) best = r; else break;
+        }
+        return best.rate || 50;
+    }
+
+    // بيحول أي مبلغ لجنيه مصري حسب سعر الصرف وقت تاريخه
+    function toEGP(amount, currency, dateStr) {
+        const val = parseFloat(amount) || 0;
+        if (currency !== 'USD') return val;
+        return val * getRateForDate(dateStr);
+    }
+
+    function renderExchangeRatesUI() {
+        const box = document.getElementById('exchange-rates-list');
+        if (!box) return;
+        if (!exchangeRatesCache.length) { box.innerHTML = '<p style="color:#8a8a90; font-size:0.8rem;">مفيش أسعار مسجلة لسه.</p>'; return; }
+        const sorted = [...exchangeRatesCache].sort((a,b) => new Date(b.date) - new Date(a.date));
+        box.innerHTML = sorted.map(r => `
+            <div style="display:flex; justify-content:space-between; background:#1e1e24; border-radius:6px; padding:6px 10px; margin-bottom:5px; font-size:0.8rem;">
+                <span style="color:#a0a0a5;">${r.date}</span>
+                <span style="color:var(--gold-light); font-weight:800;">1$ = ${r.rate} ج.م</span>
+            </div>`).join('');
+    }
+
+    function saveExchangeRate() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const date = document.getElementById('input-rate-date').value || new Date().toISOString().split('T')[0];
+        const rate = parseFloat(document.getElementById('input-rate-value').value);
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (!rate || rate <= 0) { showStatus('⚠️ أدخل سعر صرف صحيح.', 'error'); return; }
+
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveExchangeRate', date: date, rate: rate }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                showStatus('✅ ' + d.message, 'success');
+                loadExchangeRates().then(() => renderFinancialReport());
+            } else showStatus('❌ ' + (d.message || 'تعذر الحفظ.'), 'error');
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال.', 'error'));
+    }
+
     function toggleCustomCategory() {
         const sel = document.getElementById('exp-category').value;
         document.getElementById('exp-custom-category-field').style.display = (sel === 'other') ? '' : 'none';
@@ -3575,6 +3728,24 @@
         try { localStorage.setItem('arabesque_expense_currency', cur); } catch (e) {}
     }
 
+    // v30: قائمة الحجوزات في خانة "اربط بحجز" داخل نموذج المصروف
+    function populateExpenseBookingDropdown() {
+        const sel = document.getElementById('exp-linked-booking');
+        if (!sel) return;
+        const keep = sel.value;
+        sel.innerHTML = '<option value="">— بدون ربط —</option>';
+        (localBookingsCache || []).forEach(b => {
+            if (b.archived) return;
+            const o = document.createElement('option');
+            o.value = b.bookingID;
+            o.textContent = `${b.guestName} (${b.checkIn} ➔ ${b.checkOut})`;
+            sel.appendChild(o);
+        });
+        if (keep) sel.value = keep;
+    }
+
+    let editingExpenseId = null;   // v30: null = وضع إضافة، غير null = وضع تعديل
+
     function addExpense() {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
         if (!gasUrl) {
@@ -3589,6 +3760,7 @@
         }
         const amount = parseFloat(document.getElementById('exp-amount').value) || 0;
         const desc = document.getElementById('exp-desc').value.trim();
+        const linkedBooking = (document.getElementById('exp-linked-booking') || {}).value || '';
 
         if (!date || amount <= 0) {
             showStatus('⚠️ يرجى إدخال التاريخ والمبلغ بشكل صحيح!', 'error');
@@ -3596,9 +3768,15 @@
         }
 
         const currency = (document.getElementById('input-expense-currency') || {}).value || 'EGP';
-        const payload = { action: 'addExpense', date: date, category: category, amount: amount, description: desc, currency: currency };
+        const isEdit = !!editingExpenseId;
+        const payload = {
+            action: isEdit ? 'updateExpense' : 'addExpense',
+            expenseId: editingExpenseId,
+            date: date, category: category, amount: amount, description: desc,
+            currency: currency, bookingId: linkedBooking
+        };
 
-        showStatus('⏳ جاري إضافة المصروف...', 'success');
+        showStatus(isEdit ? '⏳ جاري تعديل المصروف...' : '⏳ جاري إضافة المصروف...', 'success');
         fetch(gasUrl, {
             method: 'POST',
             body: JSON.stringify(payload)
@@ -3606,15 +3784,44 @@
         .then(res => res.json())
         .then(resData => {
             if (resData.status === 'success') {
-                showStatus('✅ تم إضافة المصروف بنجاح!', 'success');
-                document.getElementById('exp-amount').value = '';
-                document.getElementById('exp-desc').value = '';
+                showStatus(isEdit ? '✅ تم تعديل المصروف.' : '✅ تم إضافة المصروف بنجاح!', 'success');
+                cancelEditExpense();
                 loadExpensesFromSheets();
             } else {
                 showStatus('❌ فشل: ' + resData.message, 'error');
             }
         })
-        .catch(() => showStatus('❌ حدث خطأ أثناء إضافة المصروف.', 'error'));
+        .catch(() => showStatus('❌ حدث خطأ أثناء العملية.', 'error'));
+    }
+
+    // v30: تحميل بيانات مصروف موجود في النموذج للتعديل
+    function editExpense(expenseId) {
+        const e = localExpensesCache.find(x => x.expenseId === expenseId);
+        if (!e) return;
+        editingExpenseId = expenseId;
+
+        document.getElementById('exp-date').value = e.date;
+        document.getElementById('exp-category').value = e.category;
+        toggleCustomCategory();
+        document.getElementById('exp-amount').value = e.amount;
+        document.getElementById('exp-desc').value = e.description || '';
+        document.getElementById('input-expense-currency').value = e.currency || 'EGP';
+        setExpenseCurrency(e.currency || 'EGP');
+        populateExpenseBookingDropdown();
+        if (document.getElementById('exp-linked-booking')) document.getElementById('exp-linked-booking').value = e.bookingId || '';
+
+        document.getElementById('exp-submit-btn').innerHTML = '<i class="fa-solid fa-save"></i> حفظ التعديل';
+        document.getElementById('exp-cancel-edit-btn').style.display = '';
+        document.getElementById('exp-date').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function cancelEditExpense() {
+        editingExpenseId = null;
+        document.getElementById('exp-amount').value = '';
+        document.getElementById('exp-desc').value = '';
+        if (document.getElementById('exp-linked-booking')) document.getElementById('exp-linked-booking').value = '';
+        document.getElementById('exp-submit-btn').innerHTML = '<i class="fa-solid fa-plus"></i> إضافة المصروف';
+        document.getElementById('exp-cancel-edit-btn').style.display = 'none';
     }
 
     function deleteExpense(expenseId) {
@@ -3706,19 +3913,25 @@
         }
 
         const sorted = [...localExpensesCache].sort((a,b) => new Date(b.date) - new Date(a.date));
-        tbody.innerHTML = sorted.map(e => `
+        tbody.innerHTML = sorted.map(e => {
+            const linked = e.bookingId ? (localBookingsCache || []).find(b => b.bookingID === e.bookingId) : null;
+            return `
             <tr style="border-bottom:1px solid #2a2a35;">
                 <td style="padding:8px;">${e.date}</td>
                 <td style="padding:8px;">${e.category}</td>
                 <td style="padding:8px; color:#a0a0a5;">${e.description || '-'}</td>
+                <td style="padding:8px;">${linked ? `<span style="color:#7fc4ee; cursor:pointer;" onclick="editIncomeBooking('${linked.bookingID}')" title="افتح الحجز">👤 ${linked.guestName}</span>` : '<span style="color:#5a5a62;">—</span>'}</td>
                 <td style="padding:8px; text-align:center; font-weight:700; color:#e74c3c;">${e.amount} ${e.currency === 'USD' ? '$' : 'ج.م'}</td>
-                <td style="padding:8px; text-align:center;">
-                    <button onclick="deleteExpense('${e.expenseId}')" style="background:#B22222; border:none; color:white; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:0.75rem;">
+                <td style="padding:8px; text-align:center; white-space:nowrap;">
+                    <button onclick="editExpense('${e.expenseId}')" style="background:#2980b9; border:none; color:white; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:0.75rem; margin-inline-end:4px;" title="تعديل">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button onclick="deleteExpense('${e.expenseId}')" style="background:#B22222; border:none; color:white; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:0.75rem;" title="حذف">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
     }
 
     /* ===== التقرير المالي الشهري ===== */
@@ -3751,6 +3964,7 @@
         const monthly = Array.from({length: 12}, () => ({ count: 0, nights: 0, income: 0, expenses: 0 }));
 
         // حساب الدخل من الحجوزات (يشمل المؤرشف والثابت للتقرير الكامل)
+        // v30: أي دخل بالدولار بيتحول لجنيه بسعر الصرف اللي كان معمول بيه في تاريخ الحجز نفسه
         localBookingsCache.forEach(b => {
             if (!b.checkIn) return;
             const d = new Date(b.checkIn);
@@ -3758,15 +3972,15 @@
             const m = d.getMonth();
             monthly[m].count += 1;
             monthly[m].nights += parseInt(b.nights) || 0;
-            monthly[m].income += parseFloat(b.totalPrice) || 0;
+            monthly[m].income += toEGP(b.totalPrice, b.currency, b.checkIn);
         });
 
-        // حساب المصروفات
+        // حساب المصروفات — نفس التحويل بالدولار
         localExpensesCache.forEach(e => {
             if (!e.date) return;
             const d = new Date(e.date);
             if (d.getFullYear() !== year) return;
-            monthly[d.getMonth()].expenses += parseFloat(e.amount) || 0;
+            monthly[d.getMonth()].expenses += toEGP(e.amount, e.currency, e.date);
         });
 
         let totalIncome = 0, totalExpenses = 0, totalCount = 0, totalNights = 0;
@@ -3837,10 +4051,13 @@
                     <button onclick="document.getElementById('income-breakdown-modal').style.display='none';"
                             style="background:none; border:none; color:#a0a0a5; font-size:1.2rem; cursor:pointer;">✕</button>
                 </div>
-                ${rows.map(b => `
-                    <div style="background:#2a2a35; border-radius:8px; padding:10px 12px; margin-bottom:8px; cursor:pointer;"
-                         onclick="document.getElementById('income-breakdown-modal').style.display='none'; editIncomeBooking('${b.bookingID}');">
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                ${rows.map(b => {
+                    const linkedExpenses = (localExpensesCache || []).filter(e => e.bookingId === b.bookingID);
+                    const expTotal = linkedExpenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+                    return `
+                    <div style="background:#2a2a35; border-radius:8px; padding:10px 12px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; cursor:pointer;"
+                             onclick="document.getElementById('income-breakdown-modal').style.display='none'; editIncomeBooking('${b.bookingID}');">
                             <div>
                                 <strong style="color:#e8e8ea;">${b.guestName}</strong>${b.locked ? ' 🔒' : ''}
                                 <div style="color:#8a8a90; font-size:0.76rem; margin-top:2px;">
@@ -3849,7 +4066,18 @@
                             </div>
                             <div style="color:#2ecc71; font-weight:800;">${(parseFloat(b.totalPrice)||0).toLocaleString()} ${b.currency||''}</div>
                         </div>
-                    </div>`).join('')}
+                        ${linkedExpenses.length ? `
+                        <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #3a3a45;">
+                            <div style="color:#e88; font-size:0.74rem; font-weight:700; margin-bottom:4px;">💸 مصروفات مرتبطة بهذا الحجز:</div>
+                            ${linkedExpenses.map(e => `
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#c5c5ca; padding:2px 0;">
+                                    <span>${e.category}${e.description ? ' — ' + e.description : ''}</span>
+                                    <span style="color:#e74c3c;">${e.amount} ${e.currency === 'USD' ? '$' : 'ج.م'}</span>
+                                </div>`).join('')}
+                            <div style="text-align:left; font-size:0.76rem; color:#e74c3c; font-weight:800; margin-top:3px;">إجمالي المصروفات: ${expTotal.toLocaleString()}</div>
+                        </div>` : ''}
+                    </div>`;
+                }).join('')}
                 <div style="border-top:1px solid #3a3a45; margin-top:10px; padding-top:10px; text-align:center; color:var(--gold-light); font-weight:800;">
                     الإجمالي: ${total.toLocaleString()} (${rows.length} حجز)
                 </div>
@@ -4813,16 +5041,20 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             }
             // v28: بيانات الوحدة
             if (s.unitName && document.getElementById('input-unit-name')) document.getElementById('input-unit-name').value = s.unitName;
-            if (s.unitLogoUrl) {
-                const p = document.getElementById('unit-logo-preview');
-                if (p) p.innerHTML = `<img src="${s.unitLogoUrl}" style="max-height:70px; border-radius:8px; border:1px solid var(--gold);">`;
+            unitBannerData.name = s.unitName || '';
+            unitBannerData.logo = s.unitLogoUrl || '';
+            if (s.unitLogoUrl && document.getElementById('unit-logo-preview')) {
+                renderUnitLogoPreview(s.unitLogoUrl, null);
             }
             // v28: بيانات المضيف والمساعدين
             if (s.hostName && document.getElementById('input-host-name')) document.getElementById('input-host-name').value = s.hostName;
             if (s.hostPhone && document.getElementById('input-host-phone')) document.getElementById('input-host-phone').value = s.hostPhone;
+            unitBannerData.hostName = s.hostName || '';
+            unitBannerData.hostPhone = s.hostPhone || '';
             if (s.cohosts) {
                 try { cohostsCache = JSON.parse(s.cohosts) || []; renderCohosts(); } catch (e) {}
             }
+            renderUnitBanner();  // v30
             // v28: عملة المصروفات
             if (s.expenseCurrency && document.getElementById('input-expense-currency')) {
                 document.getElementById('input-expense-currency').value = s.expenseCurrency;
