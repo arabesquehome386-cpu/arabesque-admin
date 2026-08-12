@@ -1812,7 +1812,9 @@
             <strong id="subscriber-count-val" style="color:var(--gold-light); font-size:1rem;">—</strong>
             <button onclick="loadSubscriberCount()" class="router-reminder-btn" style="padding:4px 10px; font-size:0.72rem;"><i class="fas fa-rotate"></i> تحديث</button>
             <button onclick="toggleSubscriberList()" class="router-reminder-btn" style="padding:4px 10px; font-size:0.72rem; background:#3498db;"><i class="fas fa-list"></i> عرض الأسامي</button>
+            <button onclick="refreshSubscriberNames()" class="router-reminder-btn" style="padding:4px 10px; font-size:0.72rem; background:#8e44ad;" title="بيسأل تليجرام مباشرة عن اسم أي مشترك اسمه مش ظاهر"><i class="fas fa-id-card"></i> حدّث الأسامي الناقصة</button>
         </div>
+        <p style="color:#5a5a62; font-size:0.72rem; margin-top:4px;">ملحوظة: رقم التليفون مش متاح للبوت من تليجرام إلا لو المشترك نفسه ضغط "مشاركة جهة الاتصال" جوه شات البوت — دي سياسة خصوصية من تليجرام، مش تقصير في البرنامج. الاسم واليوزرنيم بس هما المتاحين تلقائيًا.</p>
         <div id="subscriber-list-box" style="display:none; margin-top:8px; max-height:220px; overflow-y:auto; background:#1e1e24; border-radius:8px; padding:8px;"></div>
     </div>
 
@@ -3390,6 +3392,25 @@
         } else {
             box.style.display = 'none';
         }
+    }
+
+    // v35: بيسأل تليجرام مباشرة (getChat) عن اسم أي مشترك مسجّل من غير اسم — مفيدة للمشتركين
+    // اللي اتسجلوا قبل ما نضيف خاصية الاسم، من غير ما تستنى يبعتوا رسالة تانية للبوت.
+    function refreshSubscriberNames() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        showStatus('⏳ جاري سؤال تليجرام عن الأسامي الناقصة...', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'refreshSubscriberNames' }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success') {
+                showStatus('✅ اتحدّث ' + d.updated + ' اسم.', 'success');
+                loadSubscriberCount();
+                const box = document.getElementById('subscriber-list-box');
+                if (box && box.style.display !== 'none') { box.style.display = 'none'; toggleSubscriberList(); }
+            } else showStatus('❌ ' + (d.message || 'تعذر التحديث.'), 'error');
+        })
+        .catch(err => showStatus('❌ خطأ في الاتصال: ' + err.message, 'error'));
     }
 
     function loadCredentials() {
