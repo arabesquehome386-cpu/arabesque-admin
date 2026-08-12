@@ -822,8 +822,19 @@
         text-align: center;
         margin-top: 15px;
     }
-    .status-msg.success { display: block; background: rgba(46,139,87,0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }
-    .status-msg.error { display: block; background: rgba(178,34,34,0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
+    /* v31: صندوق الحالة بقى ثابت (sticky) وظاهر فوق أي تبويب — كان قبل كده جوه
+       تبويب "إدارة الحجوزات" بس، فلو المستخدم في تبويب "الإعدادات" وضغط حفظ،
+       الرسالة كانت بتتكتب فعلاً بس مخبية (display:none) لإن التبويب اللي هي جواه
+       مقفول، فكان حاسس إن الضغط "صامت" مع إن الحفظ كان بيتم فعلياً في الخلفية. */
+    .status-msg.success, .status-msg.error {
+        display: block;
+        position: sticky;
+        top: 8px;
+        z-index: 500;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    }
+    .status-msg.success { background: rgba(46,139,87,0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }
+    .status-msg.error { background: rgba(178,34,34,0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
 
     /* ===== تحسينات الطباعة الحركية لمنع الفراغات والصفحات الزائدة ===== */
     @media print {
@@ -1069,8 +1080,11 @@
         </button>
     </div>
 
+    <!-- v31: اتنقل هنا (بره كل تبويب) عشان يفضل ظاهر مهما كنت في أي تبويب -->
+    <div id="status-msg" class="status-msg"></div>
+
     <div id="admin-tab-bookings">
-    
+
     <!-- ===== تقويم الحجوزات التفاعلي ===== -->
     <div id="admin-calendar-section" style="margin-bottom: 18px; max-width: 320px; margin-inline: auto;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
@@ -1318,35 +1332,61 @@
         <button id="save-btn" class="btn-panel" onclick="updateGuideData(false); syncBoxCodeAndWifiToSheet();">👁️ معاينة وتحديث | Refresh Preview Only</button>
         <button id="clear-btn" class="btn-panel" onclick="showConfirmModal()">🗑️ مسح البيانات لإفراغ المدخلات يدوياً</button>
     </div>
-    <div id="status-msg" class="status-msg"></div>
     </div> <!-- end admin-tab-bookings -->
 
     <!-- ===== تبويب المصروفات والتقارير المالية ===== -->
     <div id="admin-tab-reports" style="display:none;">
 
-        <!-- ===== v30: سعر الصرف — عشان صافي الربح يحسب صح لما فيه دخل/مصروف بالدولار ===== -->
+        <!-- ===== v31: سعر الصرف الحي + محول عملات مصغّر ===== -->
         <div style="background: rgba(46,139,87,0.08); border: 1px solid var(--accent-green); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
             <div style="color: #7fd7a5; font-weight: 800; font-size: 1rem; margin-bottom: 6px;">
-                <i class="fa-solid fa-money-bill-transfer"></i> سعر الصرف (دولار ← جنيه)
+                <i class="fa-solid fa-money-bill-transfer"></i> سعر الصرف الحي (تلقائي)
             </div>
             <p style="color:#a0a0a5; font-size:0.8rem; line-height:1.8; margin-bottom:12px;">
-                التقرير المالي بيحسب صافي الربح بالجنيه دايماً. أي حجز أو مصروف بالدولار بيتحول للجنيه
-                بالسعر اللي كان مسجّل في نفس تاريخه — سجّل هنا أي سعر جديد بتاريخه وقت ما يتغيّر.
+                الدخل بيفضل زي ما اتسجل بالحجز (دولار يفضل دولار). لو عايز تشوفه بالجنيه، فعّل السوتش
+                فوق التقرير — وقتها بيتحول بسعر الصرف الحي اللحظي (بيتسحب أوتوماتيك، تقدر تحدّثه يدوي كمان).
             </p>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end;">
-                <div class="admin-field" style="max-width:180px;">
-                    <label>التاريخ</label>
-                    <input type="date" id="input-rate-date">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <div style="background:#1e1e24; border-radius:8px; padding:8px 14px; color:var(--gold-light); font-weight:800;">
+                    <span id="live-rate-display">1$ = ... ج.م</span>
                 </div>
-                <div class="admin-field" style="max-width:160px;">
-                    <label>1 دولار = كام جنيه</label>
-                    <input type="number" id="input-rate-value" placeholder="مثال: 50">
-                </div>
-                <button class="router-reminder-btn" style="padding:9px 18px;" onclick="saveExchangeRate()">
-                    <i class="fas fa-save"></i> حفظ السعر
-                </button>
+                <button class="router-reminder-btn" style="padding:7px 14px;" onclick="fetchLiveUsdEgpRate(true)"><i class="fas fa-rotate"></i> تحديث السعر</button>
+                <span id="live-rate-status" style="color:#8a8a90; font-size:0.75rem;"></span>
             </div>
-            <div id="exchange-rates-list" style="margin-top:12px;"></div>
+
+            <!-- محول عملات مصغّر — قائمة مختصرة لأشهر العملات فقط -->
+            <div style="margin-top:14px; border-top:1px solid #2a2a35; padding-top:12px;">
+                <div style="color:#c5c5ca; font-weight:700; font-size:0.85rem; margin-bottom:8px;"><i class="fa-solid fa-right-left"></i> تحويل عملات سريع</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end;">
+                    <div class="admin-field" style="max-width:130px;">
+                        <label>المبلغ</label>
+                        <input type="number" id="conv-amount" value="100" oninput="renderCurrencyConversion()">
+                    </div>
+                    <div class="admin-field" style="max-width:110px;">
+                        <label>من</label>
+                        <select id="conv-from" onchange="renderCurrencyConversion()">
+                            <option value="USD">USD $</option>
+                            <option value="EGP" selected>EGP ج.م</option>
+                            <option value="EUR">EUR €</option>
+                            <option value="GBP">GBP £</option>
+                            <option value="SAR">SAR ر.س</option>
+                            <option value="AED">AED د.إ</option>
+                        </select>
+                    </div>
+                    <div class="admin-field" style="max-width:110px;">
+                        <label>إلى</label>
+                        <select id="conv-to" onchange="renderCurrencyConversion()">
+                            <option value="USD" selected>USD $</option>
+                            <option value="EGP">EGP ج.م</option>
+                            <option value="EUR">EUR €</option>
+                            <option value="GBP">GBP £</option>
+                            <option value="SAR">SAR ر.س</option>
+                            <option value="AED">AED د.إ</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="conv-result" style="margin-top:8px; color:var(--gold-light); font-weight:800; font-size:0.95rem;"></div>
+            </div>
         </div>
 
         <!-- التقرير المالي الشهري -->
@@ -1359,21 +1399,27 @@
                 <label style="color:#d1d1d6; font-size:0.85rem; font-weight:700;">السنة:</label>
                 <select id="report-year-select" onchange="renderFinancialReport()" style="background:#121216; color:white; padding:6px 12px; border-radius:6px; border:1px solid #4a4a55; font-family:inherit;"></select>
                 <button class="router-reminder-btn" style="padding:6px 14px;" onclick="refreshReports()"><i class="fas fa-rotate"></i> تحديث البيانات</button>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#d1d1d6; font-size:0.85rem; margin-inline-start:auto;">
+                    <input type="checkbox" id="chk-show-egp-eq" class="gold-switch" onchange="toggleEgpEquivalent(this.checked)">
+                    اعرض المكافئ بالجنيه (سعر اليوم)
+                </label>
             </div>
             <div style="overflow-x:auto;">
-                <table id="financial-report-table" style="width:100%; border-collapse: collapse; color:#d1d1d6; font-size:0.85rem; min-width: 600px;">
+                <table id="financial-report-table" style="width:100%; border-collapse: collapse; color:#d1d1d6; font-size:0.85rem; min-width: 700px;">
                     <thead>
                         <tr style="background: rgba(197,168,92,0.12); color: var(--gold-light);">
                             <th style="padding:8px; text-align:right; border-bottom:1px solid #3a3a45;">الشهر</th>
                             <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">عدد الحجوزات</th>
                             <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">عدد الليالي</th>
-                            <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">إجمالي الدخل (EGP)</th>
-                            <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">إجمالي المصروفات (EGP)</th>
-                            <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">صافي الربح (EGP)</th>
+                            <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">الدخل ($)</th>
+                            <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">الدخل (ج.م)</th>
+                            <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">المصروفات ($)</th>
+                            <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">المصروفات (ج.م)</th>
+                            <th class="egp-eq-col" style="display:none; padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">صافي الربح (ج.م تقديري)</th>
                         </tr>
                     </thead>
                     <tbody id="financial-report-body">
-                        <tr><td colspan="6" style="padding:14px; text-align:center; color:#888;">اضغط "تحديث البيانات" لعرض التقرير</td></tr>
+                        <tr><td colspan="8" style="padding:14px; text-align:center; color:#888;">اضغط "تحديث البيانات" لعرض التقرير</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1458,7 +1504,7 @@
         <div class="bookings-dropdown-container">
             <div class="bookings-dropdown-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                 <div><i class="fa-solid fa-list"></i> <span>سجل المصروفات</span></div>
-                <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:400;">
+                <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:400; flex-wrap:wrap;">
                     <span style="color:#a0a0a5;">عملة المصروفات:</span>
                     <select id="input-expense-currency" onchange="setExpenseCurrency(this.value)"
                             style="padding:5px 10px; background:#1e1e24; color:white; border:1px solid var(--gold); border-radius:6px; font-family:inherit;">
@@ -1466,6 +1512,22 @@
                         <option value="USD">$</option>
                     </select>
                 </div>
+            </div>
+            <!-- v31: فلتر الشهر/السنة لسجل المصروفات -->
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:10px 0;">
+                <span style="color:#a0a0a5; font-size:0.8rem;"><i class="fa-solid fa-filter"></i> فلترة السجل:</span>
+                <select id="exp-filter-month" onchange="renderExpensesTable()"
+                        style="padding:5px 10px; background:#1e1e24; color:white; border:1px solid #3a3a45; border-radius:6px; font-family:inherit; font-size:0.8rem;">
+                    <option value="">كل الشهور</option>
+                    <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option>
+                    <option value="4">أبريل</option><option value="5">مايو</option><option value="6">يونيو</option>
+                    <option value="7">يوليو</option><option value="8">أغسطس</option><option value="9">سبتمبر</option>
+                    <option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+                </select>
+                <select id="exp-filter-year" onchange="renderExpensesTable()"
+                        style="padding:5px 10px; background:#1e1e24; color:white; border:1px solid #3a3a45; border-radius:6px; font-family:inherit; font-size:0.8rem;">
+                    <option value="">كل السنين</option>
+                </select>
             </div>
             <div style="overflow-x:auto;">
                 <table style="width:100%; border-collapse: collapse; color:#d1d1d6; font-size:0.85rem; min-width: 500px;">
@@ -1630,6 +1692,17 @@
                     <span style="color:#8a8a90; font-size:0.72rem; display:block; margin-top:4px;">أو اسحب الصورة هنا</span>
                 </div>
             </div>
+            <!-- v31: بيانات الشركة والموقع -->
+            <div class="admin-field">
+                <label>اسم الشركة (اختياري)</label>
+                <input type="text" id="input-company-name" placeholder="مثال: IDEA for Real Estate"
+                       onchange="saveSettingsToCloud({companyName: this.value}); unitBannerData.companyName = this.value; renderUnitBanner();">
+            </div>
+            <div class="admin-field">
+                <label>موقع الشركة (اختياري)</label>
+                <input type="url" id="input-company-website" placeholder="مثال: https://www.example.com"
+                       onchange="saveSettingsToCloud({companyWebsite: this.value}); unitBannerData.companyWebsite = this.value; renderUnitBanner();">
+            </div>
         </div>
         <div id="unit-logo-preview" style="margin-top:10px; display:flex; align-items:center; gap:10px;"></div>
     </div>
@@ -1705,6 +1778,12 @@
             <i class="fas fa-check"></i> حفظ واختبار الاتصال بالبوت
         </button>
         <div id="bot-config-status" style="margin-top:8px; font-size:0.82rem;"></div>
+        <!-- v31: عدد المشتركين في البوت -->
+        <div style="margin-top:12px; display:flex; align-items:center; gap:8px; font-size:0.85rem; color:#c5c5ca;">
+            <i class="fa-solid fa-users"></i> عدد المشتركين اللي كلّموا البوت:
+            <strong id="subscriber-count-val" style="color:var(--gold-light); font-size:1rem;">—</strong>
+            <button onclick="loadSubscriberCount()" class="router-reminder-btn" style="padding:4px 10px; font-size:0.72rem;"><i class="fas fa-rotate"></i> تحديث</button>
+        </div>
     </div>
 
         <!-- ===== v27: تفضيلات العرض ===== -->
@@ -3054,13 +3133,13 @@
     /* =========================================================
        v30: بانر الوحدة (شعار + اسم + مضيف) — بيظهر فوق تبويب إدارة الحجوزات بس
        ========================================================= */
-    let unitBannerData = { name: '', logo: '', hostName: '', hostPhone: '' };
+    let unitBannerData = { name: '', logo: '', hostName: '', hostPhone: '', companyName: '', companyWebsite: '' };
 
     function renderUnitBanner() {
         const box = document.getElementById('unit-banner');
         if (!box) return;
 
-        const hasContent = unitBannerData.name || unitBannerData.logo || unitBannerData.hostName;
+        const hasContent = unitBannerData.name || unitBannerData.logo || unitBannerData.hostName || unitBannerData.companyName;
         if (!hasContent) { box.style.display = 'none'; return; }
 
         box.style.display = '';
@@ -3072,6 +3151,10 @@
                     ${unitBannerData.hostName ? `<div style="color:#c5c5ca; font-size:0.85rem; margin-top:2px;">
                         <i class="fa-solid fa-user-tie"></i> ${unitBannerData.hostName}
                         ${unitBannerData.hostPhone ? ` • <i class="fa-solid fa-phone"></i> ${unitBannerData.hostPhone}` : ''}
+                    </div>` : ''}
+                    ${unitBannerData.companyName ? `<div style="color:#8a8a90; font-size:0.75rem; margin-top:2px;">
+                        <i class="fa-solid fa-building"></i> ${unitBannerData.companyName}
+                        ${unitBannerData.companyWebsite ? ` • <a href="${unitBannerData.companyWebsite}" target="_blank" style="color:#7fc4ee;">${unitBannerData.companyWebsite}</a>` : ''}
                     </div>` : ''}
                 </div>
             </div>`;
@@ -3148,42 +3231,107 @@
         const box = document.getElementById('cohosts-container');
         if (!box) return;
         box.innerHTML = cohostsCache.map((c, i) => `
-            <div class="admin-grid" style="margin-top:8px; align-items:end;">
-                <div class="admin-field">
-                    <label>اسم المساعد ${i + 1}</label>
-                    <input type="text" value="${(c.name||'').replace(/"/g,'&quot;')}" oninput="cohostsCache[${i}].name = this.value;">
+            <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:10px; margin-top:8px;">
+                <div class="admin-grid" style="align-items:end;">
+                    <div class="admin-field">
+                        <label>اسم المساعد ${i + 1}</label>
+                        <input type="text" value="${(c.name||'').replace(/"/g,'&quot;')}" oninput="cohostsCache[${i}].name = this.value;">
+                    </div>
+                    <div class="admin-field">
+                        <label>رقم تليفون المساعد ${i + 1}</label>
+                        <input type="text" value="${(c.phone||'').replace(/"/g,'&quot;')}" oninput="cohostsCache[${i}].phone = this.value;">
+                    </div>
+                    <button onclick="cohostsCache.splice(${i},1); renderCohosts(); saveHostInfo();"
+                            style="background:#B22222; color:#fff; border:none; padding:9px 14px; border-radius:6px; cursor:pointer; height:fit-content;">🗑️</button>
                 </div>
-                <div class="admin-field">
-                    <label>رقم تليفون المساعد ${i + 1}</label>
-                    <input type="text" value="${(c.phone||'').replace(/"/g,'&quot;')}" oninput="cohostsCache[${i}].phone = this.value;">
+                <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:0.82rem;">
+                    <span style="color:${c.telegramChatId ? '#2ecc71' : '#8a8a90'};">
+                        <i class="fa-brands fa-telegram"></i> ${c.telegramChatId ? 'مربوط بتليجرام ✅' : 'لسه مش مربوط بتليجرام'}
+                    </span>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#d1d1d6;">
+                        <input type="checkbox" ${c.permBooking ? 'checked' : ''} class="gold-switch"
+                               onchange="cohostsCache[${i}].permBooking = this.checked;">
+                        إشعارات الحجوزات
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#d1d1d6;">
+                        <input type="checkbox" ${c.permAdmin ? 'checked' : ''} class="gold-switch"
+                               onchange="cohostsCache[${i}].permAdmin = this.checked;">
+                        رسائل الأدمن العامة (مخزون، أخطاء...)
+                    </label>
+                    <button onclick="getCohostLink(${i})" class="router-reminder-btn" style="background:#3498db; padding:5px 12px; font-size:0.76rem;">
+                        <i class="fa-brands fa-telegram"></i> ${c.id ? 'لينك الربط' : 'احفظ الأول عشان تولّد لينك'}
+                    </button>
                 </div>
-                <button onclick="cohostsCache.splice(${i},1); renderCohosts();"
-                        style="background:#B22222; color:#fff; border:none; padding:9px 14px; border-radius:6px; cursor:pointer; height:fit-content;">🗑️</button>
             </div>`).join('');
     }
 
     function addCohostRow() {
-        cohostsCache.push({ name: '', phone: '' });
+        cohostsCache.push({ id: '', name: '', phone: '', telegramChatId: '', permBooking: true, permAdmin: false });
         renderCohosts();
     }
 
-    function saveHostInfo() {
+    // v31: توليد لينك ربط تليجرام مباشر للمساعد — أول ما يضغطه، الباك إند بيسجل chat.id بتاعه أوتوماتيك
+    function getCohostLink(i) {
+        const c = cohostsCache[i];
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (!c.id) {
+            // لسه مالوش ID — نحفظ بياناته الأول عشان الباك إند يديله ID ثابت
+            saveHostInfo(() => getCohostLink(i));
+            return;
+        }
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'getCohostLink', cohostId: c.id }) })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === 'success' && d.link) {
+                if (navigator.clipboard) { try { navigator.clipboard.writeText(d.link); } catch(e) {} }
+                showStatus('✅ اتنسخ لينك ربط "' + (c.name || 'المساعد') + '": ' + d.link, 'success');
+            } else {
+                showStatus('❌ ' + (d.message || 'تعذر توليد اللينك.'), 'error');
+            }
+        })
+        .catch(() => showStatus('❌ خطأ في الاتصال.', 'error'));
+    }
+
+    function saveHostInfo(onDone) {
         const hostName  = document.getElementById('input-host-name').value.trim();
         const hostPhone = document.getElementById('input-host-phone').value.trim();
+        // v31: كل مساعد لازم يكون له ID ثابت عشان لينك الربط بتاعه يفضل شغال
+        cohostsCache.forEach(c => { if (!c.id) c.id = 'CH-' + Math.floor(Math.random()*900000+100000); });
+        // كنا قبل كده بنمسح أي مساعد مليش اسم حتى لو حاطط رقم تليفون —
+        // دلوقتي بنحتفظ بأي صف فيه اسم أو رقم.
+        const cleanCohosts = cohostsCache.filter(c => (c.name && c.name.trim()) || (c.phone && c.phone.trim()));
         saveSettingsToCloud({
             hostName: hostName, hostPhone: hostPhone,
-            cohosts: JSON.stringify(cohostsCache.filter(c => c.name.trim()))
+            cohosts: JSON.stringify(cleanCohosts)
+        }, () => {
+            showStatus('✅ تم حفظ بيانات المضيف والمساعدين.', 'success');
+            renderCohosts();
+            if (onDone) onDone();
+        }, () => {
+            showStatus('❌ تعذر حفظ بيانات المضيف — تأكد من الاتصال بالإنترنت وحاول تاني.', 'error');
         });
         unitBannerData.hostName = hostName;
         unitBannerData.hostPhone = hostPhone;
         renderUnitBanner();  // v30: يتحدث فوراً من غير ما تحتاج تعمل Refresh
-        showStatus('✅ تم حفظ بيانات المضيف والمساعدين.', 'success');
     }
 
     /* =========================================================
        v28: صندوق البيانات الديناميكي (بديل الباسوردات الثابتة)
        ========================================================= */
     let credentialsCache = [];
+
+    // v31: عدد المشتركين في البوت
+    function loadSubscriberCount() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const el = document.getElementById('subscriber-count-val');
+        if (!gasUrl || !el) return;
+        el.textContent = '...';
+        fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=subscriberCount')
+        .then(r => r.json())
+        .then(d => { el.textContent = (d.status === 'success') ? d.count : '—'; })
+        .catch(() => { el.textContent = '—'; });
+    }
 
     function loadCredentials() {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
@@ -3243,7 +3391,8 @@
     function saveCredentialGroup(gi) {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
         const g = credentialsCache[gi];
-        if (!gasUrl || !g) return;
+        if (!g) return;
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
         fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveCredential', groupId: g.id, title: g.title, fields: g.fields }) })
         .then(r => r.json())
         .then(d => {
@@ -3480,7 +3629,7 @@
         const banner = document.getElementById('unit-banner');
         if (banner) banner.style.display = (tab === 'bookings' && (unitBannerData.name || unitBannerData.logo || unitBannerData.hostName)) ? '' : 'none';
         if (tab === 'reports') {
-            loadExchangeRates().then(() => renderFinancialReport());  // v30
+            fetchLiveUsdEgpRate().then(() => renderFinancialReport());  // v31: سعر حي بدل السجل اليدوي
             renderExpensesTable();
             renderIncomeTable();
             loadInventory();          // v26
@@ -3491,6 +3640,7 @@
             renderMsgTemplates();
             loadCredentials();
             renderCohosts();
+            loadSubscriberCount();  // v31
         }
         if (tab === 'rules') {
             loadRulesFromStorage();
@@ -3635,63 +3785,93 @@
        v30: سجل أسعار الصرف — بيتحول بيه أي مبلغ بالدولار لجنيه
        بالسعر اللي كان معمول بيه فعلياً في تاريخ العملية، مش سعر النهاردة
        ========================================================= */
-    let exchangeRatesCache = [];  // [{date, rate}] مرتبة تصاعدياً
+    /* =========================================================
+       v31: سعر صرف حي (API بدون مفتاح) + محول عملات مصغّر
+       بيستبدل نظام السجل اليدوي القديم (v30) — الدخل بيفضل بعملته
+       الأصلية دايماً، والتحويل للجنيه بقى اختياري وحي (سعر اليوم)
+       بدل التسجيل اليدوي لكل تاريخ.
+       ========================================================= */
+    const CURATED_CURRENCIES = ['USD','EGP','EUR','GBP','SAR','AED'];
+    let liveRates = null;        // { EGP: x, EUR: y, ... } — كلها نسبة لـ 1 دولار
+    let liveRatesFetchedAt = 0;
+    let showEgpEquivalent = false;
 
-    function loadExchangeRates() {
-        const gasUrl = document.getElementById('input-gas-url').value.trim();
-        if (!gasUrl) return Promise.resolve();
-        return fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=exchangeRates')
-        .then(r => r.json())
-        .then(d => { if (d.status === 'success') { exchangeRatesCache = d.data || []; renderExchangeRatesUI(); } })
-        .catch(() => {});
-    }
+    try {
+        showEgpEquivalent = localStorage.getItem('arabesque_show_egp_eq') === '1';
+        const cachedRates = JSON.parse(localStorage.getItem('arabesque_live_rates') || 'null');
+        if (cachedRates && cachedRates.rates) { liveRates = cachedRates.rates; liveRatesFetchedAt = cachedRates.at || 0; }
+    } catch (e) {}
 
-    // بيرجع سعر الصرف اللي كان معمول بيه في تاريخ معيّن (آخر سعر مسجّل قبل أو يساوي التاريخ ده)
-    function getRateForDate(dateStr) {
-        if (!exchangeRatesCache.length) return 50; // احتياطي لو مفيش سجل خالص
-        const target = new Date(dateStr).getTime();
-        let best = exchangeRatesCache[0];
-        for (const r of exchangeRatesCache) {
-            if (new Date(r.date).getTime() <= target) best = r; else break;
+    // بيرجع سعر الصرف الحي (كام جنيه في الدولار) — بيستخدم كاش لمدة ساعة عشان مايكررش الطلبات
+    function fetchLiveUsdEgpRate(forceRefresh) {
+        const statusEl = document.getElementById('live-rate-status');
+        const now = Date.now();
+        if (!forceRefresh && liveRates && (now - liveRatesFetchedAt) < 3600000) {
+            updateLiveRateDisplay();
+            return Promise.resolve(liveRates);
         }
-        return best.rate || 50;
-    }
-
-    // بيحول أي مبلغ لجنيه مصري حسب سعر الصرف وقت تاريخه
-    function toEGP(amount, currency, dateStr) {
-        const val = parseFloat(amount) || 0;
-        if (currency !== 'USD') return val;
-        return val * getRateForDate(dateStr);
-    }
-
-    function renderExchangeRatesUI() {
-        const box = document.getElementById('exchange-rates-list');
-        if (!box) return;
-        if (!exchangeRatesCache.length) { box.innerHTML = '<p style="color:#8a8a90; font-size:0.8rem;">مفيش أسعار مسجلة لسه.</p>'; return; }
-        const sorted = [...exchangeRatesCache].sort((a,b) => new Date(b.date) - new Date(a.date));
-        box.innerHTML = sorted.map(r => `
-            <div style="display:flex; justify-content:space-between; background:#1e1e24; border-radius:6px; padding:6px 10px; margin-bottom:5px; font-size:0.8rem;">
-                <span style="color:#a0a0a5;">${r.date}</span>
-                <span style="color:var(--gold-light); font-weight:800;">1$ = ${r.rate} ج.م</span>
-            </div>`).join('');
-    }
-
-    function saveExchangeRate() {
-        const gasUrl = document.getElementById('input-gas-url').value.trim();
-        const date = document.getElementById('input-rate-date').value || new Date().toISOString().split('T')[0];
-        const rate = parseFloat(document.getElementById('input-rate-value').value);
-        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
-        if (!rate || rate <= 0) { showStatus('⚠️ أدخل سعر صرف صحيح.', 'error'); return; }
-
-        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'saveExchangeRate', date: date, rate: rate }) })
+        if (statusEl) statusEl.textContent = '⏳ جاري السحب...';
+        // frankfurter.app: API حي ومجاني وبدون مفتاح (بيانات البنك المركزي الأوروبي)
+        return fetch('https://api.frankfurter.app/latest?from=USD&to=' + CURATED_CURRENCIES.filter(c => c !== 'USD').join(','))
         .then(r => r.json())
         .then(d => {
-            if (d.status === 'success') {
-                showStatus('✅ ' + d.message, 'success');
-                loadExchangeRates().then(() => renderFinancialReport());
-            } else showStatus('❌ ' + (d.message || 'تعذر الحفظ.'), 'error');
+            if (d && d.rates) {
+                liveRates = Object.assign({ USD: 1 }, d.rates);
+                liveRatesFetchedAt = now;
+                try { localStorage.setItem('arabesque_live_rates', JSON.stringify({ rates: liveRates, at: now })); } catch (e) {}
+                if (statusEl) statusEl.textContent = '✅ آخر تحديث: ' + new Date(now).toLocaleTimeString('ar-EG');
+            } else if (statusEl) {
+                statusEl.textContent = '⚠️ تعذر جلب السعر — هنستخدم آخر سعر معروف.';
+            }
+            updateLiveRateDisplay();
+            renderCurrencyConversion();
+            return liveRates;
         })
-        .catch(() => showStatus('❌ خطأ في الاتصال.', 'error'));
+        .catch(() => {
+            if (statusEl) statusEl.textContent = '⚠️ تعذر الاتصال بمزوّد سعر الصرف.';
+            updateLiveRateDisplay();
+            return liveRates;
+        });
+    }
+
+    function updateLiveRateDisplay() {
+        const el = document.getElementById('live-rate-display');
+        if (!el) return;
+        el.textContent = (liveRates && liveRates.EGP) ? ('1$ = ' + liveRates.EGP.toFixed(2) + ' ج.م') : '1$ = ... ج.م (اضغط تحديث)';
+    }
+
+    // تحويل مباشر بين أي عملتين من القائمة المختصرة، عن طريق الدولار كوسيط
+    function convertCurrency(amount, from, to) {
+        const val = parseFloat(amount) || 0;
+        if (!liveRates || from === to) return val;
+        const inUsd = from === 'USD' ? val : val / (liveRates[from] || 1);
+        return to === 'USD' ? inUsd : inUsd * (liveRates[to] || 1);
+    }
+
+    function renderCurrencyConversion() {
+        const amountEl = document.getElementById('conv-amount');
+        const fromEl   = document.getElementById('conv-from');
+        const toEl     = document.getElementById('conv-to');
+        const resEl    = document.getElementById('conv-result');
+        if (!amountEl || !resEl) return;
+        if (!liveRates) { resEl.textContent = 'جاري سحب أسعار الصرف...'; return; }
+        const result = convertCurrency(amountEl.value, fromEl.value, toEl.value);
+        resEl.textContent = (parseFloat(amountEl.value) || 0).toLocaleString() + ' ' + fromEl.value +
+            ' = ' + result.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + toEl.value;
+    }
+
+    // بيحول أي مبلغ لجنيه مصري بالسعر الحي الحالي (يُستخدم بس لما سوتش "المكافئ بالجنيه" مفعّل)
+    function toEGPLive(amount, currency) {
+        const val = parseFloat(amount) || 0;
+        if (currency !== 'USD') return val;
+        if (!liveRates || !liveRates.EGP) return val * 50; // احتياطي تقريبي لحد ما ييجي رد الـ API
+        return val * liveRates.EGP;
+    }
+
+    function toggleEgpEquivalent(checked) {
+        showEgpEquivalent = checked;
+        try { localStorage.setItem('arabesque_show_egp_eq', checked ? '1' : '0'); } catch (e) {}
+        renderFinancialReport();
     }
 
     function toggleCustomCategory() {
@@ -3903,16 +4083,54 @@
         .catch(() => showStatus('❌ حدث خطأ أثناء العملية.', 'error'));
     }
 
+    // v31: فلتر الشهر/السنة لسجل المصروفات
+    function populateExpenseFilterYears() {
+        const sel = document.getElementById('exp-filter-year');
+        if (!sel) return;
+        const prevVal = sel.value;
+        const years = new Set();
+        years.add(new Date().getFullYear());
+        localExpensesCache.forEach(e => { if (e.date) years.add(new Date(e.date).getFullYear()); });
+        const sortedYears = [...years].sort((a,b) => b - a);
+        sel.innerHTML = '<option value="">كل السنين</option>' +
+            sortedYears.map(y => `<option value="${y}">${y}</option>`).join('');
+        if (sortedYears.map(String).includes(prevVal)) sel.value = prevVal;
+    }
+
     function renderExpensesTable() {
         const tbody = document.getElementById('expenses-table-body');
         if (!tbody) return;
+
+        populateExpenseFilterYears();
 
         if (!localExpensesCache.length) {
             tbody.innerHTML = '<tr><td colspan="5" style="padding:14px; text-align:center; color:#888;">لا توجد مصروفات مسجلة بعد</td></tr>';
             return;
         }
 
-        const sorted = [...localExpensesCache].sort((a,b) => new Date(b.date) - new Date(a.date));
+        const filterMonthEl = document.getElementById('exp-filter-month');
+        const filterYearEl  = document.getElementById('exp-filter-year');
+        const filterMonth = filterMonthEl ? filterMonthEl.value : '';
+        const filterYear  = filterYearEl ? filterYearEl.value : '';
+
+        let filtered = localExpensesCache;
+        if (filterMonth || filterYear) {
+            filtered = filtered.filter(e => {
+                if (!e.date) return false;
+                const d = new Date(e.date);
+                if (isNaN(d)) return false;
+                if (filterMonth && (d.getMonth() + 1) !== Number(filterMonth)) return false;
+                if (filterYear && d.getFullYear() !== Number(filterYear)) return false;
+                return true;
+            });
+        }
+
+        if (!filtered.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:14px; text-align:center; color:#888;">لا توجد مصروفات مطابقة للفلتر</td></tr>';
+            return;
+        }
+
+        const sorted = [...filtered].sort((a,b) => new Date(b.date) - new Date(a.date));
         tbody.innerHTML = sorted.map(e => {
             const linked = e.bookingId ? (localBookingsCache || []).find(b => b.bookingID === e.bookingId) : null;
             return `
@@ -3959,12 +4177,16 @@
         const tbody = document.getElementById('financial-report-body');
         if (!tbody) return;
 
+        // v31: تحديث ظهور عمود المكافئ بالجنيه حسب حالة السوتش
+        document.querySelectorAll('.egp-eq-col').forEach(el => { el.style.display = showEgpEquivalent ? '' : 'none'; });
+        const chk = document.getElementById('chk-show-egp-eq');
+        if (chk) chk.checked = showEgpEquivalent;
+
         const year = parseInt(document.getElementById('report-year-select').value) || new Date().getFullYear();
 
-        const monthly = Array.from({length: 12}, () => ({ count: 0, nights: 0, income: 0, expenses: 0 }));
+        // v31: الدخل والمصروفات بيتفضلوا بعملتهم الأصلية — من غير أي تحويل صامت
+        const monthly = Array.from({length: 12}, () => ({ count: 0, nights: 0, incomeUsd: 0, incomeEgp: 0, expUsd: 0, expEgp: 0 }));
 
-        // حساب الدخل من الحجوزات (يشمل المؤرشف والثابت للتقرير الكامل)
-        // v30: أي دخل بالدولار بيتحول لجنيه بسعر الصرف اللي كان معمول بيه في تاريخ الحجز نفسه
         localBookingsCache.forEach(b => {
             if (!b.checkIn) return;
             const d = new Date(b.checkIn);
@@ -3972,44 +4194,53 @@
             const m = d.getMonth();
             monthly[m].count += 1;
             monthly[m].nights += parseInt(b.nights) || 0;
-            monthly[m].income += toEGP(b.totalPrice, b.currency, b.checkIn);
+            if (b.currency === 'USD') monthly[m].incomeUsd += parseFloat(b.totalPrice) || 0;
+            else monthly[m].incomeEgp += parseFloat(b.totalPrice) || 0;
         });
 
-        // حساب المصروفات — نفس التحويل بالدولار
         localExpensesCache.forEach(e => {
             if (!e.date) return;
             const d = new Date(e.date);
             if (d.getFullYear() !== year) return;
-            monthly[d.getMonth()].expenses += toEGP(e.amount, e.currency, e.date);
+            const m = d.getMonth();
+            if (e.currency === 'USD') monthly[m].expUsd += parseFloat(e.amount) || 0;
+            else monthly[m].expEgp += parseFloat(e.amount) || 0;
         });
 
-        let totalIncome = 0, totalExpenses = 0, totalCount = 0, totalNights = 0;
+        let totalCount = 0, totalNights = 0, totalIncUsd = 0, totalIncEgp = 0, totalExpUsd = 0, totalExpEgp = 0, totalNetEgp = 0;
         const rows = monthly.map((m, idx) => {
-            totalIncome += m.income; totalExpenses += m.expenses;
             totalCount += m.count; totalNights += m.nights;
-            const net = m.income - m.expenses;
-            const netColor = net >= 0 ? '#2ecc71' : '#e74c3c';
+            totalIncUsd += m.incomeUsd; totalIncEgp += m.incomeEgp;
+            totalExpUsd += m.expUsd; totalExpEgp += m.expEgp;
+            // صافي الربح التقديري بالجنيه — بيتحسب بس لو السوتش مفعّل (بيحول الدولار بسعر اليوم الحي)
+            const netEgp = (m.incomeEgp + toEGPLive(m.incomeUsd, 'USD')) - (m.expEgp + toEGPLive(m.expUsd, 'USD'));
+            totalNetEgp += netEgp;
+            const netColor = netEgp >= 0 ? '#2ecc71' : '#e74c3c';
             return `
                 <tr style="border-bottom:1px solid #2a2a35;">
                     <td style="padding:8px;">${REPORT_MONTH_NAMES[idx]}</td>
                     <td style="padding:8px; text-align:center;">${m.count}</td>
                     <td style="padding:8px; text-align:center;">${m.nights}</td>
                     <td style="padding:8px; text-align:center; color:#2ecc71; cursor:pointer; text-decoration:underline dotted;"
-                        onclick="showIncomeBreakdown(${year}, ${idx})" title="اضغط لعرض تفاصيل الحجوزات">${m.income.toLocaleString()}</td>
-                    <td style="padding:8px; text-align:center; color:#e74c3c;">${m.expenses.toLocaleString()}</td>
-                    <td style="padding:8px; text-align:center; font-weight:800; color:${netColor};">${net.toLocaleString()}</td>
+                        onclick="showIncomeBreakdown(${year}, ${idx})" title="اضغط لعرض تفاصيل الحجوزات">${m.incomeUsd ? m.incomeUsd.toLocaleString() : '—'}</td>
+                    <td style="padding:8px; text-align:center; color:#2ecc71; cursor:pointer; text-decoration:underline dotted;"
+                        onclick="showIncomeBreakdown(${year}, ${idx})" title="اضغط لعرض تفاصيل الحجوزات">${m.incomeEgp ? m.incomeEgp.toLocaleString() : '—'}</td>
+                    <td style="padding:8px; text-align:center; color:#e74c3c;">${m.expUsd ? m.expUsd.toLocaleString() : '—'}</td>
+                    <td style="padding:8px; text-align:center; color:#e74c3c;">${m.expEgp ? m.expEgp.toLocaleString() : '—'}</td>
+                    <td class="egp-eq-col" style="display:${showEgpEquivalent ? '' : 'none'}; padding:8px; text-align:center; font-weight:800; color:${netColor};">${netEgp.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
                 </tr>`;
         }).join('');
 
-        const totalNet = totalIncome - totalExpenses;
         const totalRow = `
             <tr style="background: rgba(197,168,92,0.1); font-weight:800; color: var(--gold-light);">
                 <td style="padding:8px;">الإجمالي ${year}</td>
                 <td style="padding:8px; text-align:center;">${totalCount}</td>
                 <td style="padding:8px; text-align:center;">${totalNights}</td>
-                <td style="padding:8px; text-align:center; color:#2ecc71;">${totalIncome.toLocaleString()}</td>
-                <td style="padding:8px; text-align:center; color:#e74c3c;">${totalExpenses.toLocaleString()}</td>
-                <td style="padding:8px; text-align:center; color:${totalNet>=0?'#2ecc71':'#e74c3c'};">${totalNet.toLocaleString()}</td>
+                <td style="padding:8px; text-align:center; color:#2ecc71;">${totalIncUsd ? totalIncUsd.toLocaleString() : '—'}</td>
+                <td style="padding:8px; text-align:center; color:#2ecc71;">${totalIncEgp ? totalIncEgp.toLocaleString() : '—'}</td>
+                <td style="padding:8px; text-align:center; color:#e74c3c;">${totalExpUsd ? totalExpUsd.toLocaleString() : '—'}</td>
+                <td style="padding:8px; text-align:center; color:#e74c3c;">${totalExpEgp ? totalExpEgp.toLocaleString() : '—'}</td>
+                <td class="egp-eq-col" style="display:${showEgpEquivalent ? '' : 'none'}; padding:8px; text-align:center; color:${totalNetEgp>=0?'#2ecc71':'#e74c3c'};">${totalNetEgp.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
             </tr>`;
 
         tbody.innerHTML = rows + totalRow;
@@ -5043,6 +5274,11 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             if (s.unitName && document.getElementById('input-unit-name')) document.getElementById('input-unit-name').value = s.unitName;
             unitBannerData.name = s.unitName || '';
             unitBannerData.logo = s.unitLogoUrl || '';
+            // v31: بيانات الشركة والموقع
+            if (s.companyName && document.getElementById('input-company-name')) document.getElementById('input-company-name').value = s.companyName;
+            if (s.companyWebsite && document.getElementById('input-company-website')) document.getElementById('input-company-website').value = s.companyWebsite;
+            unitBannerData.companyName = s.companyName || '';
+            unitBannerData.companyWebsite = s.companyWebsite || '';
             if (s.unitLogoUrl && document.getElementById('unit-logo-preview')) {
                 renderUnitLogoPreview(s.unitLogoUrl, null);
             }
@@ -5110,14 +5346,20 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     }
 
     // إرسال إعدادات الشقة الثابتة (واي فاي، أسعار، أوقات...) إلى جوجل شيت لتعمل كسيرفر مركزي
-    function saveSettingsToCloud(settings) {
+    function saveSettingsToCloud(settings, onOk, onFail) {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
-        if (!gasUrl) return;
+        if (!gasUrl) { if (onFail) onFail(); return; }
 
         fetch(gasUrl, {
             method: 'POST',
             body: JSON.stringify({ action: 'saveSettings', settings: settings })
-        }).catch(err => console.warn('تعذر حفظ إعدادات الشقة على السحابة:', err));
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d && d.status === 'success') { if (onOk) onOk(d); }
+            else if (onFail) onFail(d);
+        })
+        .catch(err => { console.warn('تعذر حفظ إعدادات الشقة على السحابة:', err); if (onFail) onFail(err); });
     }
 
     /* ===== منطق التقويم ===== */
