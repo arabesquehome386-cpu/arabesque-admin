@@ -1794,6 +1794,26 @@
         </button>
     </div>
 
+    <!-- ===== v38: بناء دليل الضيف (Guide Builder) ===== -->
+    <div class="router-reminder-box" style="background: rgba(163,127,61,0.12); border-color: var(--gold, #A37F3D); padding: 15px; margin-bottom: 20px; border-radius: 12px;">
+        <div class="router-reminder-title" style="color:#e0c080; margin-bottom: 8px; font-size: 1rem; font-weight: 800;">
+            <i class="fa-solid fa-book-open"></i> <span>🗂️ بناء دليل الضيف (تعديل صفحات الدليل)</span>
+        </div>
+        <p style="color:#a0a0a5; font-size:0.78rem; margin-bottom:10px; line-height:1.7;">
+            من هنا تقدر تعدّل نصوص وصور أي صفحة من صفحات دليل الضيف، تضيف صفحة جديدة بالكامل، وترتب الصفحات بالسهام. الحقول الديناميكية (بيانات الحجز، الواي فاي، QR، الطقس، القوانين...) بتتحدث تلقائياً زي ما هي دايماً — التعديل هنا للنصوص والصور الثابتة فقط.
+            <br>💡 لعمل خط عريض داخل أي نص، حط النص بين نجمتين هكذا: **نص عريض**. لو النص فيه أكتر من فقرة، اترك سطر فاضي بين كل فقرة والتانية.
+        </p>
+        <div id="guide-builder-list">جاري تحميل الدليل...</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
+            <button class="router-reminder-btn" style="padding:7px 16px; background:#8a6d1f;" onclick="addGuideCustomPage()">
+                <i class="fas fa-plus"></i> إضافة صفحة جديدة للدليل
+            </button>
+            <button class="router-reminder-btn" style="padding:7px 16px;" onclick="saveGuideBuilder()">
+                <i class="fas fa-save"></i> 💾 حفظ دليل الضيف
+            </button>
+        </div>
+    </div>
+
     <!-- ===== v28: صندوق البيانات الديناميكي (بديل الباسوردات الثابتة) ===== -->
     <div class="router-reminder-box" style="background: rgba(142, 68, 173, 0.15); border-color: #8e44ad; padding: 15px; margin-bottom: 20px; border-radius: 12px;">
         <div class="router-reminder-title" style="color: #bb8fce; margin-bottom: 12px; font-size: 1rem; font-weight: 800; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -1993,7 +2013,7 @@
         <div class="print-page" id="page-1">
             <div class="cover-header">
                 <div class="logo-container">
-                    <img src="https://i.postimg.cc/YqV8ccZg/Gemini-Generated-Image.png" class="brand-logo" alt="Arabesque Logo" onerror="this.src='https://placehold.co/150x150/A37F3D/ffffff?text=Arabesque'">
+                    <img data-gid="p1-logo" src="https://i.postimg.cc/YqV8ccZg/Gemini-Generated-Image.png" class="brand-logo" alt="Arabesque Logo" onerror="this.src='https://placehold.co/150x150/A37F3D/ffffff?text=Arabesque'">
                 </div>
                 <h1>أرابيسك ريزيدنس</h1>
                 <h2>ARABESQUE RESIDENCE</h2>
@@ -2028,7 +2048,7 @@
                     <p id="page1-guest-notes-text" style="color:var(--text-body); font-size:0.85rem; line-height:1.8; margin:0; white-space:pre-wrap;"></p>
                 </div>
 
-                <div style="margin-top: 8px; padding-top: 8px; border-top: 1.5px dashed rgba(163,127,61,0.3); text-align: center;">
+                <div data-gid="p1-note" style="margin-top: 8px; padding-top: 8px; border-top: 1.5px dashed rgba(163,127,61,0.3); text-align: center;">
                     <p class="ar" style="font-size: 0.9rem; font-weight: 700; color: var(--text-heading);">
                         ✨ <span style="color: var(--gold-dark); font-weight: 850;">لا تنسَ أن تترك لنا ذكرى جميلة تسعدنا في ركن الأثر قبل المغادرة!</span>
                     </p>
@@ -2150,8 +2170,8 @@
             <section style="border: 2px solid var(--gold); background: rgba(255, 255, 255, 0.95); text-align: center; margin-bottom: 0;">
                 <h2><i class="fas fa-building"></i> واجهة البناية الخارجية - Building Exterior</h2>
                 <div style="margin: 10px 0;">
-                    <img src="https://i.postimg.cc/1RNDYgKk/gemini-watermark-removed.png" alt="واجهة مبنى أرابيسك ريزيدنس الجديدة" style="width: 100%; max-width: 500px; height: auto; border-radius: 12px; border: 2px solid var(--gold); box-shadow: 0 4px 15px rgba(92, 61, 36, 0.15); margin-bottom: 8px;" onerror="this.src='https://placehold.co/600x400/A37F3D/ffffff?text=Building+Exterior'">
-                    <div class="bilingual" style="margin-top: 6px;">
+                    <img data-gid="p2-building" src="https://i.postimg.cc/1RNDYgKk/gemini-watermark-removed.png" alt="واجهة مبنى أرابيسك ريزيدنس الجديدة" style="width: 100%; max-width: 500px; height: auto; border-radius: 12px; border: 2px solid var(--gold); box-shadow: 0 4px 15px rgba(92, 61, 36, 0.15); margin-bottom: 8px;" onerror="this.src='https://placehold.co/600x400/A37F3D/ffffff?text=Building+Exterior'">
+                    <div class="bilingual" data-gid="p2-caption" style="margin-top: 6px;">
                         <p class="ar" style="font-weight: 800; color: var(--text-heading); font-size: 1.05rem;">هذا هو شكل البناية الخارجي لتسهيل وصولك والتعرف على المبنى بسهولة.</p>
                         <p class="en" style="font-weight: 700; color: var(--gold-dark); font-size: 0.95rem;">This is the exterior layout of the building to help you identify the property easily upon arrival.</p>
                     </div>
@@ -2166,7 +2186,7 @@
             <section style="margin-bottom: 0;">
                 <div class="key-box" style="border: none; padding: 0;">
                     <h2><i class="fas fa-key"></i> استلام المفتاح والوصول الذاتي - Self Check-in Guide</h2>
-                    <div class="bilingual" style="margin-top: 8px;">
+                    <div class="bilingual" data-gid="p3-location" style="margin-top: 8px;">
                         <p class="ar"><b>مكان البوكس (Lockbox):</b> معلق بشكل آمن على باب الشقة مباشرة من الخارج.</p>
                         <p class="en"><b>Lockbox Location:</b> Mounted directly on the apartment door from outside.</p>
                     </div>
@@ -2177,20 +2197,20 @@
                     
                     <div class="visual-guide-container">
                         <div class="visual-guide-card">
-                            <img class="visual-guide-img" src="https://i.postimg.cc/SxPjkvjJ/Whats-App-Image-2026-06-02-at-12-28-24-AM.png" alt="[صندوق حفظ مفتاح الشقة الذكي]" loading="lazy">
+                            <img data-gid="p3-img1" class="visual-guide-img" src="https://i.postimg.cc/SxPjkvjJ/Whats-App-Image-2026-06-02-at-12-28-24-AM.png" alt="[صندوق حفظ مفتاح الشقة الذكي]" loading="lazy">
                             <p class="visual-guide-caption">صندوق حفظ مفتاح الشقة (Lockbox)</p>
                         </div>
                         <div class="visual-guide-card">
-                            <img class="visual-guide-img" src="https://i.postimg.cc/y8GWsbWc/Whats-App-Image-2026-06-02-at-12-28-24-AM-(1).png" alt="[كالون الباب المخصص لفتح الشقة]" loading="lazy">
+                            <img data-gid="p3-img2" class="visual-guide-img" src="https://i.postimg.cc/y8GWsbWc/Whats-App-Image-2026-06-02-at-12-28-24-AM-(1).png" alt="[كالون الباب المخصص لفتح الشقة]" loading="lazy">
                             <p class="visual-guide-caption">الكالون المخصص لفتح باب الشقة</p>
                         </div>
                     </div>
 
-                    <div class="bilingual" style="margin-top: 10px;">
+                    <div class="bilingual" data-gid="p3-howto" style="margin-top: 10px;">
                         <p class="ar"><b>طريقة الفتح:</b> قم بمحاذاة الأرقام الـ 4 الموضحة أعلاه بالترتيب الصحيح ← اسحب الغطاء الأمامي لأسفل برفق ← خذ مفتاح الشقة المخصص لإقامتك وافتحه في الكالون المحدد بالصورة المرفقة أعلاه.</p>
                         <p class="en"><b>How to open:</b> Align the 4 digits provided above in correct sequence ← Pull the front cover down gently ← Take your apartment key and use it on the specific lock shown in the photo above.</p>
                     </div>
-                    <div class="bilingual" style="margin-top: 8px; border-top: 1px dashed rgba(163,127,61,0.2); padding-top: 8px;">
+                    <div class="bilingual" data-gid="p3-checkout" style="margin-top: 8px; border-top: 1px dashed rgba(163,127,61,0.2); padding-top: 8px;">
                         <p class="ar" style="color: var(--accent-red);">⚠️ <b>عند المغادرة النهائية:</b> نرجو منكم بلطف إعادة المفتاح داخل صندوق حفظ مفتاح الشقة وإغلاقه وتغيير الأرقام لضمان سلامة المكان.</p>
                         <p class="en" style="color: var(--accent-red);">⚠️ <b>Upon Checkout:</b> Kindly return the key inside the lockbox and secure the lock properly for safety.</p>
                     </div>
@@ -2220,7 +2240,7 @@
                 </div>
                 
                 <div class="alert-box" style="border-color:var(--gold); background:rgba(163, 127, 61, 0.04); margin-top: 15px;">
-                    <div class="bilingual">
+                    <div class="bilingual" data-gid="p4-internet">
                         <p class="ar">⚠️ <b>ملاحظة هامة بشأن سعة باقة الإنترنت:</b> نحن نوفر إنترنت فائق السرعة بشكل مجاني مخصص لأغراض <b>التصفح، التواصل، وإنجاز الأعمال عن بُعد فقط</b>. في حال قيام الضيف باستهلاك كامل سعة الباقة المتاحة للشقة (بسبب التحميل المفرط أو تشغيل بث الفيديو بأعلى جودة لفترات طويلة), سيكون الضيف هو المسؤول تماماً عن تكلفة إعادة شحن الباقة مجدداً للاستمرار في استخدام الخدمة.</p>
                         <p class="en">⚠️ <b>Important Internet Policy:</b> We provide complimentary high-speed internet intended for <b>browsing, communication, and remote work purposes only</b>. If the monthly internet quota is fully consumed due to heavy downloading or continuous ultra-high-quality streaming, the guest will be fully responsible for the recharge costs to restore service.</p>
                     </div>
@@ -2230,19 +2250,19 @@
             <section style="margin-bottom: 0;">
                 <h2><i class="fas fa-tv"></i> الشاشة الذكية وسياسة البث - Smart TV & Streaming Policy</h2>
                 <div class="info-card">
-                    <div class="bilingual">
+                    <div class="bilingual" data-gid="p4-tvintro">
                         <p class="ar">الشاشة المتواجدة في الشقة هي <b>شاشة ذكية (Smart TV)</b> مجهزة بالكامل وتدعم تشغيل تطبيقات البث العالمية مثل <b>Netflix</b> و <b>YouTube</b>.</p>
                         <p class="en">The provided television is a high-definition <b>Smart TV</b> that perfectly supports streaming applications including <b>Netflix</b> and <b>YouTube</b>.</p>
                     </div>
                     
                     <div class="alert-box" style="border-color:var(--gold); background:rgba(163, 127, 61, 0.02); margin: 10px 0 0 0; padding: 10px;">
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p4-streaming">
                             <p class="ar" style="color: var(--text-heading);">📶 <b>سياسة الاستخدام العادل للبث:</b> نود تذكير ضيوفنا الكرام بأن استخدام وتصفح تطبيقات الشاشة الذكية يخضع بشكل مباشر لـ <b>سياسة الاستخدام العادل لباقة الإنترنت</b> المذكورة سابقاً. لتجنب نفاذ الباقة والانقطاع المفاجئ للخدمة، يرجى تجنب تشغيل بث الفيديو بأعلى جودة فائقة (مثل 4K/UHD) لفترات طويلة متواصلة.</p>
                             <p class="en">📶 <b>Streaming Fair Usage Policy:</b> We kindly remind our guests that using Smart TV streaming apps is directly subject to the <b>monthly internet quota fair usage policy</b>. To avoid data exhaustion and service interruption, please avoid continuous streaming at ultra-high definitions (like 4K/UHD) for prolonged periods.</p>
                         </div>
                     </div>
 
-                    <div class="bilingual" style="margin-top: 10px; border-top: 1px dashed rgba(163,127,61,0.25); padding-top: 10px;">
+                    <div class="bilingual" data-gid="p4-logout" style="margin-top: 10px; border-top: 1px dashed rgba(163,127,61,0.25); padding-top: 10px;">
                         <p class="ar">💡 يمكنك استخدام وتصفح حساباتك الشخصية بكل حرية للاستمتاع برحلتك، ونرجو منك بلطف التكرم بعمل <b>تسجيل خروج (Log out)</b> من حساباتك الشخصية قبل مغادرة الشقة لضمان خصوصيتك التامة.</p>
                         <p class="en">💡 You are welcome to log in using your personal streaming accounts. Please remember to <b>log out</b> before your final checkout to preserve your privacy.</p>
                     </div>
@@ -2257,7 +2277,7 @@
             <section>
                 <h2><i class="fas fa-map-marker-alt"></i> العنوان والإجراءات القانونية - Address & Registration</h2>
                 <div class="info-card" style="margin-bottom: 12px; border: 1.5px solid var(--gold);">
-                    <div class="bilingual">
+                    <div class="bilingual" data-gid="p5-address">
                         <p class="ar"><b>العنوان بالتفصيل:</b> 108 شارع العباسية – فوق فرع فودافون مباشرة – الدور الأول شقة رقم 9 – العباسية – القاهرة.</p>
                         <p class="en"><b>Detailed Address:</b> 108 Al Abbaseya St – Directly above Vodafone Branch – 1st Floor, Apartment 9 – Abbaseya – Cairo.</p>
                     </div>
@@ -2281,7 +2301,7 @@
                 </div>
 
                 <div class="alert-box" style="border-color:#e67e22; background:rgba(230, 126, 34, 0.05); margin-top: 12px;">
-                    <div class="bilingual">
+                    <div class="bilingual" data-gid="p5-legal">
                         <p class="ar">📋 <b>إجراء قانوني إلزامي:</b> لسلامتكم الكاملة وطبقاً للقوانين واللوائح التنظيمية المصرية، يجب تزويدنا بصورة واضحة من <b>جوازات السفر</b> (أو بطاقات الرقم القومي للمواطنين المصريين) لجميع الضيوف المقيمين في الشقة فور تأكيد الحجز لإتمام إجراءات التسجيل الرسمية.</p>
                         <p class="en">📋 <b>Mandatory Legal Requirement:</b> For your safety and in compliance with Egyptian laws and hospitality regulations, please provide us with a clear copy of <b>passports</b> (or National IDs for Egyptian citizens) for all staying guests upon booking confirmation to complete official registration.</p>
                     </div>
@@ -2293,7 +2313,7 @@
                 <div class="info-grid">
                     <div class="info-card" style="border-right-color: var(--accent-green);">
                         <div class="label" style="color: var(--accent-green);"><i class="fas fa-glass-water"></i> مياه شرب مفلترة / Pure Drinking Water</div>
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p5-water">
                             <p class="ar">ستجد حنفية صغيرة مخصصة ومستقلة فوق حوض المطبخ، توفر لك مياهًا مفلترة عذبة وصالحة للشرب مباشرة بأمان طوال فترة إقامتك.</p>
                             <p class="en">You will find a small dedicated faucet above the kitchen sink, providing fresh, multi-stage filtered drinking water throughout your stay.</p>
                         </div>
@@ -2301,14 +2321,14 @@
                     <div class="info-card" style="border-right-color: var(--gold-dark);">
                         <!-- سخان الغاز الذكي المطور بطلب المضيف -->
                         <div class="label" style="color: var(--gold-dark);"><i class="fas fa-temperature-high"></i> سخان المياه الغاز الذكي امان كامل / Smart Gas Heater</div>
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p5-heater">
                             <p class="ar">يعمل سخان الغاز الذكي بتكنولوجيا آمنة وموثوقة تماماً بمجرد فتح صنبور المياه الساخنة، ويفصل كلياً فور غلق المياه، مما يضمن لكم إمداداً فورياً ومستقراً بمياه ساخنة بأمان كامل على مدار الساعة.</p>
                             <p class="en">The smart gas water heater operates with absolute and complete safety technology. It automatically activates upon opening the hot water tap and shuts down completely when closed, ensuring instant hot water 24/7.</p>
                         </div>
                     </div>
                     <div class="info-card" style="border-right-color: var(--accent-red);">
                         <div class="label" style="color: var(--accent-red);"><i class="fas fa-fire-burner"></i> محبس الغاز الخاص بالبوتجاز / Stove Gas Valve Safety</div>
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p5-gasvalve">
                             <p class="ar">لحفظ سلامتكم اللامحدودة والتي هي أولويتنا القصوى، يرجى التكرم بـ <b>إغلاق محبس الغاز الخاص بالبوتجاز</b> الموجود خلف الميكرويف بعد الانتهاء من استخدام الموقد.</p>
                             <p class="en">For your ultimate safety, which is our top priority, please ensure to <b>turn off the stove gas valve</b> located behind the microwave after using the stove.</p>
                         </div>
@@ -2324,7 +2344,7 @@
             <section>
                 <h2><i class="fas fa-hand-sparkles"></i> نظام النظافة وحفظ الممتلكات - Trash & Property Care</h2>
                 <div class="info-card" style="margin-bottom: 0; border-right-color: var(--gold-light);">
-                    <div class="bilingual">
+                    <div class="bilingual" data-gid="p6-trash">
                         <p class="ar">🗑️ <b>النظافة والتخلص من القمامة:</b> للحفاظ على أجواء الشقة منعشة ونظيفة، ستجد سلة مهملات مخصصة داخل الدرفة أسفل حوض المطبخ. يرجى التكرم بجمع كيس القمامة وإحكامه عند امتلائه، ثم التخلص منه في السلة الكبيرة المتواجدة خارج باب الشقة مباشرة على جهة اليمين، حيث يتولى مسؤول أمن البناية تفريغها وتنظيفها بشكل يومي.</p>
                         <p class="en">🗑️ <b>Trash Disposal:</b> To keep the apartment fresh and clean, a trash bin is located inside the cabinet under the kitchen sink. Kindly tie the trash bag when full and place it in the large bin located outside the apartment to your right; the building security officer empties it daily.</p>
                     </div>
@@ -2334,23 +2354,23 @@
             <section>
                 <h2><i class="fas fa-bolt"></i> كارت الكهرباء المسبق الدفع - Electricity Card Guide</h2>
                 <div class="electric-box" style="margin: 0; padding: 5px;">
-                    <div class="bilingual">
+                    <div class="bilingual" data-gid="p6-electric-location">
                         <p class="ar"><b>مكان الكارت واللوحة:</b> متواجد دائماً داخل اللوحة الرمادية خلف باب الشقة الرئيسي مباشرة.</p>
                         <p class="en"><b>Location:</b> Always found inside the gray electrical panel box right behind the main entrance door.</p>
                     </div>
 
                     <div class="visual-guide-container">
                         <div class="visual-guide-card">
-                            <img class="visual-guide-img" src="https://i.postimg.cc/2St3rK3x/Whats-App-Image-2026-06-02-at-12-28-24-AM-(5).png" alt="[لوحة طوارئ عداد الكهرباء الرمادية]" loading="lazy">
+                            <img data-gid="p6-img1" class="visual-guide-img" src="https://i.postimg.cc/2St3rK3x/Whats-App-Image-2026-06-02-at-12-28-24-AM-(5).png" alt="[لوحة طوارئ عداد الكهرباء الرمادية]" loading="lazy">
                             <p class="visual-guide-caption">لوحة طوارئ الكهرباء خلف الباب الرئيسي</p>
                         </div>
                         <div class="visual-guide-card">
-                            <img class="visual-guide-img" src="https://i.postimg.cc/W1ytTHt8/Whats-App-Image-2026-06-02-at-12-28-24-AM-(4).png" alt="[عداد الكهرباء وكارت شحن الكارت]" loading="lazy">
+                            <img data-gid="p6-img2" class="visual-guide-img" src="https://i.postimg.cc/W1ytTHt8/Whats-App-Image-2026-06-02-at-12-28-24-AM-(4).png" alt="[عداد الكهرباء وكارت شحن الكارت]" loading="lazy">
                             <p class="visual-guide-caption">مكان وضع كارت الكهرباء على العداد</p>
                         </div>
                     </div>
 
-                    <div class="bilingual" style="margin-top: 6px;">
+                    <div class="bilingual" data-gid="p6-power-cutoff" style="margin-top: 6px;">
                         <p class="ar"><b>في حالة انقطاع الكهرباء المفاجئ:</b> قم بوضع كارت الشحن على شاشة عداد الكهرباء (الموضح في الصورة أعلاه) لتفعيل خاصية الـ NFC وسيعود التيار للعمل فوراً كفترة سماح طارئة لمدة 3 ساعات.</p>
                         <p class="en"><b>In case of sudden power cutoff:</b> Place the recharge card firmly against the electricity meter screen (shown above) to activate the NFC feature; this grants a 3-hour emergency power extension.</p>
                     </div>
@@ -2362,14 +2382,14 @@
                 <div class="info-grid">
                     <div class="info-card" style="border-right-color: var(--accent-red); background: rgba(211, 47, 47, 0.02);">
                         <div class="label" style="color: var(--accent-red);"><i class="fas fa-ban"></i> سياسة خلع الأحذية / Shoe-Free Zone</div>
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p6-shoes">
                             <p class="ar"><b>يُمنع نهائياً الدخول بالأحذية داخل الشقة</b> حفاظاً على نظافة الموكيت والمفروشات الفاخرة. يرجى ترك الأحذية في المكان المخصص بجانب الباب.</p>
                             <p class="en"><b>Entering the apartment with shoes is strictly prohibited</b> to maintain hygiene. Please leave your shoes at the designated space near the door.</p>
                         </div>
                     </div>
                     <div class="info-card">
                         <div class="label"><i class="fas fa-video"></i> كاميرات المراقبة الخارجية / CCTV Security</div>
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p6-cctv">
                             <p class="ar">توجد كاميرا مراقبة نشطة متواجدة <b>خارج الشقة فقط</b> مخصصة لتأمين مدخل ومخرج الشقة وحمايتكم.</p>
                             <p class="en">There is an active security camera installed <b>outside the apartment entrance only</b> for your personal safety and building security.</p>
                         </div>
@@ -2387,21 +2407,22 @@
                 
                 <div class="visual-guide-container">
                     <div class="visual-guide-card">
-                        <img class="visual-guide-img visual-guide-img-tall" src="https://i.postimg.cc/XYPX4zXC/Whats-App-Image-2026-06-02-at-12-28-24-AM-(3).png" alt="[مفاتيح تشغيل المطبخ الثلاثية]" loading="lazy">
+                        <img data-gid="p7-img1" class="visual-guide-img visual-guide-img-tall" src="https://i.postimg.cc/XYPX4zXC/Whats-App-Image-2026-06-02-at-12-28-24-AM-(3).png" alt="[مفاتيح تشغيل المطبخ الثلاثية]" loading="lazy">
                         <p class="visual-guide-caption">لوحة مفاتيح المطبخ (يسار المدخل)</p>
                     </div>
                     <div class="visual-guide-card">
-                        <img class="visual-guide-img visual-guide-img-tall" src="https://i.postimg.cc/K8W4xH47/Whats-App-Image-2026-06-02-at-12-28-24-AM-(2).png" alt="[لوحة تشغيل وإضاءة الحمام]" loading="lazy">
+                        <img data-gid="p7-img2" class="visual-guide-img visual-guide-img-tall" src="https://i.postimg.cc/K8W4xH47/Whats-App-Image-2026-06-02-at-12-28-24-AM-(2).png" alt="[لوحة تشغيل وإضاءة الحمام]" loading="lazy">
                         <p class="visual-guide-caption">لوحة تحكم الحمام (بجانب الباب)</p>
                     </div>
                 </div>
 
                 <div class="info-card" style="margin-bottom: 12px;">
+                    <div class="bilingual" data-gid="p7-kitchen">
                     <p class="ar"><b>💡 مفاتيح المطبخ (يسار المدخل مباشرة):</b> موتور المياه الخاص بالشقة (الزر السفلي 1)، غسالة الملابس والفلتر (الأيسر 2)، غسالة الأطباق (الأيمن 3).</p>
                     <p class="en"><b>💡 Kitchen Switches:</b> Water motor (Bottom 1), Washing machine & filter (Left 2), Dishwasher (Right 3).</p>
-                    
+                    </div>
                     <div class="alert-box" style="border-color:var(--gold); background:rgba(163, 127, 61, 0.02); margin: 6px 0 0 0; padding: 6px;">
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p7-detergent">
                             <p class="ar" style="font-weight: 700; font-size: 0.85rem;">• <b>غسالة الملابس:</b> جل أوتوماتيك <b>PERSIL/ARIEL GEL</b> فقط (يمنع البودرة).</p>
                             <p class="ar" style="font-weight: 700; font-size: 0.85rem;">• <b>غسالة الأطباق:</b> أقراص <b>ludwik / fairy / finish tablets</b> فقط.</p>
                         </div>
@@ -2414,14 +2435,14 @@
                 <div class="info-grid">
                     <div class="info-card">
                         <div class="label"><i class="fas fa-kaaba"></i> اتجاه قبلة الصلاة / Qibla Direction</div>
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p7-qibla">
                             <p class="ar">لتحديد اتجاه القبلة الصحيح للصلاة: يرجى الوقوف مستقيماً بحيث يكون ظهرك مواجهاً للبلكونة الرئيسية مباشرة دون أي انحراف يميناً أو يساراً.</p>
                             <p class="en">To easily align with the Qibla (prayer direction): please stand facing forward with your back directly towards the main balcony, without any deviation.</p>
                         </div>
                     </div>
                     <div class="info-card">
                         <div class="label"><i class="fas fa-snowflake"></i> التكييف والمناخ / Air Conditioning</div>
-                        <div class="bilingual">
+                        <div class="bilingual" data-gid="p7-ac">
                             <p class="ar">للاستمتاع بمناخ مثالي والحفاظ على الطاقة، يُفضل ضبط درجة حرارة المكيفات على <span class="highlight">24 درجة مئوية</span>.</p>
                             <p class="en">For optimal cooling performance and energy saving, we recommend setting the AC to <span class="highlight">24°C</span>.</p>
                         </div>
@@ -2429,7 +2450,7 @@
                 </div>
                 
                 <div class="alert-box" style="text-align: center; border-color: var(--accent-red); margin-top:10px; background: rgba(211,47,47,0.02)">
-                    <div class="bilingual">
+                    <div class="bilingual" data-gid="p7-energy">
                         <p class="ar" style="font-weight: 700; color: var(--accent-red);">🌱 <b>يرجى الحفاظ على الطاقة:</b> نرجو منكم إطفاء كافة الأنوار والمكيفات والأجهزة تماماً عند مغادرة الشقة.</p>
                         <p class="en" style="font-weight: 700; color: var(--accent-red);">🌱 <b>Conserve Energy:</b> Kindly switch off all lights, appliances, and air conditioners whenever you step out.</p>
                     </div>
@@ -2515,12 +2536,12 @@
                 <!-- تمكين عرض وتكبير الصورة بكفاءة عالية بمجرد نقرها -->
                 <div style="text-align: center;">
                     <a href="https://i.postimg.cc/L5VtCL3B/Code-Generated-Image.png" target="_blank" title="اضغط لفتح وعرض الصورة بحجمها الكامل التفاعلي | Click to view full image resolution" style="display: inline-block; cursor: pointer; transition: transform 0.3s ease;">
-                        <img src="https://i.postimg.cc/L5VtCL3B/Code-Generated-Image.png" alt="ركن الأثر والذكريات" style="width: 100%; max-width: 480px; height: auto; max-height: 180px; object-fit: contain; border-radius: 12px; border: 3px double var(--gold); box-shadow: 0 6px 20px rgba(92, 61, 36, 0.2); margin-bottom: 8px; display: block;" onerror="this.src='https://placehold.co/600x450/A37F3D/ffffff?text=Memories+Corner'">
+                        <img data-gid="p9-img1" src="https://i.postimg.cc/L5VtCL3B/Code-Generated-Image.png" alt="ركن الأثر والذكريات" style="width: 100%; max-width: 480px; height: auto; max-height: 180px; object-fit: contain; border-radius: 12px; border: 3px double var(--gold); box-shadow: 0 6px 20px rgba(92, 61, 36, 0.2); margin-bottom: 8px; display: block;" onerror="this.src='https://placehold.co/600x450/A37F3D/ffffff?text=Memories+Corner'">
                         <span style="font-size: 0.75rem; color: var(--gold-dark); font-weight: bold; text-decoration: underline;"><i class="fas fa-magnifying-glass-plus"></i> انقر/المس لفتح الصورة وتكبيرها بحجم كامل · Tap to enlarge image</span>
                     </a>
                 </div>
                 
-                <div style="padding: 5px 10px; line-height: 1.6; text-align: justify; direction: rtl; font-size: 0.95rem;">
+                <div data-gid="p9-text-ar" style="padding: 5px 10px; line-height: 1.6; text-align: justify; direction: rtl; font-size: 0.95rem;">
                     <p class="ar" style="font-size: 1.15rem; font-weight: 900; color: var(--text-heading); text-align: center; margin-bottom: 8px;">
                         ✨ ركن الأثر والذكريات ✨
                     </p>
@@ -2534,7 +2555,7 @@
 
                 <div style="width: 100%; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 10px 0;"></div>
 
-                <div style="padding: 5px 10px; line-height: 1.6; text-align: justify; direction: ltr; font-size: 0.88rem;">
+                <div data-gid="p9-text-en" style="padding: 5px 10px; line-height: 1.6; text-align: justify; direction: ltr; font-size: 0.88rem;">
                     <p class="en" style="font-size: 1.15rem; font-weight: 900; color: var(--text-heading); text-align: center; margin-bottom: 8px;">
                         ✨ The Corner of Legacy & Memories ✨
                     </p>
@@ -3396,6 +3417,325 @@
             showStatus('✅ تم حفظ دليل الأماكن القريبة.', 'success');
         }, () => {
             showStatus('❌ تعذر حفظ دليل الأماكن القريبة — تأكد من الاتصال وحاول تاني.', 'error');
+        });
+    }
+
+    /* =========================================================
+       v38: بناء دليل الضيف (Guide Builder)
+       فكرة عامة: كل عنصر ثابت (نص/صورة) قابل للتعديل في #guide-wrapper
+       متعلّم عليه data-gid="..." — العناصر الديناميكية (بيانات الحجز، QR،
+       الطقس، الحاسبة المالية، الواي فاي/كود البوكس، القوانين) متعلّمش
+       عليها حاجة، وفضلت شغالة زي ما هي بالظبط زي في updateGuideData().
+       ========================================================= */
+    const GUIDE_PAGE_LABELS = {
+        'page-1': '🏠 الغلاف وتفاصيل الإقامة',
+        'page-2': '👋 الترحيب وواجهة البناية',
+        'page-3': '🔑 استلام المفتاح والوصول الذاتي',
+        'page-4': '📶 الواي فاي والشاشة الذكية',
+        'page-5': '📍 العنوان والمياه والسخان والغاز',
+        'page-6': '🧹 النظافة والكهرباء والأمان',
+        'page-7': '🔌 مفاتيح التحكم والقبلة والمناخ',
+        'page-8': '📞 الطوارئ والخدمات والقواعد',
+        'page-9': '💌 ركن الأثر والذكريات'
+    };
+    const GUIDE_FIXED_PAGE_ORDER = ['page-1','page-2','page-3','page-4','page-5','page-6','page-7','page-8','page-9'];
+    const GUIDE_BLOCK_LABELS = {
+        'p1-logo': 'صورة الشعار', 'p1-note': 'تذكير ترك ذكرى (أعلى الغلاف)',
+        'p2-building': 'صورة واجهة البناية', 'p2-caption': 'نص أسفل صورة الواجهة',
+        'p3-location': 'مكان صندوق المفتاح', 'p3-img1': 'صورة صندوق المفتاح', 'p3-img2': 'صورة الكالون',
+        'p3-howto': 'طريقة فتح الصندوق', 'p3-checkout': 'تنبيه عند المغادرة',
+        'p4-internet': 'ملاحظة سياسة الإنترنت', 'p4-tvintro': 'مقدمة الشاشة الذكية',
+        'p4-streaming': 'سياسة البث العادل', 'p4-logout': 'تذكير تسجيل الخروج من الحسابات',
+        'p5-address': 'العنوان بالتفصيل', 'p5-legal': 'الإجراء القانوني (الجوازات)',
+        'p5-water': 'مياه الشرب المفلترة', 'p5-heater': 'سخان المياه', 'p5-gasvalve': 'محبس الغاز',
+        'p6-trash': 'التخلص من القمامة', 'p6-electric-location': 'مكان كارت الكهرباء',
+        'p6-img1': 'صورة لوحة الكهرباء', 'p6-img2': 'صورة عداد الكهرباء',
+        'p6-power-cutoff': 'عند انقطاع الكهرباء', 'p6-shoes': 'سياسة خلع الأحذية', 'p6-cctv': 'كاميرات المراقبة',
+        'p7-img1': 'صورة مفاتيح المطبخ', 'p7-img2': 'صورة مفاتيح الحمام',
+        'p7-kitchen': 'شرح مفاتيح المطبخ', 'p7-detergent': 'ملاحظة الغسالة وغسالة الأطباق',
+        'p7-qibla': 'اتجاه القبلة', 'p7-ac': 'التكييف', 'p7-energy': 'توفير الطاقة',
+        'p9-img1': 'صورة ركن الأثر', 'p9-text-ar': 'نص ركن الأثر (عربي)', 'p9-text-en': 'نص ركن الأثر (إنجليزي)'
+    };
+
+    window.__guideDefaults = {};
+    window.__guideOverrides = {};
+    window.__guidePageOrder = GUIDE_FIXED_PAGE_ORDER.slice();
+    window.__guideCustomPages = [];
+
+    function guideHtmlToText(html) {
+        if (!html) return '';
+        return String(html)
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/(b|strong)>/gi, '**')
+            .replace(/<(b|strong)[^>]*>/gi, '**')
+            .replace(/<[^>]+>/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+            .trim();
+    }
+    function guideTextToHtml(text) {
+        const esc = String(text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return esc.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+    }
+
+    function captureGuideFactoryDefaults() {
+        if (window.__guideDefaultsCaptured) return;
+        document.querySelectorAll('#guide-wrapper [data-gid]').forEach(el => {
+            const gid = el.getAttribute('data-gid');
+            if (el.tagName === 'IMG') {
+                window.__guideDefaults[gid] = { img: el.getAttribute('src') };
+            } else {
+                const arNodes = el.querySelectorAll('.ar');
+                const enNodes = el.querySelectorAll('.en');
+                window.__guideDefaults[gid] = {
+                    ar: arNodes.length ? Array.from(arNodes).map(n => guideHtmlToText(n.innerHTML)).join('\n\n') : null,
+                    en: enNodes.length ? Array.from(enNodes).map(n => guideHtmlToText(n.innerHTML)).join('\n\n') : null
+                };
+            }
+        });
+        window.__guideDefaultsCaptured = true;
+    }
+
+    function guideRestoreParagraphs(nodes, text) {
+        if (!nodes.length) return;
+        const parts = String(text || '').split(/\n\n+/);
+        nodes.forEach((n, i) => {
+            if (i < parts.length) {
+                const isLast = (i === nodes.length - 1);
+                n.innerHTML = guideTextToHtml(isLast && parts.length > nodes.length ? parts.slice(i).join('\n\n') : parts[i]);
+                n.style.display = '';
+            } else {
+                n.style.display = 'none';
+            }
+        });
+    }
+
+    function applyGuideBlockOverrides() {
+        captureGuideFactoryDefaults();
+        const overrides = window.__guideOverrides || {};
+        document.querySelectorAll('#guide-wrapper [data-gid]').forEach(el => {
+            const gid = el.getAttribute('data-gid');
+            const ov = overrides[gid];
+            if (!ov) return;
+            if (el.tagName === 'IMG') {
+                if (ov.img) el.setAttribute('src', ov.img);
+            } else {
+                if (typeof ov.ar === 'string') guideRestoreParagraphs(Array.from(el.querySelectorAll('.ar')), ov.ar);
+                if (typeof ov.en === 'string') guideRestoreParagraphs(Array.from(el.querySelectorAll('.en')), ov.en);
+            }
+        });
+    }
+
+    function renderGuideCustomPageHTML(cp) {
+        return `
+            <div class="header" style="margin-bottom:10px;">
+                <h1>${(cp.titleAr || 'صفحة جديدة').replace(/</g, '&lt;')}</h1>
+                <h2 style="font-size:1.4rem; margin-top:3px; color: var(--text-heading);">${(cp.titleEn || '').replace(/</g, '&lt;')}</h2>
+                <div class="decorative-line"></div>
+            </div>
+            <section style="margin-bottom:0;">
+                ${cp.img ? `<div style="text-align:center; margin-bottom:12px;"><img src="${cp.img}" style="width:100%; max-width:480px; height:auto; border-radius:12px; border:2px solid var(--gold);"></div>` : ''}
+                <div class="bilingual">
+                    <p class="ar">${guideTextToHtml(cp.textAr || '')}</p>
+                    <p class="en">${guideTextToHtml(cp.textEn || '')}</p>
+                </div>
+            </section>`;
+    }
+
+    function applyGuidePageOrder() {
+        const wrap = document.querySelector('#guide-wrapper .container');
+        if (!wrap) return;
+        wrap.querySelectorAll('.print-page[data-custom-page]').forEach(n => n.remove());
+        (window.__guideCustomPages || []).forEach(cp => {
+            const div = document.createElement('div');
+            div.className = 'print-page';
+            div.id = cp.id;
+            div.setAttribute('data-custom-page', '1');
+            div.innerHTML = renderGuideCustomPageHTML(cp);
+            wrap.appendChild(div);
+        });
+        const order = (window.__guidePageOrder && window.__guidePageOrder.length) ? window.__guidePageOrder : GUIDE_FIXED_PAGE_ORDER;
+        order.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) wrap.appendChild(el);
+        });
+    }
+
+    // بتتنادى من جوه updateGuideData() بعد ما البيانات الديناميكية تتحدث،
+    // عشان تطبق تعديلات الأدمن الثابتة (نصوص/صور) وترتيب الصفحات فوقها
+    function applyGuideBuilder() {
+        applyGuideBlockOverrides();
+        applyGuidePageOrder();
+    }
+
+    function guideBlocksForPage(pageId) {
+        const m = pageId.match(/^page-(\d+)$/);
+        if (!m) return [];
+        const prefix = 'p' + m[1] + '-';
+        return Object.keys(GUIDE_BLOCK_LABELS).filter(gid => gid.indexOf(prefix) === 0);
+    }
+
+    function renderGuideBuilderUI() {
+        const list = document.getElementById('guide-builder-list');
+        if (!list) return;
+        const order = (window.__guidePageOrder && window.__guidePageOrder.length) ? window.__guidePageOrder : GUIDE_FIXED_PAGE_ORDER;
+        let html = '';
+        order.forEach((pid, idx) => {
+            const isCustom = pid.indexOf('page-') !== 0;
+            const cp = isCustom ? (window.__guideCustomPages || []).find(c => c.id === pid) : null;
+            if (isCustom && !cp) return;
+            const title = isCustom ? ('🆕 ' + (cp.titleAr || 'صفحة مخصصة')) : (GUIDE_PAGE_LABELS[pid] || pid);
+            html += `<div style="border:1px solid #3a3a45; border-radius:10px; margin-bottom:10px; overflow:hidden;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; background:#1c1c22; cursor:pointer;" onclick="toggleGuideBuilderCard('${pid}')">
+                    <b style="color:#e0c080; font-size:0.88rem;">${title}</b>
+                    <div style="display:flex; gap:4px; align-items:center;" onclick="event.stopPropagation();">
+                        <button class="router-reminder-btn" style="padding:3px 8px; font-size:0.75rem;" ${idx === 0 ? 'disabled' : ''} onclick="moveGuidePage('${pid}', -1)"><i class="fas fa-arrow-up"></i></button>
+                        <button class="router-reminder-btn" style="padding:3px 8px; font-size:0.75rem;" ${idx === order.length - 1 ? 'disabled' : ''} onclick="moveGuidePage('${pid}', 1)"><i class="fas fa-arrow-down"></i></button>
+                        ${isCustom ? `<button class="router-reminder-btn" style="padding:3px 8px; font-size:0.75rem; background:#c0392b;" onclick="deleteGuideCustomPage('${pid}')"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>
+                </div>
+                <div id="guide-card-body-${pid}" style="display:none; padding:12px; background:#141418;">`;
+
+            if (isCustom) {
+                html += `
+                    <label style="font-size:0.75rem; color:#a0a0a5;">عنوان الصفحة (عربي)</label>
+                    <input type="text" id="gcp-titleAr-${pid}" value="${(cp.titleAr || '').replace(/"/g, '&quot;')}" style="width:100%; margin:4px 0 8px; padding:8px; background:#121216; color:#d1d1d6; border:1px solid #3a3a45; border-radius:6px; box-sizing:border-box;">
+                    <label style="font-size:0.75rem; color:#a0a0a5;">Page Title (English)</label>
+                    <input type="text" id="gcp-titleEn-${pid}" value="${(cp.titleEn || '').replace(/"/g, '&quot;')}" style="width:100%; margin:4px 0 8px; padding:8px; background:#121216; color:#d1d1d6; border:1px solid #3a3a45; border-radius:6px; box-sizing:border-box;">
+                    <label style="font-size:0.75rem; color:#a0a0a5;">النص (عربي)</label>
+                    <textarea id="gcp-textAr-${pid}" rows="4" style="width:100%; margin:4px 0 8px; padding:8px; background:#121216; color:#d1d1d6; border:1px solid #3a3a45; border-radius:6px; box-sizing:border-box;">${(cp.textAr || '')}</textarea>
+                    <label style="font-size:0.75rem; color:#a0a0a5;">Text (English)</label>
+                    <textarea id="gcp-textEn-${pid}" rows="4" dir="ltr" style="width:100%; margin:4px 0 8px; padding:8px; background:#121216; color:#d1d1d6; border:1px solid #3a3a45; border-radius:6px; box-sizing:border-box;">${(cp.textEn || '')}</textarea>
+                    <label style="font-size:0.75rem; color:#a0a0a5;">صورة (اختياري)</label><br>
+                    <input type="file" accept="image/*" onchange="uploadGuideImage(event, null, '${pid}')">
+                    <div style="margin-top:6px;">${cp.img ? `<img src="${cp.img}" style="max-width:150px; border-radius:8px;">` : ''}</div>
+                `;
+            } else {
+                const gids = guideBlocksForPage(pid);
+                gids.forEach(gid => {
+                    const def = window.__guideDefaults[gid] || {};
+                    const ov = window.__guideOverrides[gid] || {};
+                    const label = GUIDE_BLOCK_LABELS[gid] || gid;
+                    if (def.img !== undefined) {
+                        const cur = ov.img || def.img;
+                        html += `<div style="margin-bottom:12px;">
+                            <label style="font-size:0.75rem; color:#a0a0a5;"><i class="fas fa-image"></i> ${label}</label><br>
+                            <img src="${cur}" style="max-width:150px; border-radius:8px; margin:6px 0; display:block;">
+                            <input type="file" accept="image/*" onchange="uploadGuideImage(event, '${gid}', null)">
+                            ${ov.img ? `<button type="button" class="router-reminder-btn" style="padding:3px 8px; font-size:0.7rem; margin-top:4px;" onclick="resetGuideImage('${gid}')">↺ استرجاع الصورة الأصلية</button>` : ''}
+                        </div>`;
+                    } else {
+                        html += `<div style="margin-bottom:12px;"><label style="font-size:0.75rem; color:#a0a0a5;">${label}</label>`;
+                        if (def.ar !== null && def.ar !== undefined) {
+                            html += `<textarea id="gov-ar-${gid}" rows="2" style="width:100%; margin:4px 0; padding:8px; background:#121216; color:#d1d1d6; border:1px solid #3a3a45; border-radius:6px; font-size:0.8rem; box-sizing:border-box;" placeholder="عربي">${(typeof ov.ar === 'string' ? ov.ar : def.ar)}</textarea>`;
+                        }
+                        if (def.en !== null && def.en !== undefined) {
+                            html += `<textarea id="gov-en-${gid}" rows="2" dir="ltr" style="width:100%; margin:4px 0; padding:8px; background:#121216; color:#d1d1d6; border:1px solid #3a3a45; border-radius:6px; font-size:0.8rem; box-sizing:border-box;" placeholder="English">${(typeof ov.en === 'string' ? ov.en : def.en)}</textarea>`;
+                        }
+                        html += `</div>`;
+                    }
+                });
+            }
+            html += `</div></div>`;
+        });
+        list.innerHTML = html;
+    }
+
+    function toggleGuideBuilderCard(pid) {
+        const el = document.getElementById('guide-card-body-' + pid);
+        if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+    }
+
+    function moveGuidePage(pid, dir) {
+        const order = ((window.__guidePageOrder && window.__guidePageOrder.length) ? window.__guidePageOrder : GUIDE_FIXED_PAGE_ORDER).slice();
+        const i = order.indexOf(pid);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= order.length) return;
+        const tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+        window.__guidePageOrder = order;
+        renderGuideBuilderUI();
+    }
+
+    function addGuideCustomPage() {
+        const id = 'custom-' + Date.now();
+        window.__guideCustomPages = window.__guideCustomPages || [];
+        window.__guideCustomPages.push({ id, titleAr: 'صفحة جديدة', titleEn: 'New Page', textAr: '', textEn: '', img: '' });
+        window.__guidePageOrder = ((window.__guidePageOrder && window.__guidePageOrder.length) ? window.__guidePageOrder.slice() : GUIDE_FIXED_PAGE_ORDER.slice());
+        window.__guidePageOrder.push(id);
+        renderGuideBuilderUI();
+    }
+
+    function deleteGuideCustomPage(pid) {
+        if (!confirm('⚠️ هل تريد حذف هذه الصفحة نهائياً من دليل الضيف؟')) return;
+        window.__guideCustomPages = (window.__guideCustomPages || []).filter(c => c.id !== pid);
+        window.__guidePageOrder = ((window.__guidePageOrder && window.__guidePageOrder.length) ? window.__guidePageOrder : GUIDE_FIXED_PAGE_ORDER).filter(p => p !== pid);
+        renderGuideBuilderUI();
+    }
+
+    function uploadGuideImage(event, gid, customPageId) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            fetch(gasUrl, { method: 'POST', body: JSON.stringify({
+                action: 'uploadDocument', fileName: 'GuideImg_' + Date.now() + '_' + file.name, fileType: file.type, fileData: e.target.result
+            })})
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success' && d.url) {
+                    if (customPageId) {
+                        const cp = (window.__guideCustomPages || []).find(c => c.id === customPageId);
+                        if (cp) cp.img = d.url;
+                    } else if (gid) {
+                        window.__guideOverrides[gid] = window.__guideOverrides[gid] || {};
+                        window.__guideOverrides[gid].img = d.url;
+                    }
+                    renderGuideBuilderUI();
+                    showStatus('✅ تم رفع الصورة، متنساش تدوس حفظ دليل الضيف.', 'success');
+                } else {
+                    showStatus('❌ ' + (d.message || 'تعذر رفع الصورة.'), 'error');
+                }
+            })
+            .catch(() => showStatus('❌ خطأ في الاتصال أثناء رفع الصورة.', 'error'));
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function resetGuideImage(gid) {
+        if (window.__guideOverrides[gid]) delete window.__guideOverrides[gid].img;
+        renderGuideBuilderUI();
+    }
+
+    function saveGuideBuilder() {
+        document.querySelectorAll('#guide-builder-list textarea[id^="gov-ar-"]').forEach(ta => {
+            const gid = ta.id.replace('gov-ar-', '');
+            window.__guideOverrides[gid] = window.__guideOverrides[gid] || {};
+            window.__guideOverrides[gid].ar = ta.value;
+        });
+        document.querySelectorAll('#guide-builder-list textarea[id^="gov-en-"]').forEach(ta => {
+            const gid = ta.id.replace('gov-en-', '');
+            window.__guideOverrides[gid] = window.__guideOverrides[gid] || {};
+            window.__guideOverrides[gid].en = ta.value;
+        });
+        (window.__guideCustomPages || []).forEach(cp => {
+            const ta = document.getElementById('gcp-titleAr-' + cp.id); if (ta) cp.titleAr = ta.value;
+            const te = document.getElementById('gcp-titleEn-' + cp.id); if (te) cp.titleEn = te.value;
+            const ba = document.getElementById('gcp-textAr-' + cp.id); if (ba) cp.textAr = ba.value;
+            const be = document.getElementById('gcp-textEn-' + cp.id); if (be) cp.textEn = be.value;
+        });
+
+        saveSettingsToCloud({
+            guideOverrides: JSON.stringify(window.__guideOverrides || {}),
+            guidePageOrder: JSON.stringify(window.__guidePageOrder || GUIDE_FIXED_PAGE_ORDER),
+            guideCustomPages: JSON.stringify(window.__guideCustomPages || [])
+        }, () => {
+            showStatus('✅ تم حفظ دليل الضيف بنجاح.', 'success');
+            applyGuideBuilder();
+            renderGuideBuilderUI();
+        }, () => {
+            showStatus('❌ تعذر حفظ دليل الضيف — تأكد من الاتصال وحاول تاني.', 'error');
         });
     }
 
@@ -5580,6 +5920,9 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                                    showVodafone: String(showVodafone), currentFormat });
         }
 
+        // v38: تطبيق تعديلات بناء دليل الضيف (نصوص/صور مخصصة + ترتيب الصفحات) فوق البيانات الديناميكية اللي فوق
+        applyGuideBuilder();
+
         if (shouldPrint) {
             showStatus('✅ تم التحديث! جاري فتح معالج الطباعة...', 'success');
             setTimeout(() => window.print(), 1200);
@@ -5666,6 +6009,11 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             if (s.hostName && document.getElementById('input-host-name')) document.getElementById('input-host-name').value = s.hostName;
             if (s.hostPhone && document.getElementById('input-host-phone')) document.getElementById('input-host-phone').value = s.hostPhone;
             if (s.localGuideText && document.getElementById('input-local-guide')) document.getElementById('input-local-guide').value = s.localGuideText; // v37
+            // v38: تحميل تعديلات بناء دليل الضيف (نصوص/صور مخصصة + ترتيب الصفحات + الصفحات المضافة)
+            if (s.guideOverrides) { try { window.__guideOverrides = JSON.parse(s.guideOverrides) || {}; } catch (e) {} }
+            if (s.guidePageOrder) { try { const o = JSON.parse(s.guidePageOrder); if (Array.isArray(o) && o.length) window.__guidePageOrder = o; } catch (e) {} }
+            if (s.guideCustomPages) { try { const cps = JSON.parse(s.guideCustomPages); if (Array.isArray(cps)) window.__guideCustomPages = cps; } catch (e) {} }
+            renderGuideBuilderUI();
             unitBannerData.hostName = s.hostName || '';
             unitBannerData.hostPhone = s.hostPhone || '';
             if (s.cohosts) {
@@ -5871,6 +6219,8 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
 
     /* ===== تهيئة واجهة الدليل واستدعاء البيانات المحفوظة والاتصال بسيرفر الشيت ===== */
     window.onload = function() {
+        captureGuideFactoryDefaults(); // v38: لازم يتنفذ قبل أي تطبيق لتعديلات بناء دليل الضيف
+        if (document.getElementById('guide-builder-list')) renderGuideBuilderUI();
         makeQR('qr-map-div', 'https://maps.google.com/?q=30.0686764,31.2799624');
 
         if (window.EXPORTED_DATA && window.EXPORTED_DATA.isExported) {
