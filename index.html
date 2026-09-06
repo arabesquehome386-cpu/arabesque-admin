@@ -1779,6 +1779,21 @@
         </button>
     </div>
 
+    <!-- ===== v37: دليل الأماكن القريبة (Local Guide) — يظهر للضيف كزرار في البوت ===== -->
+    <div class="router-reminder-box" style="background: rgba(46,139,87,0.1); border-color: var(--accent-green); padding: 15px; margin-bottom: 20px; border-radius: 12px;">
+        <div class="router-reminder-title" style="color: #7fd7a5; margin-bottom: 8px; font-size: 1rem; font-weight: 800;">
+            <i class="fa-solid fa-map-location-dot"></i> <span>دليل الأماكن القريبة (يظهر للضيف في البوت)</span>
+        </div>
+        <p style="color:#a0a0a5; font-size:0.78rem; margin-bottom:10px;">
+            اكتب أي أماكن قريبة من الشقة تنصح بيها الضيوف (مطاعم، صيدلية، سوبر ماركت...) — سطر لكل مكان، وممكن تحط لينك ماب جنبه. النص ده هيظهر للضيف لو دوس زرار "📍 أماكن قريبة" في البوت.
+        </p>
+        <textarea id="input-local-guide" rows="6" placeholder="مثال:&#10;🍽️ مطعم كذا — أفضل مكان للمشويات، 5 دقايق مشي&#10;https://maps.google.com/?q=...&#10;&#10;💊 صيدلية كذا — مفتوحة 24 ساعة&#10;https://maps.google.com/?q=..."
+            style="width:100%; background:#121216; color:#d1d1d6; border:1px solid #3a3a45; border-radius:8px; padding:12px; font-family:inherit; font-size:0.85rem; line-height:1.8; resize:vertical; box-sizing:border-box;"></textarea>
+        <button class="router-reminder-btn" style="margin-top:10px; padding:7px 16px;" onclick="saveLocalGuide()">
+            <i class="fas fa-save"></i> 💾 حفظ دليل الأماكن القريبة
+        </button>
+    </div>
+
     <!-- ===== v28: صندوق البيانات الديناميكي (بديل الباسوردات الثابتة) ===== -->
     <div class="router-reminder-box" style="background: rgba(142, 68, 173, 0.15); border-color: #8e44ad; padding: 15px; margin-bottom: 20px; border-radius: 12px;">
         <div class="router-reminder-title" style="color: #bb8fce; margin-bottom: 12px; font-size: 1rem; font-weight: 800; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -3367,6 +3382,16 @@
         unitBannerData.hostName = hostName;
         unitBannerData.hostPhone = hostPhone;
         renderUnitBanner();  // v30: يتحدث فوراً من غير ما تحتاج تعمل Refresh
+    }
+
+    // v37: حفظ دليل الأماكن القريبة — بيظهر للضيف في البوت كزرار "📍 أماكن قريبة"
+    function saveLocalGuide() {
+        const text = document.getElementById('input-local-guide').value;
+        saveSettingsToCloud({ localGuideText: text }, () => {
+            showStatus('✅ تم حفظ دليل الأماكن القريبة.', 'success');
+        }, () => {
+            showStatus('❌ تعذر حفظ دليل الأماكن القريبة — تأكد من الاتصال وحاول تاني.', 'error');
+        });
     }
 
     /* =========================================================
@@ -5635,6 +5660,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             // v28: بيانات المضيف والمساعدين
             if (s.hostName && document.getElementById('input-host-name')) document.getElementById('input-host-name').value = s.hostName;
             if (s.hostPhone && document.getElementById('input-host-phone')) document.getElementById('input-host-phone').value = s.hostPhone;
+            if (s.localGuideText && document.getElementById('input-local-guide')) document.getElementById('input-local-guide').value = s.localGuideText; // v37
             unitBannerData.hostName = s.hostName || '';
             unitBannerData.hostPhone = s.hostPhone || '';
             if (s.cohosts) {
