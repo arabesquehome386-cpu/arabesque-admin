@@ -2894,7 +2894,12 @@
                 populateBookingsDropdown();
                 renderCalendar(); // تحديث التقويم بعد جلب الحجوزات
                 renderIncomeTable();
-                showStatus('🟢 تم تحديث قائمة الحجوزات النشطة من جوجل شيت بنجاح!', 'success');
+                showStatus('🟢 تم تحديث قائمة الحجوزات النشطة من جوجل شيت بنجاح!' +
+                    (resData.skippedRows ? ' (⚠️ تم تجاهل ' + resData.skippedRows + ' صف تالف)' : ''), 'success');
+            } else {
+                // v37.1: قبل كده كان مفيش else هنا خالص — أي رد status:"error" من السيرفر
+                // كان بيختفي بصمت والشاشة تفضل فاضية بدون ولا رسالة. دلوقتي بيظهر السبب الحقيقي.
+                showStatus('❌ فشل تحميل الحجوزات من السيرفر: ' + (resData.message || 'خطأ غير معروف.'), 'error');
             }
         })
         .catch(err => {
