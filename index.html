@@ -130,11 +130,6 @@
     .admin-tab-btn:hover { color: #d1d1d6; }
     .admin-tab-active { background: rgba(197,168,92,0.15); color: var(--gold-light); border-color: var(--gold); }
 
-    /* v41: شريط سعر الصرف اللحظي المتحرك */
-    @keyframes ticker-scroll {
-        from { transform: translateX(100%); }
-        to   { transform: translateX(-100%); }
-    }
     /* v23: min-width:0 على أبناء أي Grid — من غيرها العنصر بيرفض ينكمش أقل من محتواه
        (القيمة الافتراضية min-width:auto) وده أشهر سبب لخروج المحتوى بره الشاشة على الموبايل. */
     .admin-grid > *, .info-grid > *, .stay-grid > *, .visual-guide-container > * { min-width: 0; }
@@ -1078,8 +1073,8 @@
     <p class="panel-subtitle">البيانات تُحفظ تلقائياً في المتصفح • يتم جلب الحجوزات النشطة وتعديلها بسهولة من جوجل شيت</p>
 
     <!-- ===== v41: شريط أسعار الصرف اللحظية المتحرك — ظاهر فوق كل التبويبات ===== -->
-    <div id="live-rate-ticker" style="background:#1e1e24; border:1px solid var(--gold); border-radius:8px; padding:8px 0; margin-bottom:16px; overflow:hidden; white-space:nowrap;">
-        <span id="live-rate-ticker-track" style="display:inline-block; padding-right:30px; color:var(--gold-light); font-weight:700; font-size:0.85rem; animation: ticker-scroll 22s linear infinite;">
+    <div id="live-rate-ticker" style="background:#1e1e24; border:1px solid var(--gold); border-radius:8px; padding:8px 14px; margin-bottom:16px; overflow:hidden; white-space:normal; text-align:center;">
+        <span id="live-rate-ticker-track" style="display:inline-block; color:var(--gold-light); font-weight:700; font-size:0.85rem;">
             🔄 جاري سحب أسعار الصرف اللحظية...
         </span>
     </div>
@@ -2086,14 +2081,14 @@
             </div>
 
             <div class="admin-field" style="grid-column: 1 / -1;">
-                <label>الحجز جاي منين / Booking Source</label>
+                <label>حجز</label>
                 <div class="source-options">
-                    <input type="radio" id="inv-src-booking" name="invoice-booking-source" value="Booking.com" checked>
-                    <label for="inv-src-booking" class="source-btn-label">Booking</label>
+                    <input type="radio" id="inv-src-internal" name="invoice-booking-source" value="حجز داخلي" checked>
+                    <label for="inv-src-internal" class="source-btn-label">داخلي</label>
+                    <input type="radio" id="inv-src-booking" name="invoice-booking-source" value="Booking.com">
+                    <label for="inv-src-booking" class="source-btn-label">بوكينج</label>
                     <input type="radio" id="inv-src-airbnb" name="invoice-booking-source" value="Airbnb">
-                    <label for="inv-src-airbnb" class="source-btn-label">Airbnb</label>
-                    <input type="radio" id="inv-src-internal" name="invoice-booking-source" value="حجز داخلي">
-                    <label for="inv-src-internal" class="source-btn-label">حجز داخلي</label>
+                    <label for="inv-src-airbnb" class="source-btn-label">اير بي ان بي</label>
                 </div>
             </div>
 
@@ -2115,7 +2110,9 @@
                     <input type="radio" id="inv-disc-percent" name="invoice-discount-type" value="percent" onchange="toggleInvoiceDiscountInput(); calculateInvoiceTotals();">
                     <label for="inv-disc-percent" class="source-btn-label">نسبة %</label>
                     <input type="radio" id="inv-disc-amount" name="invoice-discount-type" value="amount" onchange="toggleInvoiceDiscountInput(); calculateInvoiceTotals();">
-                    <label for="inv-disc-amount" class="source-btn-label">مبلغ ثابت</label>
+                    <label for="inv-disc-amount" class="source-btn-label">مبلغ ثابت (إجمالي)</label>
+                    <input type="radio" id="inv-disc-pernight" name="invoice-discount-type" value="perNight" onchange="toggleInvoiceDiscountInput(); calculateInvoiceTotals();">
+                    <label for="inv-disc-pernight" class="source-btn-label">خصم في الليلة</label>
                 </div>
             </div>
             <div class="admin-field" id="invoice-discount-value-wrap" style="display:none;">
@@ -3440,6 +3437,7 @@
     function deleteUnitLogo() {
         if (!confirm('حذف شعار الوحدة؟')) return;
         saveSettingsToCloud({ unitLogoUrl: '' });
+        unitBannerData.logo = ''; // v41.1: كان ده السبب إن اللوجو يفضل ظاهر (أو يختفي) غلط من غير تحديث للصفحة
         const preview = document.getElementById('unit-logo-preview');
         if (preview) preview.innerHTML = '<span style="color:#8a8a90; font-size:0.8rem;">مفيش شعار حالياً.</span>';
         const fileInput = document.getElementById('input-unit-logo');
@@ -3476,8 +3474,10 @@
             .then(d => {
                 if (d.status === 'success' && d.url) {
                     saveSettingsToCloud({ unitLogoUrl: d.url });
+                    unitBannerData.logo = d.url; // v41.1: من غير السطر ده اللوجو ما كانش يظهر فورًا بعد الرفع إلا بعد تحديث الصفحة
                     renderUnitLogoPreview(d.url, file);
                     renderUnitBanner();
+                    showStatus('✅ تم رفع الشعار وهيظهر تلقائياً فوق كل الفواتير والدليل.', 'success');
                 } else if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ ' + (d.message || 'فشل الرفع.') + '</span>';
             })
             .catch(() => { if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ خطأ في الاتصال.</span>'; });
@@ -6532,7 +6532,11 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         const label = document.getElementById('invoice-discount-value-label');
         if (!wrap) return;
         wrap.style.display = (type === 'none') ? 'none' : '';
-        if (label) label.textContent = (type === 'percent') ? 'قيمة الخصم (%)' : 'قيمة الخصم (مبلغ)';
+        if (label) {
+            if (type === 'percent') label.textContent = 'قيمة الخصم (%)';
+            else if (type === 'perNight') label.textContent = 'قيمة الخصم في كل ليلة';
+            else label.textContent = 'قيمة الخصم (إجمالي)';
+        }
     }
 
     function calculateInvoiceTotals() {
@@ -6549,6 +6553,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         let discountAmount = 0;
         if (discountType === 'percent') discountAmount = subtotal * (discountValue / 100);
         else if (discountType === 'amount') discountAmount = discountValue;
+        else if (discountType === 'perNight') discountAmount = discountValue * nights; // v41.1: خصم في الليلة × عدد الليالي
         if (discountAmount > subtotal) discountAmount = subtotal;
         if (discountAmount < 0) discountAmount = 0;
         const total = Math.max(0, subtotal - discountAmount);
@@ -6936,9 +6941,8 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         if (liveRates.SAR) parts.push('💵 1$ = ' + liveRates.SAR.toFixed(2) + ' ر.س');
         if (liveRates.EGP && liveRates.SAR) parts.push('🔁 1 ر.س = ' + (liveRates.EGP / liveRates.SAR).toFixed(2) + ' ج.م');
         parts.push('🕒 آخر تحديث: ' + new Date(liveRatesFetchedAt || Date.now()).toLocaleTimeString('ar-EG'));
-        const line = parts.join('    •    ');
-        // تكرار النص مرتين عشان السكرول يبان متواصل بدون فجوة واضحة
-        el.textContent = line + '          •          ' + line;
+        // v41.1: الشريط بقى ثابت (مش متحرك) بناءً على طلبك — بس القيمة نفسها لسه بتتحدث أوتوماتيك كل ساعة
+        el.textContent = parts.join('    •    ');
     }
 
     // بيبني محتوى مستند الفاتورة/عرض السعر بلغة واحدة (عربي أو إنجليزي)
@@ -6949,8 +6953,10 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         const title = isAr ? (isQuote ? 'عرض سعر' : 'فاتورة') : (isQuote ? 'Quote' : 'Invoice');
         const todayDisplay = new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-GB');
         const logoHtml = unitBannerData.logo ? `<img src="${unitBannerData.logo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #c5a85c;">` : '';
+        const discountNote = doc.discountType === 'percent' ? `(${doc.discountValue}%)` :
+            doc.discountType === 'perNight' ? `(${(parseFloat(doc.discountValue)||0).toFixed(2)} ${symbol} / ${isAr ? 'ليلة' : 'night'})` : '';
         const discountRow = (doc.discountAmount && parseFloat(doc.discountAmount) > 0)
-            ? `<tr><td>${isAr ? 'الخصم' : 'Discount'} ${doc.discountType === 'percent' ? '(' + doc.discountValue + '%)' : ''}</td><td style="text-align:left;">- ${(parseFloat(doc.discountAmount)||0).toFixed(2)} ${symbol}</td></tr>`
+            ? `<tr><td>${isAr ? 'الخصم' : 'Discount'} ${discountNote}</td><td style="text-align:left;">- ${(parseFloat(doc.discountAmount)||0).toFixed(2)} ${symbol}</td></tr>`
             : '';
         const notesHtml = doc.notes ? `<div style="margin-top:14px; font-size:0.85rem; color:#444;"><strong>${isAr ? 'ملاحظات' : 'Notes'}:</strong> ${doc.notes}</div>` : '';
         const numberLine = doc.invoiceNumber ? `<div style="font-size:0.95rem; color:#555;">${isAr ? 'رقم' : 'No.'}: ${doc.invoiceNumber}</div>` : '<div style="font-size:0.85rem; color:#e74c3c;">' + (isAr ? '(مسودة — غير محفوظة)' : '(Draft — not saved)') + '</div>';
