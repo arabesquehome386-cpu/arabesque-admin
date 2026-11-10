@@ -2933,7 +2933,8 @@
         const select = document.getElementById('bookings-select');
         select.innerHTML = '<option value="">-- اختر حجزاً مسجلاً لتعديله أو حذفه --</option>';
 
-        localBookingsCache.forEach(b => {
+        // الأحدث أولاً (ترتيب تنازلي بتاريخ الدخول)
+        [...localBookingsCache].sort((a, b) => new Date(b.checkIn) - new Date(a.checkIn)).forEach(b => {
             if (b.archived) return; // لا تظهر الحجوزات المؤرشفة في القائمة النشطة
             const opt = document.createElement('option');
             opt.value = b.bookingID;
