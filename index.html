@@ -1459,10 +1459,11 @@
                             <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">المصروفات ($)</th>
                             <th style="padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">المصروفات (ج.م)</th>
                             <th class="egp-eq-col" style="display:none; padding:8px; text-align:center; border-bottom:1px solid #3a3a45;">صافي الربح (ج.م تقديري)</th>
+                            <th class="egp-eq-col" style="display:none; padding:8px; text-align:center; border-bottom:1px solid #3a3a45;" title="بيستخدم الدفعات الحقيقية اللي سُجلت على الفواتير بدل الدخل الكامل المحجوز">صافي حقيقي (محصّل من الفواتير) 🧾</th>
                         </tr>
                     </thead>
                     <tbody id="financial-report-body">
-                        <tr><td colspan="8" style="padding:14px; text-align:center; color:#888;">اضغط "تحديث البيانات" لعرض التقرير</td></tr>
+                        <tr><td colspan="9" style="padding:14px; text-align:center; color:#888;">اضغط "تحديث البيانات" لعرض التقرير</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -2019,6 +2020,10 @@
     <!-- ===== v41: تبويب الفواتير وعروض الأسعار ===== -->
     <div id="admin-tab-invoices" style="display:none;">
 
+        <!-- v41.3 (فكرة 4): يظهر بس وقت تعديل فاتورة محفوظة بالفعل -->
+        <div id="invoice-edit-banner" style="display:none; background:rgba(230,166,30,0.15); border:1px solid #e6a61e; color:#e6a61e; padding:10px 14px; border-radius:10px; margin-bottom:14px; font-size:0.85rem; font-weight:700;"></div>
+        <button id="cancel-invoice-edit-btn" class="btn-panel" onclick="clearInvoiceForm()" style="display:none; background:linear-gradient(135deg,#6b6b6b,#8e8e8e); margin-bottom:14px;" title="يرجّعك لوضع إنشاء فاتورة جديدة">↩️ إلغاء التعديل / فاتورة جديدة</button>
+
         <div class="router-reminder-box" style="background: rgba(52,152,219,0.10); border-color:#3498db; padding:15px; margin-bottom:20px; border-radius:12px; display:block;">
             <div class="router-reminder-title" style="margin-bottom:10px;">
                 <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -2038,6 +2043,9 @@
             </div>
             <div id="invoices-monthly-stats" style="color:#d1d1d6; font-size:0.85rem;">جاري الحساب…</div>
         </div>
+
+        <!-- v41.3 (فكرة 1): تذكير الدفعات المتبقية — بيبعتلك رسالة على تليجرام فيها الفواتير اللي فيها متبقي وقرب ميعاد دخول الضيف (مع رابط واتساب جاهز تبعته إنت للضيف) -->
+        <button id="check-pending-payments-btn" class="btn-panel" onclick="checkPendingPaymentsNow()" style="background:linear-gradient(135deg,#b8860b,#d4af37); margin-bottom:20px;" title="بيفحص كل الفواتير دلوقتي ويبعتلك على تليجرام أي فاتورة فيها متبقي وقرب ميعاد دخول ضيفها (بيحصل أوتوماتيك كل يوم 9 الصبح كمان)">🔔 تحقق من الدفعات المتبقية الآن</button>
 
         <div class="bookings-dropdown-container">
             <div class="bookings-dropdown-title"><i class="fa-solid fa-magnifying-glass"></i> اختر حجزاً مسجلاً بالفعل لعمل فاتورة له (اختياري)</div>
@@ -4340,6 +4348,13 @@
         const banner = document.getElementById('unit-banner');
         if (banner) banner.style.display = (tab === 'bookings') ? '' : 'none'; // v32: البانر بيظهر دايماً (بيانات الشركة ثابتة فيه)
         if (tab === 'reports') {
+            // v41.3: محتاجين سجل الفواتير والدفعات محمّل عشان عمود "صافي حقيقي" يحسب صح
+            try {
+                const invHistPromise = loadInvoicesHistory();
+                if (invHistPromise && typeof invHistPromise.then === 'function') {
+                    invHistPromise.then(() => { try { renderFinancialReport(); } catch (e) {} });
+                }
+            } catch (e) {}
             fetchLiveUsdEgpRate().then(() => renderFinancialReport());  // v31: سعر حي بدل السجل اليدوي
             renderExpensesTable();
             renderIncomeTable();
@@ -5079,7 +5094,22 @@
             else monthly[m].expEgp += parseFloat(e.amount) || 0;
         });
 
-        let totalCount = 0, totalNights = 0, totalIncUsd = 0, totalIncEgp = 0, totalExpUsd = 0, totalExpEgp = 0, totalNetEgp = 0;
+        // v41.3: فكرة رقم 5 — "صافي حقيقي" بيستخدم المحصّل الفعلي من دفعات الفواتير (مش الدخل المحجوز بالكامل)
+        // مطروح منه نفس مصروفات الشهر، عشان تعرف صافي دخلك الحقيقي اللي دخل جيبك فعلاً
+        const realCollectedEgp = Array.from({length: 12}, () => 0);
+        invoicesHistoryCache.forEach(doc => {
+            if (doc.voided) return;
+            const cur = doc.currency || 'EGP';
+            (doc.payments || []).forEach(p => {
+                const d = new Date(p.date);
+                if (isNaN(d.getTime()) || d.getFullYear() !== year) return;
+                const m = d.getMonth();
+                const amt = parseFloat(p.amount) || 0;
+                realCollectedEgp[m] += (liveRates && cur !== 'EGP') ? convertCurrency(amt, cur, 'EGP') : amt;
+            });
+        });
+
+        let totalCount = 0, totalNights = 0, totalIncUsd = 0, totalIncEgp = 0, totalExpUsd = 0, totalExpEgp = 0, totalNetEgp = 0, totalRealNetEgp = 0;
         const rows = monthly.map((m, idx) => {
             totalCount += m.count; totalNights += m.nights;
             totalIncUsd += m.incomeUsd; totalIncEgp += m.incomeEgp;
@@ -5087,7 +5117,11 @@
             // صافي الربح التقديري بالجنيه — بيتحسب بس لو السوتش مفعّل (بيحول الدولار بسعر اليوم الحي)
             const netEgp = (m.incomeEgp + toEGPLive(m.incomeUsd, 'USD')) - (m.expEgp + toEGPLive(m.expUsd, 'USD'));
             totalNetEgp += netEgp;
+            const expTotalEgp = m.expEgp + toEGPLive(m.expUsd, 'USD');
+            const realNetEgp = realCollectedEgp[idx] - expTotalEgp;
+            totalRealNetEgp += realNetEgp;
             const netColor = netEgp >= 0 ? '#2ecc71' : '#e74c3c';
+            const realNetColor = realNetEgp >= 0 ? '#2ecc71' : '#e74c3c';
             return `
                 <tr style="border-bottom:1px solid #2a2a35;">
                     <td style="padding:8px;">${REPORT_MONTH_NAMES[idx]}</td>
@@ -5100,6 +5134,7 @@
                     <td style="padding:8px; text-align:center; color:#e74c3c;">${m.expUsd ? m.expUsd.toLocaleString() : '—'}</td>
                     <td style="padding:8px; text-align:center; color:#e74c3c;">${m.expEgp ? m.expEgp.toLocaleString() : '—'}</td>
                     <td class="egp-eq-col" style="display:${showEgpEquivalent ? '' : 'none'}; padding:8px; text-align:center; font-weight:800; color:${netColor};">${netEgp.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+                    <td class="egp-eq-col" style="display:${showEgpEquivalent ? '' : 'none'}; padding:8px; text-align:center; font-weight:800; color:${realNetColor};">${realNetEgp.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
                 </tr>`;
         }).join('');
 
@@ -5113,6 +5148,7 @@
                 <td style="padding:8px; text-align:center; color:#e74c3c;">${totalExpUsd ? totalExpUsd.toLocaleString() : '—'}</td>
                 <td style="padding:8px; text-align:center; color:#e74c3c;">${totalExpEgp ? totalExpEgp.toLocaleString() : '—'}</td>
                 <td class="egp-eq-col" style="display:${showEgpEquivalent ? '' : 'none'}; padding:8px; text-align:center; color:${totalNetEgp>=0?'#2ecc71':'#e74c3c'};">${totalNetEgp.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+                <td class="egp-eq-col" style="display:${showEgpEquivalent ? '' : 'none'}; padding:8px; text-align:center; color:${totalRealNetEgp>=0?'#2ecc71':'#e74c3c'};">${totalRealNetEgp.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
             </tr>`;
 
         tbody.innerHTML = rows + totalRow;
@@ -6528,6 +6564,8 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     let invoicesHistoryCache = [];
     let lastSavedInvoiceDoc = null; // آخر فاتورة/عرض سعر تم حفظه بنجاح (عشان الطباعة تستخدم رقمه الصحيح)
     let invoiceSourceBookingId = null; // لو الفاتورة متعبّاة من حجز موجود، نستثنيه من فحص تداخل التواريخ
+    let editingInvoiceNumber = null; // v41.3 (فكرة 4): لو مش null، يعني إحنا بصدد تعديل فاتورة محفوظة بالفعل بدل إنشاء جديدة
+    let editingInvoicePaidTotal = 0; // v41.3 (فكرة 4): المدفوع سابقاً على الفاتورة اللي بنعدّلها، عشان نحسب المتبقي الصحيح بعد التعديل
 
     function currencySymbol(code) {
         if (code === 'USD') return '$';
@@ -6617,9 +6655,60 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         if (picker) picker.value = '';
         lastSavedInvoiceDoc = null;
         invoiceSourceBookingId = null;
+        editingInvoiceNumber = null; // v41.3 (فكرة 4)
+        updateInvoiceEditBanner();
         toggleInvoiceDiscountInput();
         calculateInvoiceTotals();
         showStatus('🧹 تم مسح نموذج الفاتورة.', 'success');
+    }
+
+    // v41.3 (فكرة 4): بيوضح فوق نموذج الفاتورة لو إحنا دلوقتي بصدد تعديل فاتورة محفوظة بالفعل (مش إنشاء جديدة)
+    function updateInvoiceEditBanner() {
+        const banner = document.getElementById('invoice-edit-banner');
+        const cancelBtn = document.getElementById('cancel-invoice-edit-btn');
+        if (!banner) return;
+        if (editingInvoiceNumber) {
+            banner.style.display = '';
+            banner.textContent = '✏️ بتعدّل في الفاتورة رقم ' + editingInvoiceNumber + ' — اضغط "إلغاء التعديل" لو عاوز ترجع تعمل فاتورة جديدة بدلها.';
+            if (cancelBtn) cancelBtn.style.display = '';
+        } else {
+            banner.style.display = 'none';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+        }
+    }
+
+    // v41.3 (فكرة 4): تحميل فاتورة محفوظة من السجل مرة تانية في النموذج عشان تعدّل فيها وتحفظها بنفس رقمها
+    function editInvoiceFromHistory(invoiceNumber) {
+        const doc = invoicesHistoryCache.find(d => d.invoiceNumber === invoiceNumber);
+        if (!doc) { showStatus('⚠️ تعذر العثور على هذا المستند في السجل.', 'error'); return; }
+        if (doc.voided) { showStatus('⚠️ المستند ده ملغي (Voided) — مش ممكن تعديله.', 'error'); return; }
+
+        document.getElementById('input-invoice-guest').value = doc.guestName || '';
+        document.getElementById('input-invoice-phone').value = doc.guestPhone || '';
+        document.getElementById('input-invoice-checkin').value = doc.checkIn || '';
+        document.getElementById('input-invoice-checkout').value = doc.checkOut || '';
+        document.getElementById('input-invoice-price').value = doc.pricePerNight || '';
+        document.getElementById('input-invoice-currency').value = doc.currency || 'EGP';
+        document.getElementById('input-invoice-notes').value = doc.notes || '';
+        document.getElementById('input-invoice-discount-value').value = doc.discountValue || 0;
+
+        const discRadio = document.querySelector(`input[name="invoice-discount-type"][value="${doc.discountType || 'none'}"]`);
+        if (discRadio) discRadio.checked = true;
+        const docTypeRadio = document.querySelector(`input[name="invoice-doc-type"][value="${doc.docType || 'invoice'}"]`);
+        if (docTypeRadio) docTypeRadio.checked = true;
+        const srcRadio = document.querySelector(`input[name="invoice-booking-source"][value="${doc.bookingSource || 'حجز داخلي'}"]`);
+        if (srcRadio) srcRadio.checked = true;
+
+        invoiceSourceBookingId = doc.bookingId || null;
+        editingInvoiceNumber = invoiceNumber;
+        editingInvoicePaidTotal = parseFloat(doc.paidTotal) || 0;
+        updateInvoiceEditBanner();
+        toggleInvoiceDiscountInput();
+        calculateInvoiceTotals();
+        showStatus('✏️ تم تحميل الفاتورة ' + invoiceNumber + ' للتعديل. عدّل اللي محتاجه واضغط حفظ.', 'success');
+
+        const formWrap = document.getElementById('admin-tab-invoices');
+        if (formWrap) formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // v41: تعبئة نموذج الفاتورة تلقائياً من بيانات الحجز المفتوح دلوقتي في تبويب إدارة الحجوزات
@@ -6740,8 +6829,11 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         const today = new Date();
         const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
 
+        const isEditing = !!editingInvoiceNumber; // v41.3 (فكرة 4)
+        const remainingNow = docType === 'quote' ? 0 : Math.max(0, totals.total - (isEditing ? editingInvoicePaidTotal : 0));
+
         const payload = {
-            action: 'saveInvoice',
+            action: isEditing ? 'updateInvoice' : 'saveInvoice',
             docType: docType,
             date: todayStr,
             guestName: guestName,
@@ -6753,21 +6845,29 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             currency: totals.currency, notes: notes, bookingId: invoiceSourceBookingId || '',
             // الحقول دي مش بتُحفظ في الشيت، بس محتاجينها جاهزة للطباعة/PDF فوراً بعد الحفظ
             equivalentText: totals.equivalentText || '',
-            unitName: unitBannerData.name || '', hostName: unitBannerData.hostName || '', hostPhone: unitBannerData.hostPhone || ''
+            unitName: unitBannerData.name || '', hostName: unitBannerData.hostName || '', hostPhone: unitBannerData.hostPhone || '',
+            // v41.3: فاتورة جديدة لسه ماعندهاش دفعات مسجلة، يبقى المتبقي = الإجمالي بالكامل (لو مش عرض سعر)؛
+            // وفي حالة التعديل، بنطرح المدفوع سابقاً من الإجمالي الجديد بعد التعديل
+            remaining: remainingNow, paidTotal: isEditing ? editingInvoicePaidTotal : 0
         };
+        if (isEditing) payload.invoiceNumber = editingInvoiceNumber;
+        Object.assign(payload, readGuidePaymentLinks());
 
-        showStatus('⏳ جاري حفظ ' + (docType === 'quote' ? 'عرض السعر' : 'الفاتورة') + '...', 'success');
+        showStatus('⏳ جاري ' + (isEditing ? 'تحديث' : 'حفظ') + ' ' + (docType === 'quote' ? 'عرض السعر' : 'الفاتورة') + '...', 'success');
 
         return fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload) })
             .then(r => r.json())
             .then(d => {
                 if (d.status === 'success') {
                     const fullDoc = Object.assign({}, payload, {
-                        invoiceNumber: d.invoiceNumber, subtotal: d.subtotal,
+                        invoiceNumber: d.invoiceNumber || editingInvoiceNumber, subtotal: d.subtotal,
                         discountAmount: d.discountAmount, total: d.total
                     });
                     lastSavedInvoiceDoc = fullDoc;
-                    showStatus('✅ ' + (d.message || 'تم الحفظ بنجاح.') + ' (رقم: ' + d.invoiceNumber + ')', 'success');
+                    showStatus('✅ ' + (d.message || 'تم الحفظ بنجاح.') + ' (رقم: ' + fullDoc.invoiceNumber + ')', 'success');
+                    editingInvoiceNumber = null; // v41.3: رجوع لوضع "فاتورة جديدة" بعد الحفظ/التحديث بنجاح
+                    editingInvoicePaidTotal = 0;
+                    updateInvoiceEditBanner();
                     loadInvoicesHistory();
                     return fullDoc;
                 } else {
@@ -6791,10 +6891,10 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     function loadInvoicesHistory() {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
         const box = document.getElementById('invoices-history-list');
-        if (!gasUrl) { if (box) box.textContent = '⚠️ أضف رابط Apps Script أولاً.'; return; }
+        if (!gasUrl) { if (box) box.textContent = '⚠️ أضف رابط Apps Script أولاً.'; return Promise.resolve(); }
         if (box) box.textContent = 'جاري التحميل…';
 
-        fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=invoices')
+        return fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=invoices')
             .then(r => r.json())
             .then(d => {
                 if (d.status !== 'success') { if (box) box.textContent = '❌ فشل تحميل السجل: ' + (d.message || ''); return; }
@@ -6839,6 +6939,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                         <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#2E72B5; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">EN 👁️</button>
                         <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">واتساب AR 📲</button>
                         <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">WhatsApp EN 📲</button>
+                        ${doc.voided ? '' : `<button onclick='editInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)})' style="background:#8e6bc9; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تعديل بيانات الفاتورة دي">✏️ تعديل</button>`}
                         <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "void")' style="background:#c99a2e; color:#1e1e24; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="إلغاء مع الاحتفاظ بالرقم">⛔ إلغاء</button>
                         <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "hard")' style="background:#B22222; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="حذف نهائي من السجل">🗑️ حذف نهائي</button>
                     </div>
@@ -6926,7 +7027,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     function enrichDocWithUnitData(doc) {
         return Object.assign({}, doc, {
             unitName: unitBannerData.name || '', hostName: unitBannerData.hostName || '', hostPhone: unitBannerData.hostPhone || ''
-        });
+        }, readGuidePaymentLinks());
     }
 
     function reprintInvoiceFromHistory(invoiceNumber, lang) {
@@ -6967,6 +7068,24 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر.', 'error'));
     }
 
+    // v41.3 (فكرة 2): بيقرأ روابط الدفع (إنستاباي/فودافون كاش) الموجودة بالفعل في دليل الضيف — لو مفعّلة —
+    // عشان نرفقها في الفاتورة/الـ PDF/رسالة واتساب لما يكون فيه متبقي. دي روابط ثابتة (الضيف بيكتب المبلغ بنفسه)،
+    // مفيش API مؤكد لتوليد رابط بمبلغ محدد تلقائياً مع المزودين دول.
+    function readGuidePaymentLinks() {
+        const links = { instapayUrl: '', vodafoneUrl: '' };
+        try {
+            const instapayChk = document.getElementById('chk-instapay');
+            const instapayA = document.querySelector('#guest-instapay-box a');
+            if (instapayChk && instapayChk.checked && instapayA) links.instapayUrl = instapayA.href;
+        } catch (e) {}
+        try {
+            const vodafoneChk = document.getElementById('chk-vodafone');
+            const vodafoneA = document.querySelector('#guest-vodafone-box a');
+            if (vodafoneChk && vodafoneChk.checked && vodafoneA) links.vodafoneUrl = vodafoneA.href;
+        } catch (e) {}
+        return links;
+    }
+
     // بينظف رقم التليفون ويبني رابط واتساب click-to-chat (نفس طريقة زرار الترحيب الحالي)
     function buildWhatsAppLink(rawPhone, text) {
         let phoneClean = String(rawPhone || '').replace(/\D/g, '');
@@ -7002,7 +7121,18 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                     const intro = lang === 'en'
                         ? `Hello ${doc.guestName || ''}, here is your ${doc.docType === 'quote' ? 'quote' : 'invoice'} (${doc.invoiceNumber || ''}) from ${doc.unitName || 'Arabesque Residence'}:\n\n`
                         : `مرحباً ${doc.guestName || ''}، ده ${title} حضرتك (${doc.invoiceNumber || ''}) من ${doc.unitName || 'أرابيسك ريزيدنس'}:\n\n`;
-                    const link = buildWhatsAppLink(doc.guestPhone, intro + d.pdfUrl);
+                    // v41.3 (فكرة 2): لو فيه متبقي، نضيف نص يوضحه + روابط الدفع الثابتة (المتوفرة) في نفس رسالة الواتساب
+                    const remainingAmt = doc.remaining !== undefined && doc.remaining !== null ? (parseFloat(doc.remaining) || 0) : 0;
+                    let paymentLinesTxt = '';
+                    if (doc.docType !== 'quote' && remainingAmt > 0.009) {
+                        const symbolTxt = doc.currency === 'USD' ? '$' : (doc.currency === 'SAR' ? 'ر.س' : 'ج.م');
+                        paymentLinesTxt = lang === 'en'
+                            ? `\n\nRemaining balance: ${remainingAmt.toFixed(2)} ${doc.currency || symbolTxt}`
+                            : `\n\nالمتبقي للسداد: ${remainingAmt.toFixed(2)} ${symbolTxt}`;
+                        if (doc.instapayUrl) paymentLinesTxt += `\nInstaPay: ${doc.instapayUrl}`;
+                        if (doc.vodafoneUrl) paymentLinesTxt += `\nVodafone Cash: ${doc.vodafoneUrl}`;
+                    }
+                    const link = buildWhatsAppLink(doc.guestPhone, intro + d.pdfUrl + paymentLinesTxt);
                     showStatus('✅ تم توليد الملف، جاري فتح واتساب...', 'success');
                     setTimeout(() => window.open(link, '_blank'), 600);
                 } else {
@@ -7010,6 +7140,20 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                 }
             })
             .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر لتوليد الملف.', 'error'));
+    }
+
+    // v41.3 (فكرة 1): تشغيل فحص الدفعات المتبقية فوراً — بيبعت رسالة على تليجرام بدل انتظار تريجر 9 الصبح
+    function checkPendingPaymentsNow() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        showStatus('⏳ جاري الفحص... (هتوصلك رسالة على تليجرام لو فيه متبقي)', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'checkPendingPaymentsNow' }) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') showStatus('✅ ' + (d.message || 'تم الفحص.'), 'success');
+                else showStatus('❌ فشل: ' + (d.message || ''), 'error');
+            })
+            .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر.', 'error'));
     }
 
     // v41: إعادة تسجيل ربط بوت تليجرام على رابط Apps Script الحالي — يحل مشكلة "البوت مش بيرد خالص"
@@ -7042,6 +7186,13 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     }
 
     // بيبني محتوى مستند الفاتورة/عرض السعر بلغة واحدة (عربي أو إنجليزي)
+    // v41.3: "حجز داخلي" لازم يترجم لما الفاتورة انجليزي؛ Booking.com/Airbnb اسامي عالمية فبتفضل زي ما هي
+    function translateBookingSource(value, lang) {
+        if (lang !== 'en') return value || '';
+        if (value === 'حجز داخلي') return 'Internal Booking';
+        return value || '';
+    }
+
     function buildInvoiceLangBlock(doc, lang) {
         const isAr = lang === 'ar';
         const isQuote = doc.docType === 'quote';
@@ -7057,6 +7208,19 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         const notesHtml = doc.notes ? `<div style="margin-top:14px; font-size:0.85rem; color:#444;"><strong>${isAr ? 'ملاحظات' : 'Notes'}:</strong> ${doc.notes}</div>` : '';
         const numberLine = doc.invoiceNumber ? `<div style="font-size:0.95rem; color:#555;">${isAr ? 'رقم' : 'No.'}: ${doc.invoiceNumber}</div>` : '<div style="font-size:0.85rem; color:#e74c3c;">' + (isAr ? '(مسودة — غير محفوظة)' : '(Draft — not saved)') + '</div>';
         const equivalentRow = doc.equivalentText ? `<tr><td colspan="2" style="padding:4px 0; color:#666; font-size:0.85rem;">${doc.equivalentText}</td></tr>` : '';
+
+        // v41.3 (فكرة 2): لو فيه متبقي، نضيف بوكس يوضح المبلغ المتبقي + روابط الدفع الثابتة (الضيف بيدخل المبلغ بنفسه)
+        const remainingAmt = doc.remaining !== undefined && doc.remaining !== null ? (parseFloat(doc.remaining) || 0) : 0;
+        const showPaymentDue = !isQuote && remainingAmt > 0.009;
+        const payLinksHtml = [
+            doc.instapayUrl ? `<a href="${doc.instapayUrl}" style="display:inline-block; margin:4px 6px; background:#6a1fa0; color:#fff; padding:6px 14px; border-radius:20px; font-size:0.78rem; font-weight:800; text-decoration:none;">💳 InstaPay</a>` : '',
+            doc.vodafoneUrl ? `<a href="${doc.vodafoneUrl}" style="display:inline-block; margin:4px 6px; background:#cc0000; color:#fff; padding:6px 14px; border-radius:20px; font-size:0.78rem; font-weight:800; text-decoration:none;">📱 Vodafone Cash</a>` : ''
+        ].filter(Boolean).join('');
+        const paymentDueBlock = showPaymentDue ? `
+            <div style="margin-top:14px; padding:12px 16px; background:#fff8ec; border:1px solid #e6cf9e; border-radius:10px; text-align:center;">
+                <div style="font-weight:800; color:#a3621a; font-size:0.95rem;">${isAr ? 'المبلغ المتبقي للسداد' : 'Remaining Balance Due'}: ${remainingAmt.toFixed(2)} ${symbol}</div>
+                ${payLinksHtml ? `<div style="margin-top:8px;">${payLinksHtml}</div>` : ''}
+            </div>` : '';
 
         return `
         <div class="invoice-lang-block" dir="${isAr ? 'rtl' : 'ltr'}" style="font-family:${isAr ? "'Tajawal', sans-serif" : "Arial, sans-serif"}; color:#1a1a1a; padding:28px; max-width:720px; margin:0 auto;">
@@ -7081,7 +7245,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                 <tr><td style="padding:4px 0;"><strong>${isAr ? 'تاريخ الدخول' : 'Check-in'}:</strong> ${doc.checkIn || ''}</td>
                     <td style="padding:4px 0;"><strong>${isAr ? 'تاريخ الخروج' : 'Check-out'}:</strong> ${doc.checkOut || ''}</td></tr>
                 <tr><td style="padding:4px 0;"><strong>${isAr ? 'عدد الليالي' : 'Nights'}:</strong> ${doc.nights || 0}</td>
-                    <td style="padding:4px 0;"><strong>${isAr ? 'الحجز جاي من' : 'Booking Source'}:</strong> ${doc.bookingSource || ''}</td></tr>
+                    <td style="padding:4px 0;"><strong>${isAr ? 'الحجز جاي من' : 'Booking Source'}:</strong> ${translateBookingSource(doc.bookingSource, lang)}</td></tr>
             </table>
 
             <table style="width:100%; border-collapse:collapse; font-size:0.95rem; border-top:1px solid #ddd; padding-top:10px;">
@@ -7091,6 +7255,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                 <tr style="border-top:2px solid #c5a85c; font-weight:900; font-size:1.1rem;"><td style="padding:10px 0;">${isAr ? 'الإجمالي النهائي' : 'Total'}</td><td style="text-align:${isAr ? 'left' : 'right'}; color:#a3833d;">${(parseFloat(doc.total)||0).toFixed(2)} ${symbol}</td></tr>
                 ${equivalentRow}
             </table>
+            ${paymentDueBlock}
             ${notesHtml}
 
             <div style="margin-top:60px; display:flex; justify-content:${isAr ? 'flex-end' : 'flex-start'};">
