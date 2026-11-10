@@ -2030,6 +2030,15 @@
             </div>
         </div>
 
+        <!-- v41.2: لوحة سريعة — إجمالي المحصّل (المدفوع فعلياً) هذا الشهر مقابل الشهر اللي فات -->
+        <div class="router-reminder-box" style="background: rgba(197,168,92,0.10); border-color:var(--gold); padding:14px; margin-bottom:20px; border-radius:12px; display:block;">
+            <div class="router-reminder-title" style="margin-bottom:8px;">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>إجمالي المحصّل — هذا الشهر مقابل الشهر اللي فات</span>
+            </div>
+            <div id="invoices-monthly-stats" style="color:#d1d1d6; font-size:0.85rem;">جاري الحساب…</div>
+        </div>
+
         <div class="bookings-dropdown-container">
             <div class="bookings-dropdown-title"><i class="fa-solid fa-magnifying-glass"></i> اختر حجزاً مسجلاً بالفعل لعمل فاتورة له (اختياري)</div>
             <select id="invoice-booking-picker" onchange="prefillInvoiceFromBookingId(this.value)" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #4a4a55; background:#1e1e24; color:white; font-family:inherit;">
@@ -6798,7 +6807,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     function renderInvoicesHistoryList() {
         const box = document.getElementById('invoices-history-list');
         if (!box) return;
-        if (!invoicesHistoryCache.length) { box.textContent = 'لا توجد فواتير أو عروض أسعار محفوظة بعد.'; return; }
+        if (!invoicesHistoryCache.length) { box.textContent = 'لا توجد فواتير أو عروض أسعار محفوظة بعد.'; renderInvoicesMonthlyStats(); return; }
 
         // الأحدث أولاً
         const sorted = [...invoicesHistoryCache].reverse();
@@ -6807,22 +6816,109 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             const symbol = currencySymbol(doc.currency);
             const voidedTag = doc.voided ? ' <span style="color:#e74c3c; font-weight:900;">⛔ ملغاة</span>' : '';
             const rowStyle = doc.voided ? 'opacity:0.55; text-decoration:line-through;' : '';
+
+            const total = parseFloat(doc.total) || 0;
+            const paidTotal = parseFloat(doc.paidTotal) || 0;
+            const remaining = doc.remaining !== undefined ? parseFloat(doc.remaining) || 0 : Math.max(0, total - paidTotal);
+            let payStatus;
+            if (doc.docType === 'quote') payStatus = '';
+            else if (paidTotal <= 0) payStatus = `<span style="color:#e74c3c;">⚠️ غير مدفوعة</span>`;
+            else if (remaining <= 0.009) payStatus = `<span style="color:#2E8B57;">✅ مدفوعة بالكامل</span>`;
+            else payStatus = `<span style="color:#c99a2e;">🟡 مدفوعة جزئياً — المدفوع ${paidTotal.toFixed(2)} / المتبقي ${remaining.toFixed(2)} ${symbol}</span>`;
+
             return `
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:10px; border-bottom:1px solid #3a3a45;">
-                <div style="${rowStyle}">
-                    <strong style="color:var(--gold-light);">${doc.invoiceNumber}</strong> — ${typeLabel} —
-                    ${doc.guestName || '—'} (${doc.checkIn || '—'} ➔ ${doc.checkOut || '—'}) —
-                    <strong>${(parseFloat(doc.total)||0).toFixed(2)} ${symbol}</strong>${voidedTag}
+            <div style="padding:10px; border-bottom:1px solid #3a3a45;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div style="${rowStyle}">
+                        <strong style="color:var(--gold-light);">${doc.invoiceNumber}</strong> — ${typeLabel} —
+                        ${doc.guestName || '—'} (${doc.checkIn || '—'} ➔ ${doc.checkOut || '—'}) —
+                        <strong>${total.toFixed(2)} ${symbol}</strong>${voidedTag}
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#2E8B57; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">AR 👁️</button>
+                        <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#2E72B5; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">EN 👁️</button>
+                        <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">واتساب AR 📲</button>
+                        <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">WhatsApp EN 📲</button>
+                        <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "void")' style="background:#c99a2e; color:#1e1e24; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="إلغاء مع الاحتفاظ بالرقم">⛔ إلغاء</button>
+                        <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "hard")' style="background:#B22222; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="حذف نهائي من السجل">🗑️ حذف نهائي</button>
+                    </div>
                 </div>
-                <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#2E8B57; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">AR 👁️</button>
-                    <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#2E72B5; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">EN 👁️</button>
-                    <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">واتساب AR 📲</button>
-                    <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">WhatsApp EN 📲</button>
-                    <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "void")' style="background:#c99a2e; color:#1e1e24; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="إلغاء مع الاحتفاظ بالرقم">⛔ إلغاء</button>
-                    <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "hard")' style="background:#B22222; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="حذف نهائي من السجل">🗑️ حذف نهائي</button>
+                ${doc.docType === 'quote' ? '' : `
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:0.82rem;">
+                    <div>${payStatus}</div>
+                    <button onclick='toggleAddPaymentRow(${JSON.stringify(doc.invoiceNumber)})' style="background:#3a3a45; color:#d1d1d6; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">➕ إضافة دفعة</button>
                 </div>
+                <div id="add-payment-row-${doc.invoiceNumber}" style="display:none; margin-top:8px; gap:8px; align-items:center;">
+                    <input type="number" min="0" id="add-payment-amount-${doc.invoiceNumber}" placeholder="قيمة الدفعة" style="padding:6px 10px; border-radius:6px; border:1px solid #4a4a55; background:#1e1e24; color:white; width:140px;">
+                    <button onclick='submitInvoicePayment(${JSON.stringify(doc.invoiceNumber)})' style="background:#2E8B57; color:white; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">✅ تسجيل الدفعة</button>
+                </div>`}
             </div>`;
+        }).join('');
+
+        renderInvoicesMonthlyStats();
+    }
+
+    // v41.2: فتح/قفل حقل إضافة دفعة لفاتورة معينة في السجل
+    function toggleAddPaymentRow(invoiceNumber) {
+        const row = document.getElementById('add-payment-row-' + invoiceNumber);
+        if (!row) return;
+        row.style.display = (row.style.display === 'none') ? 'flex' : 'none';
+    }
+
+    function submitInvoicePayment(invoiceNumber) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        const amountEl = document.getElementById('add-payment-amount-' + invoiceNumber);
+        const amount = parseFloat(amountEl ? amountEl.value : 0) || 0;
+        if (amount <= 0) { showStatus('⚠️ اكتب قيمة دفعة صحيحة.', 'error'); return; }
+
+        showStatus('⏳ جاري تسجيل الدفعة...', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'addInvoicePayment', invoiceNumber: invoiceNumber, amount: amount }) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    showStatus('✅ تم تسجيل الدفعة. المتبقي: ' + (parseFloat(d.remaining)||0).toFixed(2), 'success');
+                    if (amountEl) amountEl.value = '';
+                    loadInvoicesHistory();
+                } else {
+                    showStatus('❌ فشل: ' + (d.message || 'خطأ غير معروف.'), 'error');
+                }
+            })
+            .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر.', 'error'));
+    }
+
+    // v41.2: فكرة رقم 5 — إجمالي المحصّل فعلياً (مجموع الدفعات الحقيقية) هذا الشهر مقابل الشهر اللي فات،
+    // مقسّم لكل عملة لوحدها (عشان ما نجمعش جنيه ودولار وريال في رقم واحد مضلل)
+    function renderInvoicesMonthlyStats() {
+        const box = document.getElementById('invoices-monthly-stats');
+        if (!box) return;
+
+        const now = new Date();
+        const curY = now.getFullYear(), curM = now.getMonth();
+        let prevY = curY, prevM = curM - 1;
+        if (prevM < 0) { prevM = 11; prevY -= 1; }
+
+        const curTotals = {}, prevTotals = {};
+        invoicesHistoryCache.forEach(doc => {
+            const cur = doc.currency || 'EGP';
+            (doc.payments || []).forEach(p => {
+                const d = new Date(p.date);
+                if (isNaN(d.getTime())) return;
+                const amt = parseFloat(p.amount) || 0;
+                if (d.getFullYear() === curY && d.getMonth() === curM) curTotals[cur] = (curTotals[cur] || 0) + amt;
+                else if (d.getFullYear() === prevY && d.getMonth() === prevM) prevTotals[cur] = (prevTotals[cur] || 0) + amt;
+            });
+        });
+
+        const currencies = [...new Set([...Object.keys(curTotals), ...Object.keys(prevTotals)])];
+        if (!currencies.length) { box.innerHTML = '<span style="color:#8a8a90;">لسه مفيش دفعات مسجلة الشهرين دول.</span>'; return; }
+
+        box.innerHTML = currencies.map(cur => {
+            const symbol = currencySymbol(cur);
+            const curVal = curTotals[cur] || 0, prevVal = prevTotals[cur] || 0;
+            const diff = curVal - prevVal;
+            const arrow = diff > 0.009 ? '🔼' : (diff < -0.009 ? '🔻' : '➖');
+            return `<div style="margin-bottom:4px;"><strong style="color:var(--gold-light);">${symbol}</strong> — هذا الشهر: <strong>${curVal.toFixed(2)}</strong> &nbsp;|&nbsp; الشهر اللي فات: ${prevVal.toFixed(2)} &nbsp;${arrow}</div>`;
         }).join('');
     }
 
