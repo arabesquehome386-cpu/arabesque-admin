@@ -1085,6 +1085,9 @@
         <button id="tab-btn-settings" class="admin-tab-btn" onclick="switchAdminTab('settings')">
             <i class="fa-solid fa-gear"></i> الإعدادات والربط
         </button>
+        <button id="tab-btn-invoices" class="admin-tab-btn" onclick="switchAdminTab('invoices')">
+            <i class="fa-solid fa-file-invoice-dollar"></i> الفواتير
+        </button>
     </div>
 
     <!-- v31: اتنقل هنا (بره كل تبويب) عشان يفضل ظاهر مهما كنت في أي تبويب -->
@@ -1337,6 +1340,7 @@
     <!-- أزرار التحكم الفعالة دون مسح تلقائي للمدخلات لتسهيل المراجعة -->
     <div class="admin-buttons">
         <button id="save-booking-btn" class="btn-panel" onclick="submitBookingToGoogleSheets('auto')"><i class="fa-solid fa-floppy-disk"></i> حفظ الحجز 💾</button>
+        <button id="create-invoice-btn" class="btn-panel" onclick="createInvoiceFromCurrentBooking()" style="background:linear-gradient(135deg,#1f4e8a,#2E72B5);"><i class="fa-solid fa-file-invoice"></i> عمل فاتورة لهذا الحجز 🧾</button>
         <button id="cancel-booking-btn" class="btn-panel" onclick="cancelBookingToArchive()" style="background:linear-gradient(135deg,#8B2020,#B22222);"><i class="fa-solid fa-ban"></i> إلغاء الحجز ونقله للأرشيف 🚫</button>
         <button id="view-archive-btn" class="btn-panel" onclick="openArchivePanel()" style="background:linear-gradient(135deg,#1f6e4a,#2E8B57);"><i class="fa-solid fa-box-archive"></i> عرض الأرشيف 🗂️</button>
         <button id="restore-archive-btn" class="btn-panel" onclick="openArchivePanel()" style="background:linear-gradient(135deg,#8a6d1f,#c99a2e);"><i class="fa-solid fa-rotate-left"></i> إعادة حجز من الأرشيف ♻️</button>
@@ -2001,6 +2005,125 @@
         </div>
 
     </div> <!-- end admin-tab-settings -->
+
+    <!-- ===== v41: تبويب الفواتير وعروض الأسعار ===== -->
+    <div id="admin-tab-invoices" style="display:none;">
+
+        <div class="router-reminder-box" style="background: rgba(52,152,219,0.10); border-color:#3498db; padding:15px; margin-bottom:20px; border-radius:12px; display:block;">
+            <div class="router-reminder-title" style="margin-bottom:10px;">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span>الفواتير وعروض الأسعار</span>
+            </div>
+            <div style="color:#c5c5ca; font-size:0.82rem; line-height:1.7;">
+                اعمل فاتورة أو عرض سعر لأي ضيف، احفظه برقم تسلسلي ثابت، واطبعه عربي أو إنجليزي أو الاثنين معاً.
+                تقدر كمان تضغط زرار "🧾 عمل فاتورة لهذا الحجز" في تبويب "إدارة الحجوزات" عشان يملى البيانات تلقائياً من الحجز المفتوح دلوقتي.
+            </div>
+        </div>
+
+        <div class="admin-grid">
+            <div class="admin-field">
+                <label>اسم الضيف / Guest Name</label>
+                <input type="text" id="input-invoice-guest" placeholder="مثال: أحمد علي">
+            </div>
+            <div class="admin-field">
+                <label>رقم الموبايل / Mobile</label>
+                <input type="text" id="input-invoice-phone" placeholder="مثال: 201061888636">
+            </div>
+            <div class="admin-field">
+                <label>تاريخ الدخول / Check-in</label>
+                <input type="date" id="input-invoice-checkin" onchange="calculateInvoiceTotals()">
+            </div>
+            <div class="admin-field">
+                <label>تاريخ الخروج / Check-out</label>
+                <input type="date" id="input-invoice-checkout" onchange="calculateInvoiceTotals()">
+            </div>
+            <div class="admin-field">
+                <label>عدد الليالي (تلقائي) / Nights</label>
+                <input type="text" id="display-invoice-nights" disabled style="background:#121216; border-color:#3a3a45;">
+            </div>
+            <div class="admin-field">
+                <label>سعر الليلة / Price per night</label>
+                <input type="number" id="input-invoice-price" min="0" oninput="calculateInvoiceTotals()">
+            </div>
+            <div class="admin-field">
+                <label>العملة / Currency</label>
+                <select id="input-invoice-currency" onchange="calculateInvoiceTotals()">
+                    <option value="EGP">ج.م</option>
+                    <option value="USD">$</option>
+                </select>
+            </div>
+
+            <div class="admin-field" style="grid-column: 1 / -1;">
+                <label>الحجز جاي منين / Booking Source</label>
+                <div class="source-options">
+                    <input type="radio" id="inv-src-booking" name="invoice-booking-source" value="Booking.com" checked>
+                    <label for="inv-src-booking" class="source-btn-label">Booking</label>
+                    <input type="radio" id="inv-src-airbnb" name="invoice-booking-source" value="Airbnb">
+                    <label for="inv-src-airbnb" class="source-btn-label">Airbnb</label>
+                    <input type="radio" id="inv-src-internal" name="invoice-booking-source" value="حجز داخلي">
+                    <label for="inv-src-internal" class="source-btn-label">حجز داخلي</label>
+                </div>
+            </div>
+
+            <div class="admin-field" style="grid-column: 1 / -1;">
+                <label>نوع المستند / Document Type</label>
+                <div class="source-options">
+                    <input type="radio" id="inv-doc-invoice" name="invoice-doc-type" value="invoice" checked onchange="calculateInvoiceTotals()">
+                    <label for="inv-doc-invoice" class="source-btn-label">🧾 فاتورة / Invoice</label>
+                    <input type="radio" id="inv-doc-quote" name="invoice-doc-type" value="quote" onchange="calculateInvoiceTotals()">
+                    <label for="inv-doc-quote" class="source-btn-label">📋 عرض سعر / Quote</label>
+                </div>
+            </div>
+
+            <div class="admin-field" style="grid-column: 1 / -1;">
+                <label>نوع الخصم / Discount</label>
+                <div class="source-options">
+                    <input type="radio" id="inv-disc-none" name="invoice-discount-type" value="none" checked onchange="toggleInvoiceDiscountInput(); calculateInvoiceTotals();">
+                    <label for="inv-disc-none" class="source-btn-label">بدون خصم</label>
+                    <input type="radio" id="inv-disc-percent" name="invoice-discount-type" value="percent" onchange="toggleInvoiceDiscountInput(); calculateInvoiceTotals();">
+                    <label for="inv-disc-percent" class="source-btn-label">نسبة %</label>
+                    <input type="radio" id="inv-disc-amount" name="invoice-discount-type" value="amount" onchange="toggleInvoiceDiscountInput(); calculateInvoiceTotals();">
+                    <label for="inv-disc-amount" class="source-btn-label">مبلغ ثابت</label>
+                </div>
+            </div>
+            <div class="admin-field" id="invoice-discount-value-wrap" style="display:none;">
+                <label id="invoice-discount-value-label">قيمة الخصم</label>
+                <input type="number" id="input-invoice-discount-value" min="0" value="0" oninput="calculateInvoiceTotals()">
+            </div>
+
+            <div class="admin-field">
+                <label>الإجمالي قبل الخصم / Subtotal</label>
+                <input type="text" id="display-invoice-subtotal" disabled style="background:#121216; border-color:#3a3a45;">
+            </div>
+            <div class="admin-field">
+                <label>قيمة الخصم / Discount Amount</label>
+                <input type="text" id="display-invoice-discount-amount" disabled style="background:#121216; border-color:#3a3a45;">
+            </div>
+            <div class="admin-field">
+                <label style="color:var(--gold-light);">الإجمالي النهائي / Total</label>
+                <input type="text" id="display-invoice-total" disabled style="background:#121216; border-color:var(--gold); font-weight:900; color:var(--gold-light);">
+            </div>
+
+            <div class="admin-field" style="grid-column: 1 / -1;">
+                <label>ملاحظات (اختياري) / Notes</label>
+                <input type="text" id="input-invoice-notes" placeholder="أي ملاحظات تظهر في المستند (اختياري)">
+            </div>
+        </div>
+
+        <div class="admin-buttons">
+            <button id="invoice-print-ar-btn" class="btn-panel" onclick="saveAndPrintInvoice('ar')" style="background:linear-gradient(135deg,#1f6e4a,#2E8B57);"><i class="fa-solid fa-print"></i> حفظ وطباعة عربي</button>
+            <button id="invoice-print-en-btn" class="btn-panel" onclick="saveAndPrintInvoice('en')" style="background:linear-gradient(135deg,#1f4e8a,#2E72B5);"><i class="fa-solid fa-print"></i> Save &amp; Print English</button>
+            <button id="invoice-print-both-btn" class="btn-panel" onclick="saveAndPrintInvoice('both')" style="background:linear-gradient(135deg,#8a6d1f,#c99a2e);"><i class="fa-solid fa-print"></i> حفظ وطباعة عربي + English</button>
+            <button id="invoice-save-only-btn" class="btn-panel" onclick="saveInvoiceToCloud()" style="background:#3a3a45;"><i class="fa-solid fa-floppy-disk"></i> حفظ بدون طباعة</button>
+            <button id="invoice-clear-btn" class="btn-panel" onclick="clearInvoiceForm()" style="background:linear-gradient(135deg,#8B2020,#B22222);"><i class="fa-solid fa-eraser"></i> مسح النموذج</button>
+        </div>
+
+        <div class="bookings-dropdown-container" style="margin-top:28px;">
+            <div class="bookings-dropdown-title"><i class="fa-solid fa-list"></i> سجل الفواتير وعروض الأسعار المحفوظة</div>
+            <div id="invoices-history-list" style="color:#d1d1d6; font-size:0.85rem;">جاري التحميل…</div>
+        </div>
+
+    </div> <!-- end admin-tab-invoices -->
 </div>
 
 <!-- ===== دليل الإقامة والصفحات الفاخرة للضيف — يظهر بس في تبويب "إدارة الحجوزات" ===== -->
@@ -4149,7 +4272,7 @@
 
     /* ===== تبويبات لوحة التحكم ===== */
     function switchAdminTab(tab) {
-        const tabs = ['bookings', 'reports', 'rules', 'settings'];
+        const tabs = ['bookings', 'reports', 'rules', 'settings', 'invoices'];
         tabs.forEach(t => {
             const content = document.getElementById('admin-tab-' + t);
             const btn     = document.getElementById('tab-btn-' + t);
@@ -4198,6 +4321,10 @@
             const rulesMode = localStorage.getItem('arabesque_rules_mode') || 'first';
             const modeEl = document.querySelector(`input[name="rules-display-mode"][value="${rulesMode}"]`);
             if (modeEl) modeEl.checked = true;
+        }
+        if (tab === 'invoices') { // v41: الفواتير وعروض الأسعار
+            calculateInvoiceTotals();
+            loadInvoicesHistory();
         }
     }
 
@@ -6332,6 +6459,294 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         // تحميل القوانين وعرضها في الدليل
         loadRulesFromStorage();
         renderGuideRules();
+    }
+
+    /* =========================================================
+       v41: الفواتير وعروض الأسعار
+       ========================================================= */
+    let invoicesHistoryCache = [];
+    let lastSavedInvoiceDoc = null; // آخر فاتورة/عرض سعر تم حفظه بنجاح (عشان الطباعة تستخدم رقمه الصحيح)
+
+    function toggleInvoiceDiscountInput() {
+        const type = (document.querySelector('input[name="invoice-discount-type"]:checked') || {}).value || 'none';
+        const wrap = document.getElementById('invoice-discount-value-wrap');
+        const label = document.getElementById('invoice-discount-value-label');
+        if (!wrap) return;
+        wrap.style.display = (type === 'none') ? 'none' : '';
+        if (label) label.textContent = (type === 'percent') ? 'قيمة الخصم (%)' : 'قيمة الخصم (مبلغ)';
+    }
+
+    function calculateInvoiceTotals() {
+        const checkIn  = document.getElementById('input-invoice-checkin').value;
+        const checkOut = document.getElementById('input-invoice-checkout').value;
+        const nights = calcNights(checkIn, checkOut);
+        document.getElementById('display-invoice-nights').value = nights > 0 ? (nights + ' ليلة / ' + nights + ' Night' + (nights > 1 ? 's' : '')) : '—';
+
+        const price = parseFloat(document.getElementById('input-invoice-price').value) || 0;
+        const subtotal = nights * price;
+
+        const discountType = (document.querySelector('input[name="invoice-discount-type"]:checked') || {}).value || 'none';
+        const discountValue = parseFloat(document.getElementById('input-invoice-discount-value').value) || 0;
+        let discountAmount = 0;
+        if (discountType === 'percent') discountAmount = subtotal * (discountValue / 100);
+        else if (discountType === 'amount') discountAmount = discountValue;
+        if (discountAmount > subtotal) discountAmount = subtotal;
+        if (discountAmount < 0) discountAmount = 0;
+        const total = Math.max(0, subtotal - discountAmount);
+
+        const currency = document.getElementById('input-invoice-currency').value;
+        const symbol = currency === 'USD' ? '$' : 'ج.م';
+
+        document.getElementById('display-invoice-subtotal').value = subtotal.toFixed(2) + ' ' + symbol;
+        document.getElementById('display-invoice-discount-amount').value = discountAmount.toFixed(2) + ' ' + symbol;
+        document.getElementById('display-invoice-total').value = total.toFixed(2) + ' ' + symbol;
+
+        return { nights, price, subtotal, discountType, discountValue, discountAmount, total, currency };
+    }
+
+    function clearInvoiceForm() {
+        document.getElementById('input-invoice-guest').value = '';
+        document.getElementById('input-invoice-phone').value = '';
+        document.getElementById('input-invoice-checkin').value = '';
+        document.getElementById('input-invoice-checkout').value = '';
+        document.getElementById('input-invoice-price').value = '';
+        document.getElementById('input-invoice-currency').value = 'EGP';
+        document.getElementById('input-invoice-notes').value = '';
+        document.getElementById('input-invoice-discount-value').value = 0;
+        const noneRadio = document.getElementById('inv-disc-none');
+        if (noneRadio) noneRadio.checked = true;
+        const invoiceRadio = document.getElementById('inv-doc-invoice');
+        if (invoiceRadio) invoiceRadio.checked = true;
+        const bookingRadio = document.getElementById('inv-src-booking');
+        if (bookingRadio) bookingRadio.checked = true;
+        lastSavedInvoiceDoc = null;
+        toggleInvoiceDiscountInput();
+        calculateInvoiceTotals();
+        showStatus('🧹 تم مسح نموذج الفاتورة.', 'success');
+    }
+
+    // v41: تعبئة نموذج الفاتورة تلقائياً من بيانات الحجز المفتوح دلوقتي في تبويب إدارة الحجوزات
+    function createInvoiceFromCurrentBooking() {
+        const guest = document.getElementById('input-guest').value || '';
+        const phone = document.getElementById('input-phone').value || '';
+        const checkIn = document.getElementById('input-checkin-date').value || '';
+        const checkOut = document.getElementById('input-checkout-date').value || '';
+        const price = document.getElementById('input-price').value || '';
+        const currency = document.getElementById('input-currency').value || 'EGP';
+        const sourceChecked = document.querySelector('input[name="admin-booking-source"]:checked');
+        const source = sourceChecked ? sourceChecked.value : 'Booking.com';
+
+        if (!guest && !checkIn) {
+            showStatus('⚠️ مفيش حجز مفتوح دلوقتي في تبويب "إدارة الحجوزات" لتحويله لفاتورة.', 'error');
+        }
+
+        switchAdminTab('invoices');
+        document.getElementById('input-invoice-guest').value = guest;
+        document.getElementById('input-invoice-phone').value = phone;
+        document.getElementById('input-invoice-checkin').value = checkIn;
+        document.getElementById('input-invoice-checkout').value = checkOut;
+        document.getElementById('input-invoice-price').value = price;
+        document.getElementById('input-invoice-currency').value = currency;
+        const srcEl = document.querySelector(`input[name="invoice-booking-source"][value="${source}"]`);
+        if (srcEl) srcEl.checked = true;
+        lastSavedInvoiceDoc = null;
+        calculateInvoiceTotals();
+        if (guest || checkIn) showStatus('✅ تم تعبئة بيانات الفاتورة من الحجز الحالي. راجع البيانات واضغط حفظ وطباعة.', 'success');
+    }
+
+    // بيحفظ الفاتورة/عرض السعر على السيرفر ويرجع Promise بالبيانات الكاملة (شاملة رقم الفاتورة)
+    function saveInvoiceToCloud() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً من تبويب الإعدادات.', 'error'); return Promise.reject('no-gas-url'); }
+
+        const guestName = document.getElementById('input-invoice-guest').value.trim();
+        if (!guestName) { showStatus('⚠️ اكتب اسم الضيف أولاً.', 'error'); return Promise.reject('no-guest'); }
+
+        const checkIn  = document.getElementById('input-invoice-checkin').value;
+        const checkOut = document.getElementById('input-invoice-checkout').value;
+        const totals = calculateInvoiceTotals();
+        const docType = (document.querySelector('input[name="invoice-doc-type"]:checked') || {}).value || 'invoice';
+        const sourceChecked = document.querySelector('input[name="invoice-booking-source"]:checked');
+        const bookingSource = sourceChecked ? sourceChecked.value : 'Booking.com';
+        const notes = document.getElementById('input-invoice-notes').value.trim();
+        const today = new Date();
+        const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+        const payload = {
+            action: 'saveInvoice',
+            docType: docType,
+            date: todayStr,
+            guestName: guestName,
+            guestPhone: document.getElementById('input-invoice-phone').value.trim(),
+            checkIn: checkIn, checkOut: checkOut,
+            bookingSource: bookingSource,
+            pricePerNight: totals.price, nights: totals.nights,
+            discountType: totals.discountType, discountValue: totals.discountValue,
+            currency: totals.currency, notes: notes
+        };
+
+        showStatus('⏳ جاري حفظ ' + (docType === 'quote' ? 'عرض السعر' : 'الفاتورة') + '...', 'success');
+
+        return fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    const fullDoc = Object.assign({}, payload, {
+                        invoiceNumber: d.invoiceNumber, subtotal: d.subtotal,
+                        discountAmount: d.discountAmount, total: d.total
+                    });
+                    lastSavedInvoiceDoc = fullDoc;
+                    showStatus('✅ ' + (d.message || 'تم الحفظ بنجاح.') + ' (رقم: ' + d.invoiceNumber + ')', 'success');
+                    loadInvoicesHistory();
+                    return fullDoc;
+                } else {
+                    showStatus('❌ فشل حفظ المستند: ' + (d.message || 'خطأ غير معروف.'), 'error');
+                    return Promise.reject(d.message || 'save-failed');
+                }
+            })
+            .catch(err => {
+                console.error('Error saving invoice:', err);
+                showStatus('⚠️ تعذر الاتصال بالسيرفر لحفظ المستند.', 'error');
+                return Promise.reject(err);
+            });
+    }
+
+    function saveAndPrintInvoice(lang) {
+        saveInvoiceToCloud().then(fullDoc => {
+            printInvoiceWindow(fullDoc, lang);
+        }).catch(() => { /* تم إظهار سبب الفشل بالفعل في showStatus */ });
+    }
+
+    function loadInvoicesHistory() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const box = document.getElementById('invoices-history-list');
+        if (!gasUrl) { if (box) box.textContent = '⚠️ أضف رابط Apps Script أولاً.'; return; }
+        if (box) box.textContent = 'جاري التحميل…';
+
+        fetch(gasUrl + (gasUrl.indexOf('?') > -1 ? '&' : '?') + 'type=invoices')
+            .then(r => r.json())
+            .then(d => {
+                if (d.status !== 'success') { if (box) box.textContent = '❌ فشل تحميل السجل: ' + (d.message || ''); return; }
+                invoicesHistoryCache = d.data || [];
+                renderInvoicesHistoryList();
+            })
+            .catch(() => { if (box) box.textContent = '⚠️ تعذر تحميل سجل الفواتير.'; });
+    }
+
+    function renderInvoicesHistoryList() {
+        const box = document.getElementById('invoices-history-list');
+        if (!box) return;
+        if (!invoicesHistoryCache.length) { box.textContent = 'لا توجد فواتير أو عروض أسعار محفوظة بعد.'; return; }
+
+        // الأحدث أولاً
+        const sorted = [...invoicesHistoryCache].reverse();
+        box.innerHTML = sorted.map(doc => {
+            const typeLabel = doc.docType === 'quote' ? '📋 عرض سعر' : '🧾 فاتورة';
+            const symbol = doc.currency === 'USD' ? '$' : 'ج.م';
+            return `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:10px; border-bottom:1px solid #3a3a45;">
+                <div>
+                    <strong style="color:var(--gold-light);">${doc.invoiceNumber}</strong> — ${typeLabel} —
+                    ${doc.guestName || '—'} (${doc.checkIn || '—'} ➔ ${doc.checkOut || '—'}) —
+                    <strong>${(parseFloat(doc.total)||0).toFixed(2)} ${symbol}</strong>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#2E8B57; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">AR 🖨️</button>
+                    <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#2E72B5; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">EN 🖨️</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function reprintInvoiceFromHistory(invoiceNumber, lang) {
+        const doc = invoicesHistoryCache.find(d => d.invoiceNumber === invoiceNumber);
+        if (!doc) { showStatus('⚠️ تعذر العثور على هذا المستند في السجل.', 'error'); return; }
+        printInvoiceWindow(doc, lang);
+    }
+
+    // بيبني محتوى مستند الفاتورة/عرض السعر بلغة واحدة (عربي أو إنجليزي)
+    function buildInvoiceLangBlock(doc, lang) {
+        const isAr = lang === 'ar';
+        const isQuote = doc.docType === 'quote';
+        const symbol = doc.currency === 'USD' ? '$' : (isAr ? 'ج.م' : 'EGP');
+        const title = isAr ? (isQuote ? 'عرض سعر' : 'فاتورة') : (isQuote ? 'Quote' : 'Invoice');
+        const todayDisplay = new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-GB');
+        const logoHtml = unitBannerData.logo ? `<img src="${unitBannerData.logo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #c5a85c;">` : '';
+        const discountRow = (doc.discountAmount && parseFloat(doc.discountAmount) > 0)
+            ? `<tr><td>${isAr ? 'الخصم' : 'Discount'} ${doc.discountType === 'percent' ? '(' + doc.discountValue + '%)' : ''}</td><td style="text-align:left;">- ${(parseFloat(doc.discountAmount)||0).toFixed(2)} ${symbol}</td></tr>`
+            : '';
+        const notesHtml = doc.notes ? `<div style="margin-top:14px; font-size:0.85rem; color:#444;"><strong>${isAr ? 'ملاحظات' : 'Notes'}:</strong> ${doc.notes}</div>` : '';
+        const numberLine = doc.invoiceNumber ? `<div style="font-size:0.95rem; color:#555;">${isAr ? 'رقم' : 'No.'}: ${doc.invoiceNumber}</div>` : '';
+
+        return `
+        <div class="invoice-lang-block" dir="${isAr ? 'rtl' : 'ltr'}" style="font-family:${isAr ? "'Tajawal', sans-serif" : "Arial, sans-serif"}; color:#1a1a1a; padding:28px; max-width:720px; margin:0 auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #c5a85c; padding-bottom:16px; margin-bottom:20px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    ${logoHtml}
+                    <div>
+                        <div style="font-size:1.25rem; font-weight:900;">${unitBannerData.name || ''}</div>
+                        ${unitBannerData.hostName ? `<div style="font-size:0.85rem; color:#555;">${unitBannerData.hostName}${unitBannerData.hostPhone ? ' • ' + unitBannerData.hostPhone : ''}</div>` : ''}
+                    </div>
+                </div>
+                <div style="text-align:${isAr ? 'left' : 'right'};">
+                    <div style="font-size:1.4rem; font-weight:900; color:#a3833d;">${title}</div>
+                    ${numberLine}
+                    <div style="font-size:0.85rem; color:#555;">${isAr ? 'التاريخ' : 'Date'}: ${doc.date || todayDisplay}</div>
+                </div>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse; margin-bottom:18px; font-size:0.92rem;">
+                <tr><td style="padding:4px 0; width:50%;"><strong>${isAr ? 'اسم الضيف' : 'Guest Name'}:</strong> ${doc.guestName || ''}</td>
+                    <td style="padding:4px 0;"><strong>${isAr ? 'رقم الموبايل' : 'Mobile'}:</strong> ${doc.guestPhone || ''}</td></tr>
+                <tr><td style="padding:4px 0;"><strong>${isAr ? 'تاريخ الدخول' : 'Check-in'}:</strong> ${doc.checkIn || ''}</td>
+                    <td style="padding:4px 0;"><strong>${isAr ? 'تاريخ الخروج' : 'Check-out'}:</strong> ${doc.checkOut || ''}</td></tr>
+                <tr><td style="padding:4px 0;"><strong>${isAr ? 'عدد الليالي' : 'Nights'}:</strong> ${doc.nights || 0}</td>
+                    <td style="padding:4px 0;"><strong>${isAr ? 'الحجز جاي من' : 'Booking Source'}:</strong> ${doc.bookingSource || ''}</td></tr>
+            </table>
+
+            <table style="width:100%; border-collapse:collapse; font-size:0.95rem; border-top:1px solid #ddd; padding-top:10px;">
+                <tr><td style="padding:6px 0;">${isAr ? 'سعر الليلة' : 'Price / Night'}</td><td style="text-align:${isAr ? 'left' : 'right'};">${(parseFloat(doc.pricePerNight)||0).toFixed(2)} ${symbol}</td></tr>
+                <tr><td style="padding:6px 0;">${isAr ? 'الإجمالي قبل الخصم' : 'Subtotal'}</td><td style="text-align:${isAr ? 'left' : 'right'};">${(parseFloat(doc.subtotal)||0).toFixed(2)} ${symbol}</td></tr>
+                ${discountRow}
+                <tr style="border-top:2px solid #c5a85c; font-weight:900; font-size:1.1rem;"><td style="padding:10px 0;">${isAr ? 'الإجمالي النهائي' : 'Total'}</td><td style="text-align:${isAr ? 'left' : 'right'}; color:#a3833d;">${(parseFloat(doc.total)||0).toFixed(2)} ${symbol}</td></tr>
+            </table>
+            ${notesHtml}
+
+            <div style="margin-top:60px; display:flex; justify-content:${isAr ? 'flex-end' : 'flex-start'};">
+                <div style="text-align:center;">
+                    <div style="border-top:1px solid #333; width:200px; margin-bottom:6px;"></div>
+                    <div style="font-size:0.85rem;">${isAr ? 'توقيع المسؤول' : 'Authorized Signature'}</div>
+                    ${unitBannerData.hostName ? `<div style="font-size:0.82rem; color:#555; margin-top:2px;">${unitBannerData.hostName}</div>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function printInvoiceWindow(doc, lang) {
+        if (!doc) { showStatus('⚠️ لا يوجد مستند لطباعته.', 'error'); return; }
+        let bodyHtml = '';
+        if (lang === 'both') {
+            bodyHtml = buildInvoiceLangBlock(doc, 'ar') +
+                '<div style="page-break-before:always;"></div>' +
+                buildInvoiceLangBlock(doc, 'en');
+        } else {
+            bodyHtml = buildInvoiceLangBlock(doc, lang === 'en' ? 'en' : 'ar');
+        }
+
+        const win = window.open('', '_blank');
+        if (!win) { showStatus('⚠️ المتصفح منع فتح نافذة الطباعة — اسمح بالنوافذ المنبثقة لهذا الموقع.', 'error'); return; }
+        win.document.open();
+        win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <title>${doc.invoiceNumber || (doc.docType === 'quote' ? 'Quote' : 'Invoice')}</title>
+            <style>
+                body { margin:0; background:#fff; }
+                @media print { @page { margin: 14mm; } }
+            </style>
+            </head><body>${bodyHtml}</body></html>`);
+        win.document.close();
+        win.onload = function () { win.focus(); win.print(); };
+        // بعض المتصفحات مابتستدعيش onload على نافذة فاضية مكتوبة بـ document.write، فبناحتاط بمؤقت كمان
+        setTimeout(() => { try { win.focus(); win.print(); } catch (e) {} }, 400);
     }
 </script>
 
