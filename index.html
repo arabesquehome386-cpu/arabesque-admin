@@ -1764,6 +1764,78 @@
         </div>
     </div>
 
+    <!-- ===== v41.5: بيانات إضافية تظهر في الفاتورة/عرض السعر — ختم، إمضاء، فودافون كاش، إنستاباي ===== -->
+    <div class="router-reminder-box" style="background: rgba(197,168,92,0.10); border-color: var(--gold); padding: 15px; margin-bottom: 20px; border-radius: 12px;">
+        <div class="router-reminder-title" style="color: var(--gold-light); margin-bottom: 12px; font-size: 1rem; font-weight: 800;">
+            <i class="fa-solid fa-file-invoice"></i>
+            <span>بيانات إضافية في الفاتورة (ختم / إمضاء / طرق دفع)</span>
+        </div>
+
+        <div class="admin-grid" style="align-items:end;">
+            <div class="admin-field">
+                <label>ختم الشركة/الوحدة (اختياري)</label>
+                <input type="file" id="input-invoice-stamp" accept="image/*" onchange="uploadInvoiceImage('stamp')">
+                <div id="invoice-stamp-preview" style="margin-top:8px; display:flex; align-items:center; gap:10px;"></div>
+            </div>
+            <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="chk-invoice-show-stamp" class="gold-switch" onchange="saveSettingsToCloud({invoiceShowStamp: String(this.checked)}); unitBannerData.showStamp = this.checked;">
+                <label style="margin:0; cursor:pointer;" for="chk-invoice-show-stamp">إظهار الختم في الفاتورة</label>
+            </div>
+        </div>
+
+        <div class="admin-grid" style="align-items:end; margin-top:10px;">
+            <div class="admin-field">
+                <label>إمضاء المسؤول (اختياري)</label>
+                <input type="file" id="input-invoice-signature" accept="image/*" onchange="uploadInvoiceImage('signature')">
+                <div id="invoice-signature-preview" style="margin-top:8px; display:flex; align-items:center; gap:10px;"></div>
+            </div>
+            <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="chk-invoice-show-signature" class="gold-switch" onchange="saveSettingsToCloud({invoiceShowSignature: String(this.checked)}); unitBannerData.showSignature = this.checked;">
+                <label style="margin:0; cursor:pointer;" for="chk-invoice-show-signature">إظهار الإمضاء في الفاتورة</label>
+            </div>
+        </div>
+
+        <div style="margin-top:14px; padding-top:12px; border-top:1px dashed #3a3a45;">
+            <div class="admin-grid" style="align-items:end;">
+                <div class="admin-field">
+                    <label>رقم فودافون كاش</label>
+                    <input type="text" id="input-invoice-vodafone-number" placeholder="01xxxxxxxxx"
+                           onchange="saveSettingsToCloud({invoiceVodafoneNumber: this.value}); unitBannerData.vodafoneNumber = this.value;">
+                </div>
+                <div class="admin-field">
+                    <label>اسم صاحب حساب فودافون كاش</label>
+                    <input type="text" id="input-invoice-vodafone-name" placeholder="مثال: كريم الحكيم"
+                           onchange="saveSettingsToCloud({invoiceVodafoneName: this.value}); unitBannerData.vodafoneName = this.value;">
+                </div>
+                <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="chk-invoice-show-vodafone" class="gold-switch"
+                           onchange="saveSettingsToCloud({invoiceShowVodafone: String(this.checked)}); unitBannerData.showVodafone = this.checked;">
+                    <label style="margin:0; cursor:pointer;" for="chk-invoice-show-vodafone">إظهار فودافون كاش في الفاتورة</label>
+                </div>
+            </div>
+            <div class="admin-grid" style="align-items:end; margin-top:10px;">
+                <div class="admin-field">
+                    <label>رابط إنستاباي</label>
+                    <input type="text" id="input-invoice-instapay-link" placeholder="https://ipn.eg/S/..."
+                           onchange="saveSettingsToCloud({invoiceInstapayLink: this.value}); unitBannerData.instapayLink = this.value;">
+                </div>
+                <div class="admin-field">
+                    <label>اسم صاحب حساب إنستاباي</label>
+                    <input type="text" id="input-invoice-instapay-name" placeholder="مثال: كريم الحكيم"
+                           onchange="saveSettingsToCloud({invoiceInstapayName: this.value}); unitBannerData.instapayName = this.value;">
+                </div>
+                <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="chk-invoice-show-instapay" class="gold-switch"
+                           onchange="saveSettingsToCloud({invoiceShowInstapay: String(this.checked)}); unitBannerData.showInstapay = this.checked;">
+                    <label style="margin:0; cursor:pointer;" for="chk-invoice-show-instapay">إظهار إنستاباي في الفاتورة</label>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top:10px; color:#8a8a90; font-size:0.78rem;">
+            <i class="fa-solid fa-circle-info"></i> طرق الدفع دي بتظهر بس في الفاتورة لو فيها مبلغ متبقي (مش مدفوعة بالكامل)، وبس لو الشيك بوكس بجنبها متفعّل.
+        </div>
+    </div>
+
     <!-- ===== v28: مضيف الشقة والمساعدين (Co-Host) ===== -->
     <div class="router-reminder-box" style="background: rgba(52,152,219,0.10); border-color: #3498db; padding: 15px; margin-bottom: 20px; border-radius: 12px;">
         <div class="router-reminder-title" style="color: #7fc4ee; margin-bottom: 12px; font-size: 1rem; font-weight: 800;">
@@ -2174,6 +2246,18 @@
         <div class="admin-buttons" style="margin-top:4px;">
             <button id="invoice-whatsapp-ar-btn" class="btn-panel" onclick="sendInvoicePdfToWhatsApp('ar')" style="background:linear-gradient(135deg,#128C7E,#25D366);"><i class="fa-brands fa-whatsapp"></i> حفظ وإرسال PDF عربي على واتساب</button>
             <button id="invoice-whatsapp-en-btn" class="btn-panel" onclick="sendInvoicePdfToWhatsApp('en')" style="background:linear-gradient(135deg,#128C7E,#25D366);"><i class="fa-brands fa-whatsapp"></i> Save &amp; Send English PDF via WhatsApp</button>
+        </div>
+
+        <!-- v41.4: زراير تحميل مباشرة (PDF/HTML) — عشان تختار إنت تبعت من أي واتساب (أو إيميل/درايف) بنفسك
+             بدل ما يفتح واتساب معيّن أوتوماتيك على الموبايل اللي فيه أكتر من حساب -->
+        <div class="admin-buttons" style="margin-top:4px;">
+            <button id="invoice-download-pdf-ar-btn" class="btn-panel" onclick="downloadInvoicePdfFromForm('ar')" style="background:linear-gradient(135deg,#1f6f8b,#2e9bb8);"><i class="fa-solid fa-download"></i> ⬇️ تحميل PDF عربي</button>
+            <button id="invoice-download-pdf-en-btn" class="btn-panel" onclick="downloadInvoicePdfFromForm('en')" style="background:linear-gradient(135deg,#1f6f8b,#2e9bb8);"><i class="fa-solid fa-download"></i> ⬇️ Download English PDF</button>
+            <button id="invoice-download-html-ar-btn" class="btn-panel" onclick="downloadInvoiceHtmlFromForm('ar')" style="background:#4a4a55;"><i class="fa-solid fa-download"></i> ⬇️ تحميل HTML عربي</button>
+            <button id="invoice-download-html-en-btn" class="btn-panel" onclick="downloadInvoiceHtmlFromForm('en')" style="background:#4a4a55;"><i class="fa-solid fa-download"></i> ⬇️ Download English HTML</button>
+        </div>
+        <div style="color:#8a8a90; font-size:0.78rem; margin-top:-6px; margin-bottom:10px;">
+            <i class="fa-solid fa-circle-info"></i> بعد التحميل، افتح الملف من "الملفات/Downloads" في الموبايل وادوس مشاركة — هيديك تختار تبعت من أي واتساب (أو أي برنامج تاني) إنت عاوزه.
         </div>
 
         <div class="bookings-dropdown-container" style="margin-top:28px;">
@@ -3500,6 +3584,63 @@
             .catch(() => { if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ خطأ في الاتصال.</span>'; });
         };
         reader.readAsDataURL(file);
+    }
+
+    // v41.5: رفع صورة ختم/إمضاء — نفس آلية رفع الشعار بالضبط، بس معمّمة لـ kind = 'stamp' أو 'signature'
+    function uploadInvoiceImage(kind) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const fileInput = document.getElementById('input-invoice-' + kind);
+        const preview = document.getElementById('invoice-' + kind + '-preview');
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        if (!fileInput || !fileInput.files[0]) return;
+
+        const file = fileInput.files[0];
+        const settingsKey = kind === 'stamp' ? 'invoiceStampUrl' : 'invoiceSignatureUrl';
+        const dataKey = kind === 'stamp' ? 'stampUrl' : 'signatureUrl';
+        const label = kind === 'stamp' ? 'الختم' : 'الإمضاء';
+        if (preview) preview.innerHTML = '<span style="color:#a0a0a5;">⏳ جاري رفع ' + label + '...</span>';
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            fetch(gasUrl, { method: 'POST', body: JSON.stringify({
+                action: 'uploadDocument', fileName: 'Invoice' + kind.charAt(0).toUpperCase() + kind.slice(1) + '_' + file.name,
+                fileType: file.type, fileData: e.target.result
+            })})
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success' && d.url) {
+                    const payload = {}; payload[settingsKey] = d.url;
+                    saveSettingsToCloud(payload);
+                    unitBannerData[dataKey] = d.url;
+                    renderInvoiceImagePreview(kind, d.url);
+                    showStatus('✅ تم رفع ' + label + ' بنجاح.', 'success');
+                } else if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ ' + (d.message || 'فشل الرفع.') + '</span>';
+            })
+            .catch(() => { if (preview) preview.innerHTML = '<span style="color:#e74c3c;">✗ خطأ في الاتصال.</span>'; });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function renderInvoiceImagePreview(kind, url) {
+        const preview = document.getElementById('invoice-' + kind + '-preview');
+        if (!preview) return;
+        if (!url) { preview.innerHTML = '<span style="color:#8a8a90; font-size:0.8rem;">مفيش صورة حالياً.</span>'; return; }
+        preview.innerHTML = '<img src="' + url + '" style="width:48px; height:48px; object-fit:contain; border-radius:6px; background:#fff;">' +
+            '<button type="button" onclick="deleteInvoiceImage(\'' + kind + '\')" style="background:#B22222; color:white; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.75rem;">🗑️ حذف</button>';
+    }
+
+    function deleteInvoiceImage(kind) {
+        const label = kind === 'stamp' ? 'الختم' : 'الإمضاء';
+        if (!confirm('حذف ' + label + '؟')) return;
+        const settingsKey = kind === 'stamp' ? 'invoiceStampUrl' : 'invoiceSignatureUrl';
+        const dataKey = kind === 'stamp' ? 'stampUrl' : 'signatureUrl';
+        const payload = {}; payload[settingsKey] = '';
+        saveSettingsToCloud(payload);
+        unitBannerData[dataKey] = '';
+        const fileInput = document.getElementById('input-invoice-' + kind);
+        if (fileInput) fileInput.value = '';
+        renderInvoiceImagePreview(kind, '');
+        showStatus('🗑️ تم حذف ' + label + '.', 'success');
     }
 
     /* =========================================================
@@ -6218,6 +6359,27 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             if (s.unitName && document.getElementById('input-unit-name')) document.getElementById('input-unit-name').value = s.unitName;
             unitBannerData.name = s.unitName || '';
             unitBannerData.logo = s.unitLogoUrl || '';
+            // v41.5: بيانات إضافية في الفاتورة — ختم/إمضاء/فودافون كاش/إنستاباي
+            unitBannerData.stampUrl = s.invoiceStampUrl || '';
+            unitBannerData.showStamp = s.invoiceShowStamp === 'true';
+            unitBannerData.signatureUrl = s.invoiceSignatureUrl || '';
+            unitBannerData.showSignature = s.invoiceShowSignature === 'true';
+            unitBannerData.vodafoneNumber = s.invoiceVodafoneNumber || '';
+            unitBannerData.vodafoneName = s.invoiceVodafoneName || '';
+            unitBannerData.showVodafone = s.invoiceShowVodafone === 'true';
+            unitBannerData.instapayLink = s.invoiceInstapayLink || '';
+            unitBannerData.instapayName = s.invoiceInstapayName || '';
+            unitBannerData.showInstapay = s.invoiceShowInstapay === 'true';
+            if (document.getElementById('input-invoice-vodafone-number')) document.getElementById('input-invoice-vodafone-number').value = unitBannerData.vodafoneNumber;
+            if (document.getElementById('input-invoice-vodafone-name')) document.getElementById('input-invoice-vodafone-name').value = unitBannerData.vodafoneName;
+            if (document.getElementById('input-invoice-instapay-link')) document.getElementById('input-invoice-instapay-link').value = unitBannerData.instapayLink;
+            if (document.getElementById('input-invoice-instapay-name')) document.getElementById('input-invoice-instapay-name').value = unitBannerData.instapayName;
+            if (document.getElementById('chk-invoice-show-stamp')) document.getElementById('chk-invoice-show-stamp').checked = unitBannerData.showStamp;
+            if (document.getElementById('chk-invoice-show-signature')) document.getElementById('chk-invoice-show-signature').checked = unitBannerData.showSignature;
+            if (document.getElementById('chk-invoice-show-vodafone')) document.getElementById('chk-invoice-show-vodafone').checked = unitBannerData.showVodafone;
+            if (document.getElementById('chk-invoice-show-instapay')) document.getElementById('chk-invoice-show-instapay').checked = unitBannerData.showInstapay;
+            renderInvoiceImagePreview('stamp', unitBannerData.stampUrl);
+            renderInvoiceImagePreview('signature', unitBannerData.signatureUrl);
             // v32: بيانات الشركة (IDEA-EG) بقت ثابتة في الكود نفسه — مفيش حاجة تتحمّل من هنا
             // v34: فئات المصروفات المخصصة
             if (s.customExpenseCategories) {
@@ -6846,12 +7008,13 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             // الحقول دي مش بتُحفظ في الشيت، بس محتاجينها جاهزة للطباعة/PDF فوراً بعد الحفظ
             equivalentText: totals.equivalentText || '',
             unitName: unitBannerData.name || '', hostName: unitBannerData.hostName || '', hostPhone: unitBannerData.hostPhone || '',
+            gasUrl: gasUrl, // v41.5: محتاجينه عشان نبني رابط كود QR اللي بيودي لتحميل نفس المستند
             // v41.3: فاتورة جديدة لسه ماعندهاش دفعات مسجلة، يبقى المتبقي = الإجمالي بالكامل (لو مش عرض سعر)؛
             // وفي حالة التعديل، بنطرح المدفوع سابقاً من الإجمالي الجديد بعد التعديل
             remaining: remainingNow, paidTotal: isEditing ? editingInvoicePaidTotal : 0
         };
         if (isEditing) payload.invoiceNumber = editingInvoiceNumber;
-        Object.assign(payload, readGuidePaymentLinks());
+        Object.assign(payload, readInvoiceBrandingFields());
 
         showStatus('⏳ جاري ' + (isEditing ? 'تحديث' : 'حفظ') + ' ' + (docType === 'quote' ? 'عرض السعر' : 'الفاتورة') + '...', 'success');
 
@@ -6939,6 +7102,8 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                         <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#2E72B5; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">EN 👁️</button>
                         <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">واتساب AR 📲</button>
                         <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">WhatsApp EN 📲</button>
+                        <button onclick='downloadInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#1f6f8b; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تحميل PDF عربي">⬇️ PDF AR</button>
+                        <button onclick='downloadInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#1f6f8b; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="Download English PDF">⬇️ PDF EN</button>
                         ${doc.voided ? '' : `<button onclick='editInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)})' style="background:#8e6bc9; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تعديل بيانات الفاتورة دي">✏️ تعديل</button>`}
                         <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "void")' style="background:#c99a2e; color:#1e1e24; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="إلغاء مع الاحتفاظ بالرقم">⛔ إلغاء</button>
                         <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "hard")' style="background:#B22222; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="حذف نهائي من السجل">🗑️ حذف نهائي</button>
@@ -7025,9 +7190,11 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
 
     // بيضيف بيانات الوحدة/المضيف الحالية لمستند من السجل (السيرفر مابيحفظهاش مع كل فاتورة لوحدها)
     function enrichDocWithUnitData(doc) {
+        const gasUrl = document.getElementById('input-gas-url') ? document.getElementById('input-gas-url').value.trim() : '';
         return Object.assign({}, doc, {
-            unitName: unitBannerData.name || '', hostName: unitBannerData.hostName || '', hostPhone: unitBannerData.hostPhone || ''
-        }, readGuidePaymentLinks());
+            unitName: unitBannerData.name || '', hostName: unitBannerData.hostName || '', hostPhone: unitBannerData.hostPhone || '',
+            gasUrl: gasUrl
+        }, readInvoiceBrandingFields());
     }
 
     function reprintInvoiceFromHistory(invoiceNumber, lang) {
@@ -7071,19 +7238,18 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     // v41.3 (فكرة 2): بيقرأ روابط الدفع (إنستاباي/فودافون كاش) الموجودة بالفعل في دليل الضيف — لو مفعّلة —
     // عشان نرفقها في الفاتورة/الـ PDF/رسالة واتساب لما يكون فيه متبقي. دي روابط ثابتة (الضيف بيكتب المبلغ بنفسه)،
     // مفيش API مؤكد لتوليد رابط بمبلغ محدد تلقائياً مع المزودين دول.
-    function readGuidePaymentLinks() {
-        const links = { instapayUrl: '', vodafoneUrl: '' };
-        try {
-            const instapayChk = document.getElementById('chk-instapay');
-            const instapayA = document.querySelector('#guest-instapay-box a');
-            if (instapayChk && instapayChk.checked && instapayA) links.instapayUrl = instapayA.href;
-        } catch (e) {}
-        try {
-            const vodafoneChk = document.getElementById('chk-vodafone');
-            const vodafoneA = document.querySelector('#guest-vodafone-box a');
-            if (vodafoneChk && vodafoneChk.checked && vodafoneA) links.vodafoneUrl = vodafoneA.href;
-        } catch (e) {}
-        return links;
+    // v41.5: بيانات الختم/الإمضاء/فودافون كاش/إنستاباي بقت إعدادات مركزية (unitBannerData) بدل القراءة
+    // من صندوق دليل الضيف — عشان نقدر نبعتها للسيرفر وقت توليد الـ PDF (السيرفر مالوش دخول على الصفحة نفسها)
+    function readInvoiceBrandingFields() {
+        return {
+            logo: unitBannerData.logo || '',
+            stampUrl: unitBannerData.stampUrl || '', showStamp: !!unitBannerData.showStamp,
+            signatureUrl: unitBannerData.signatureUrl || '', showSignature: !!unitBannerData.showSignature,
+            vodafoneNumber: unitBannerData.vodafoneNumber || '', vodafoneName: unitBannerData.vodafoneName || '',
+            showVodafone: !!unitBannerData.showVodafone,
+            instapayLink: unitBannerData.instapayLink || '', instapayName: unitBannerData.instapayName || '',
+            showInstapay: !!unitBannerData.showInstapay
+        };
     }
 
     // بينظف رقم التليفون ويبني رابط واتساب click-to-chat (نفس طريقة زرار الترحيب الحالي)
@@ -7129,8 +7295,8 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                         paymentLinesTxt = lang === 'en'
                             ? `\n\nRemaining balance: ${remainingAmt.toFixed(2)} ${doc.currency || symbolTxt}`
                             : `\n\nالمتبقي للسداد: ${remainingAmt.toFixed(2)} ${symbolTxt}`;
-                        if (doc.instapayUrl) paymentLinesTxt += `\nInstaPay: ${doc.instapayUrl}`;
-                        if (doc.vodafoneUrl) paymentLinesTxt += `\nVodafone Cash: ${doc.vodafoneUrl}`;
+                        if (doc.showVodafone && doc.vodafoneNumber) paymentLinesTxt += `\nVodafone Cash: ${doc.vodafoneNumber}${doc.vodafoneName ? ' (' + doc.vodafoneName + ')' : ''}`;
+                        if (doc.showInstapay && doc.instapayLink) paymentLinesTxt += `\nInstaPay: ${doc.instapayLink}${doc.instapayName ? ' (' + doc.instapayName + ')' : ''}`;
                     }
                     const link = buildWhatsAppLink(doc.guestPhone, intro + d.pdfUrl + paymentLinesTxt);
                     showStatus('✅ تم توليد الملف، جاري فتح واتساب...', 'success');
@@ -7140,6 +7306,84 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                 }
             })
             .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر لتوليد الملف.', 'error'));
+    }
+
+    // =========================================================
+    // v41.4: تحميل مباشر (PDF/HTML) — بدل فتح واتساب معيّن أوتوماتيك.
+    // ليه؟ لو الموبايل عنده أكتر من حساب واتساب (عادي وواتساب بيزنس مثلاً)، رابط wa.me بيفتح
+    // واحد منهم بس (اللي النظام شايفه "الافتراضي") من غير ما يسألك تختار — ده سلوك نظام أندرويد/آيفون
+    // نفسه في فتح الروابط، ومش حاجة نقدر نتحكم فيها من جوه النظام. الحل العملي: تحمّل الملف على
+    // الموبايل، وبعدين تفتحه من "الملفات/Downloads" وتدوس "مشاركة" — ساعتها أندرويد بيوريك كل
+    // البرامج المتاحة (الواتسابين الاثنين) وتختار إنت من أي واحد تبعت.
+    // =========================================================
+
+    // بيولّد PDF حقيقي من السيرفر ويفتحه في تاب جديد (رابط Google Drive) عشان تقدر تحمّله بنفسك
+    function downloadInvoicePdf(doc, lang) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+
+        showStatus('⏳ جاري توليد ملف PDF... (ممكن تاخد لحظات)', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'generateInvoicePdf', lang: lang, invoice: doc }) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success' && d.pdfUrl) {
+                    showStatus('✅ تم توليد الملف — هيفتح في تاب جديد، دوس أيقونة التحميل ⬇️ هناك.', 'success');
+                    setTimeout(() => window.open(d.pdfUrl, '_blank'), 400);
+                } else {
+                    showStatus('❌ فشل توليد ملف PDF: ' + (d.message || 'خطأ غير معروف.'), 'error');
+                }
+            })
+            .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر لتوليد الملف.', 'error'));
+    }
+
+    // تحميل PDF للفاتورة/العرض الحالي في النموذج (بيحفظه أولاً لو جديد)
+    function downloadInvoicePdfFromForm(lang) {
+        saveInvoiceToCloud().then(fullDoc => {
+            downloadInvoicePdf(fullDoc, lang);
+        }).catch(() => { /* تم إظهار سبب الفشل بالفعل في showStatus */ });
+    }
+
+    // تحميل PDF لفاتورة محفوظة بالفعل في السجل
+    function downloadInvoicePdfFromHistory(invoiceNumber, lang) {
+        const doc = invoicesHistoryCache.find(d => d.invoiceNumber === invoiceNumber);
+        if (!doc) { showStatus('⚠️ تعذر العثور على هذا المستند في السجل.', 'error'); return; }
+        downloadInvoicePdf(enrichDocWithUnitData(doc), lang);
+    }
+
+    // بيولّد ملف HTML مستقل (فيه تنسيق الفاتورة كامل) ويحمّله مباشرة — بدون أي اتصال بالسيرفر
+    function downloadInvoiceHtmlBlob(doc, lang) {
+        let bodyHtml = '';
+        if (lang === 'both') bodyHtml = buildInvoiceLangBlock(doc, 'ar') + '<div style="page-break-before:always;"></div>' + buildInvoiceLangBlock(doc, 'en');
+        else bodyHtml = buildInvoiceLangBlock(doc, lang);
+
+        const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+            <title>${doc.invoiceNumber || (doc.docType === 'quote' ? 'Quote' : 'Invoice')}</title></head>
+            <body style="margin:0; background:#fff;">${bodyHtml}</body></html>`;
+
+        const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (doc.invoiceNumber || 'document') + '_' + lang + '.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        showStatus('✅ تم تحميل ملف HTML.', 'success');
+    }
+
+    // تحميل HTML للفاتورة/العرض الحالي في النموذج (بيحفظه أولاً لو جديد)
+    function downloadInvoiceHtmlFromForm(lang) {
+        saveInvoiceToCloud().then(fullDoc => {
+            downloadInvoiceHtmlBlob(fullDoc, lang);
+        }).catch(() => { /* تم إظهار سبب الفشل بالفعل في showStatus */ });
+    }
+
+    // تحميل HTML لفاتورة محفوظة بالفعل في السجل
+    function downloadInvoiceHtmlFromHistory(invoiceNumber, lang) {
+        const doc = invoicesHistoryCache.find(d => d.invoiceNumber === invoiceNumber);
+        if (!doc) { showStatus('⚠️ تعذر العثور على هذا المستند في السجل.', 'error'); return; }
+        downloadInvoiceHtmlBlob(enrichDocWithUnitData(doc), lang);
     }
 
     // v41.3 (فكرة 1): تشغيل فحص الدفعات المتبقية فوراً — بيبعت رسالة على تليجرام بدل انتظار تريجر 9 الصبح
@@ -7199,7 +7443,8 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         const symbol = doc.currency === 'USD' ? '$' : (doc.currency === 'SAR' ? (isAr ? 'ر.س' : 'SAR') : (isAr ? 'ج.م' : 'EGP'));
         const title = isAr ? (isQuote ? 'عرض سعر' : 'فاتورة') : (isQuote ? 'Quote' : 'Invoice');
         const todayDisplay = new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-GB');
-        const logoHtml = unitBannerData.logo ? `<img src="${unitBannerData.logo}" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #c5a85c;">` : '';
+        const logoUrl = doc.logo || unitBannerData.logo || '';
+        const logoHtml = logoUrl ? `<img src="${logoUrl}" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid #c5a85c;">` : '';
         const discountNote = doc.discountType === 'percent' ? `(${doc.discountValue}%)` :
             doc.discountType === 'perNight' ? `(${(parseFloat(doc.discountValue)||0).toFixed(2)} ${symbol} / ${isAr ? 'ليلة' : 'night'})` : '';
         const discountRow = (doc.discountAmount && parseFloat(doc.discountAmount) > 0)
@@ -7209,18 +7454,36 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         const numberLine = doc.invoiceNumber ? `<div style="font-size:0.95rem; color:#555;">${isAr ? 'رقم' : 'No.'}: ${doc.invoiceNumber}</div>` : '<div style="font-size:0.85rem; color:#e74c3c;">' + (isAr ? '(مسودة — غير محفوظة)' : '(Draft — not saved)') + '</div>';
         const equivalentRow = doc.equivalentText ? `<tr><td colspan="2" style="padding:4px 0; color:#666; font-size:0.85rem;">${doc.equivalentText}</td></tr>` : '';
 
-        // v41.3 (فكرة 2): لو فيه متبقي، نضيف بوكس يوضح المبلغ المتبقي + روابط الدفع الثابتة (الضيف بيدخل المبلغ بنفسه)
+        // v41.3 (فكرة 2): لو فيه متبقي، نضيف بوكس يوضح المبلغ المتبقي + طرق الدفع المفعّلة من الإعدادات
         const remainingAmt = doc.remaining !== undefined && doc.remaining !== null ? (parseFloat(doc.remaining) || 0) : 0;
         const showPaymentDue = !isQuote && remainingAmt > 0.009;
-        const payLinksHtml = [
-            doc.instapayUrl ? `<a href="${doc.instapayUrl}" style="display:inline-block; margin:4px 6px; background:#6a1fa0; color:#fff; padding:6px 14px; border-radius:20px; font-size:0.78rem; font-weight:800; text-decoration:none;">💳 InstaPay</a>` : '',
-            doc.vodafoneUrl ? `<a href="${doc.vodafoneUrl}" style="display:inline-block; margin:4px 6px; background:#cc0000; color:#fff; padding:6px 14px; border-radius:20px; font-size:0.78rem; font-weight:800; text-decoration:none;">📱 Vodafone Cash</a>` : ''
+        // v41.5: فودافون كاش (رقم + اسم) وإنستاباي (رابط + اسم) — كل واحد له شيك بوكس خاص بيه في الإعدادات
+        const payLinesHtml = [
+            (doc.showVodafone && doc.vodafoneNumber) ? `<div style="margin:4px 0;">📱 <strong>${isAr ? 'فودافون كاش' : 'Vodafone Cash'}:</strong> ${doc.vodafoneNumber}${doc.vodafoneName ? ' — ' + doc.vodafoneName : ''}</div>` : '',
+            (doc.showInstapay && doc.instapayLink) ? `<div style="margin:4px 0;">💳 <strong>InstaPay:</strong> <a href="${doc.instapayLink}" style="color:#6a1fa0;">${doc.instapayLink}</a>${doc.instapayName ? ' — ' + doc.instapayName : ''}</div>` : ''
         ].filter(Boolean).join('');
         const paymentDueBlock = showPaymentDue ? `
             <div style="margin-top:14px; padding:12px 16px; background:#fff8ec; border:1px solid #e6cf9e; border-radius:10px; text-align:center;">
                 <div style="font-weight:800; color:#a3621a; font-size:0.95rem;">${isAr ? 'المبلغ المتبقي للسداد' : 'Remaining Balance Due'}: ${remainingAmt.toFixed(2)} ${symbol}</div>
-                ${payLinksHtml ? `<div style="margin-top:8px;">${payLinksHtml}</div>` : ''}
+                ${payLinesHtml ? `<div style="margin-top:8px; font-size:0.85rem; color:#444;">${payLinesHtml}</div>` : ''}
             </div>` : '';
+
+        // v41.5 (فكرة 1): كود QR بيودّي لرابط تحميل/معاينة نفس المستند — متاح بس بعد الحفظ (لازم رقم مستند)
+        // ملحوظة: بيستخدم خدمة توليد صور QR عامة ومجانية (api.qrserver.com) — مفيش مفتاح API أو تسجيل مطلوب
+        let qrHtml = '';
+        if (doc.invoiceNumber && doc.gasUrl) {
+            const qrTarget = doc.gasUrl + (doc.gasUrl.indexOf('?') > -1 ? '&' : '?') +
+                'type=invoicePdfView&invoiceNumber=' + encodeURIComponent(doc.invoiceNumber) + '&lang=' + lang;
+            const qrImgSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' + encodeURIComponent(qrTarget);
+            qrHtml = `<div style="text-align:center;">
+                <img src="${qrImgSrc}" style="width:90px; height:90px;">
+                <div style="font-size:0.68rem; color:#777; margin-top:2px;">${isAr ? 'مسح لتحميل المستند' : 'Scan to download'}</div>
+            </div>`;
+        }
+
+        // v41.5: الختم والإمضاء — كل واحد له شيك بوكس خاص بيه (إظهار أو لا) من الإعدادات
+        const stampHtml = (doc.showStamp && doc.stampUrl) ? `<img src="${doc.stampUrl}" style="width:85px; height:85px; object-fit:contain; opacity:0.92;">` : '';
+        const signatureImgHtml = (doc.showSignature && doc.signatureUrl) ? `<img src="${doc.signatureUrl}" style="max-width:160px; max-height:60px; object-fit:contain; display:block; margin:0 auto 4px;">` : '';
 
         return `
         <div class="invoice-lang-block" dir="${isAr ? 'rtl' : 'ltr'}" style="font-family:${isAr ? "'Tajawal', sans-serif" : "Arial, sans-serif"}; color:#1a1a1a; padding:28px; max-width:720px; margin:0 auto;">
@@ -7258,11 +7521,16 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             ${paymentDueBlock}
             ${notesHtml}
 
-            <div style="margin-top:60px; display:flex; justify-content:${isAr ? 'flex-end' : 'flex-start'};">
-                <div style="text-align:center;">
-                    <div style="border-top:1px solid #333; width:200px; margin-bottom:6px;"></div>
-                    <div style="font-size:0.85rem;">${isAr ? 'توقيع المسؤول' : 'Authorized Signature'}</div>
-                    ${unitBannerData.hostName ? `<div style="font-size:0.82rem; color:#555; margin-top:2px;">${unitBannerData.hostName}</div>` : ''}
+            <div style="margin-top:60px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px;">
+                <div>${qrHtml}</div>
+                <div style="display:flex; align-items:flex-end; gap:16px;">
+                    ${stampHtml}
+                    <div style="text-align:center;">
+                        ${signatureImgHtml}
+                        <div style="border-top:1px solid #333; width:200px; margin-bottom:6px;"></div>
+                        <div style="font-size:0.85rem;">${isAr ? 'توقيع المسؤول' : 'Authorized Signature'}</div>
+                        ${unitBannerData.hostName ? `<div style="font-size:0.82rem; color:#555; margin-top:2px;">${unitBannerData.hostName}</div>` : ''}
+                    </div>
                 </div>
             </div>
         </div>`;
