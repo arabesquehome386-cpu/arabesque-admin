@@ -2232,32 +2232,26 @@
             </div>
         </div>
 
+        <!-- v41.6: لغة واحدة تتختار مرة، وكل الأزرار (معاينة/واتساب/تحميل) بتستخدمها — بدل تكرار كل زرار 2-3 مرات -->
+        <div class="admin-field" style="max-width:320px; margin-bottom:10px;">
+            <label>لغة المستند / Document language</label>
+            <select id="invoice-doc-lang" style="padding:8px 10px; border-radius:8px; border:1px solid #4a4a55; background:#1e1e24; color:white; width:100%;">
+                <option value="ar">عربي</option>
+                <option value="en">English</option>
+                <option value="both">عربي + English (معاينة بس)</option>
+            </select>
+        </div>
+
         <div class="admin-buttons">
-            <button id="invoice-print-ar-btn" class="btn-panel" onclick="saveAndPrintInvoice('ar')" style="background:linear-gradient(135deg,#1f6e4a,#2E8B57);"><i class="fa-solid fa-eye"></i> حفظ ومعاينة عربي</button>
-            <button id="invoice-print-en-btn" class="btn-panel" onclick="saveAndPrintInvoice('en')" style="background:linear-gradient(135deg,#1f4e8a,#2E72B5);"><i class="fa-solid fa-eye"></i> Save &amp; Preview English</button>
-            <button id="invoice-print-both-btn" class="btn-panel" onclick="saveAndPrintInvoice('both')" style="background:linear-gradient(135deg,#8a6d1f,#c99a2e);"><i class="fa-solid fa-eye"></i> حفظ ومعاينة عربي + English</button>
+            <button id="invoice-print-btn" class="btn-panel" onclick="saveAndPrintInvoice(getInvoiceDocLang())" style="background:linear-gradient(135deg,#1f6e4a,#2E8B57);"><i class="fa-solid fa-eye"></i> 👁️ حفظ ومعاينة</button>
+            <button id="invoice-whatsapp-btn" class="btn-panel" onclick="sendInvoicePdfToWhatsApp(getInvoiceDocLang(true))" style="background:linear-gradient(135deg,#128C7E,#25D366);"><i class="fa-brands fa-whatsapp"></i> 📲 حفظ وإرسال PDF واتساب</button>
+            <button id="invoice-download-pdf-btn" class="btn-panel" onclick="downloadInvoicePdfFromForm(getInvoiceDocLang(true))" style="background:linear-gradient(135deg,#1f6f8b,#2e9bb8);"><i class="fa-solid fa-download"></i> ⬇️ تحميل PDF</button>
+            <button id="invoice-download-html-btn" class="btn-panel" onclick="downloadInvoiceHtmlFromForm(getInvoiceDocLang())" style="background:#4a4a55;"><i class="fa-solid fa-download"></i> ⬇️ تحميل HTML</button>
             <button id="invoice-save-only-btn" class="btn-panel" onclick="saveInvoiceToCloud()" style="background:#3a3a45;"><i class="fa-solid fa-floppy-disk"></i> حفظ بدون طباعة</button>
             <button id="invoice-clear-btn" class="btn-panel" onclick="clearInvoiceForm()" style="background:linear-gradient(135deg,#8B2020,#B22222);"><i class="fa-solid fa-eraser"></i> مسح النموذج</button>
         </div>
-        <div style="color:#8a8a90; font-size:0.78rem; margin-top:-10px; margin-bottom:10px;">
-            <i class="fa-solid fa-circle-info"></i> زرار "معاينة" بيحفظ المستند وبيديله رقم تسلسلي، وبيفتحه في نافذة جديدة فيها زرار طباعة — تقدر تشوفه الأول وتطبع لما تكون جاهز.
-        </div>
-
-        <div class="admin-buttons" style="margin-top:4px;">
-            <button id="invoice-whatsapp-ar-btn" class="btn-panel" onclick="sendInvoicePdfToWhatsApp('ar')" style="background:linear-gradient(135deg,#128C7E,#25D366);"><i class="fa-brands fa-whatsapp"></i> حفظ وإرسال PDF عربي على واتساب</button>
-            <button id="invoice-whatsapp-en-btn" class="btn-panel" onclick="sendInvoicePdfToWhatsApp('en')" style="background:linear-gradient(135deg,#128C7E,#25D366);"><i class="fa-brands fa-whatsapp"></i> Save &amp; Send English PDF via WhatsApp</button>
-        </div>
-
-        <!-- v41.4: زراير تحميل مباشرة (PDF/HTML) — عشان تختار إنت تبعت من أي واتساب (أو إيميل/درايف) بنفسك
-             بدل ما يفتح واتساب معيّن أوتوماتيك على الموبايل اللي فيه أكتر من حساب -->
-        <div class="admin-buttons" style="margin-top:4px;">
-            <button id="invoice-download-pdf-ar-btn" class="btn-panel" onclick="downloadInvoicePdfFromForm('ar')" style="background:linear-gradient(135deg,#1f6f8b,#2e9bb8);"><i class="fa-solid fa-download"></i> ⬇️ تحميل PDF عربي</button>
-            <button id="invoice-download-pdf-en-btn" class="btn-panel" onclick="downloadInvoicePdfFromForm('en')" style="background:linear-gradient(135deg,#1f6f8b,#2e9bb8);"><i class="fa-solid fa-download"></i> ⬇️ Download English PDF</button>
-            <button id="invoice-download-html-ar-btn" class="btn-panel" onclick="downloadInvoiceHtmlFromForm('ar')" style="background:#4a4a55;"><i class="fa-solid fa-download"></i> ⬇️ تحميل HTML عربي</button>
-            <button id="invoice-download-html-en-btn" class="btn-panel" onclick="downloadInvoiceHtmlFromForm('en')" style="background:#4a4a55;"><i class="fa-solid fa-download"></i> ⬇️ Download English HTML</button>
-        </div>
         <div style="color:#8a8a90; font-size:0.78rem; margin-top:-6px; margin-bottom:10px;">
-            <i class="fa-solid fa-circle-info"></i> بعد التحميل، افتح الملف من "الملفات/Downloads" في الموبايل وادوس مشاركة — هيديك تختار تبعت من أي واتساب (أو أي برنامج تاني) إنت عاوزه.
+            <i class="fa-solid fa-circle-info"></i> "معاينة" بيحفظ المستند وبيديله رقم تسلسلي، وبيفتحه في نافذة فيها زرار طباعة. "واتساب"/"تحميل PDF" بيستخدموا لغة واحدة بس (لو اخترت "عربي+English" هيستخدموا عربي تلقائي). بعد التحميل، افتح الملف من "الملفات/Downloads" وادوس مشاركة عشان تختار تبعت من أي واتساب إنت عاوزه.
         </div>
 
         <div class="bookings-dropdown-container" style="margin-top:28px;">
@@ -6796,6 +6790,21 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         return { nights, price, subtotal, discountType, discountValue, discountAmount, total, currency, equivalentText };
     }
 
+    // v41.6: بيقرأ اللغة المختارة من السيليكت الواحد فوق النموذج. forceSingle=true يرجّع "ar" بدل "both"
+    // (مستخدم في واتساب/تحميل PDF اللي مش بتدعم "الاثنين مع بعض" في مستند واحد)
+    function getInvoiceDocLang(forceSingle) {
+        const el = document.getElementById('invoice-doc-lang');
+        const val = el ? el.value : 'ar';
+        if (forceSingle && val === 'both') return 'ar';
+        return val;
+    }
+
+    // v41.6: نفس الفكرة بس لكل صف في سجل الفواتير (كل فاتورة ليها سيليكت لغة خاص بيها)
+    function getHistoryRowLang(invoiceNumber) {
+        const el = document.getElementById('invoice-row-lang-' + invoiceNumber);
+        return el ? el.value : 'ar';
+    }
+
     function clearInvoiceForm() {
         document.getElementById('input-invoice-guest').value = '';
         document.getElementById('input-invoice-phone').value = '';
@@ -6874,6 +6883,34 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     }
 
     // v41: تعبئة نموذج الفاتورة تلقائياً من بيانات الحجز المفتوح دلوقتي في تبويب إدارة الحجوزات
+    // v41.6: بيدوّر على فاتورة/عرض سعر غير ملغى محفوظ بالفعل لنفس رقم الحجز ده — عشان لو حد عمل
+    // فاتورة لحجز معيّن قبل كده بالغلط (أو قصداً) ضغط "عمل فاتورة" تاني، نقوله فيه واحدة موجودة
+    // ونديله اختيار يفتحها للتعديل بدل ما ينشئ نسخة جديدة مكررة بنفس البيانات
+    function findExistingInvoiceForBooking(bookingId) {
+        if (!bookingId) return null;
+        const matches = invoicesHistoryCache.filter(d => !d.voided && String(d.bookingId || '').trim() === String(bookingId).trim());
+        if (!matches.length) return null;
+        return matches[matches.length - 1]; // الأحدث
+    }
+
+    // لو فيه فاتورة موجودة بالفعل لنفس الحجز، بيسأل المستخدم يفتحها للتعديل بدل الإنشاء من جديد.
+    // بيرجع true لو حمّل فاتورة موجودة (والمفروض الكود اللي نادى عليه يوقف هنا)، و false لو يكمل عادي.
+    function offerEditExistingInvoiceForBooking(bookingId) {
+        const existing = findExistingInvoiceForBooking(bookingId);
+        if (!existing) return false;
+        const wantsEdit = confirm(
+            'فيه مستند محفوظ بالفعل لنفس الحجز ده (رقم: ' + existing.invoiceNumber + '، الإجمالي: ' +
+            (parseFloat(existing.total) || 0).toFixed(2) + ' ' + currencySymbol(existing.currency) +
+            ').\n\nتحب تفتحه للتعديل بدل ما تعمل مستند جديد مكرر؟\n(OK = فتح للتعديل، Cancel = عمل مستند جديد زيادة عن قصد)'
+        );
+        if (wantsEdit) {
+            switchAdminTab('invoices');
+            editInvoiceFromHistory(existing.invoiceNumber);
+            return true;
+        }
+        return false;
+    }
+
     function createInvoiceFromCurrentBooking() {
         const guest = document.getElementById('input-guest').value || '';
         const phone = document.getElementById('input-phone').value || '';
@@ -6888,6 +6925,8 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         if (!guest && !checkIn) {
             showStatus('⚠️ مفيش حجز مفتوح دلوقتي في تبويب "إدارة الحجوزات" لتحويله لفاتورة.', 'error');
         }
+
+        if (offerEditExistingInvoiceForBooking(currentBookingId)) return;
 
         switchAdminTab('invoices');
         document.getElementById('input-invoice-guest').value = guest;
@@ -6927,6 +6966,8 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         if (!bookingId) { invoiceSourceBookingId = null; return; }
         const b = localBookingsCache.find(x => String(x.bookingID).trim() === String(bookingId).trim());
         if (!b) { showStatus('⚠️ تعذر العثور على هذا الحجز.', 'error'); return; }
+
+        if (offerEditExistingInvoiceForBooking(bookingId)) return;
 
         invoiceSourceBookingId = bookingId;
         document.getElementById('input-invoice-guest').value = b.guestName || '';
@@ -7097,13 +7138,15 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                         ${doc.guestName || '—'} (${doc.checkIn || '—'} ➔ ${doc.checkOut || '—'}) —
                         <strong>${total.toFixed(2)} ${symbol}</strong>${voidedTag}
                     </div>
-                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                        <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#2E8B57; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">AR 👁️</button>
-                        <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#2E72B5; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">EN 👁️</button>
-                        <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">واتساب AR 📲</button>
-                        <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">WhatsApp EN 📲</button>
-                        <button onclick='downloadInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "ar")' style="background:#1f6f8b; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تحميل PDF عربي">⬇️ PDF AR</button>
-                        <button onclick='downloadInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, "en")' style="background:#1f6f8b; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="Download English PDF">⬇️ PDF EN</button>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                        <!-- v41.6: سيليكت لغة واحد بدل تكرار كل زرار مرتين (عربي/إنجليزي) -->
+                        <select id="invoice-row-lang-${doc.invoiceNumber}" style="padding:5px 8px; border-radius:6px; border:1px solid #4a4a55; background:#1e1e24; color:white; font-size:0.75rem;">
+                            <option value="ar">عربي</option>
+                            <option value="en">English</option>
+                        </select>
+                        <button onclick='reprintInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, getHistoryRowLang(${JSON.stringify(doc.invoiceNumber)}))' style="background:#2E8B57; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">👁️ معاينة</button>
+                        <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, getHistoryRowLang(${JSON.stringify(doc.invoiceNumber)}))' style="background:#25D366; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">📲 واتساب</button>
+                        <button onclick='downloadInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, getHistoryRowLang(${JSON.stringify(doc.invoiceNumber)}))' style="background:#1f6f8b; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تحميل PDF">⬇️ PDF</button>
                         ${doc.voided ? '' : `<button onclick='editInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)})' style="background:#8e6bc9; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تعديل بيانات الفاتورة دي">✏️ تعديل</button>`}
                         <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "void")' style="background:#c99a2e; color:#1e1e24; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="إلغاء مع الاحتفاظ بالرقم">⛔ إلغاء</button>
                         <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "hard")' style="background:#B22222; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="حذف نهائي من السجل">🗑️ حذف نهائي</button>
