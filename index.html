@@ -1778,7 +1778,7 @@
                 <div id="invoice-stamp-preview" style="margin-top:8px; display:flex; align-items:center; gap:10px;"></div>
             </div>
             <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="chk-invoice-show-stamp" class="gold-switch" onchange="saveSettingsToCloud({invoiceShowStamp: String(this.checked)}); unitBannerData.showStamp = this.checked;">
+                <input type="checkbox" id="chk-invoice-show-stamp" class="gold-switch" onchange="syncInvoiceShowFlag('Stamp', this.checked)">
                 <label style="margin:0; cursor:pointer;" for="chk-invoice-show-stamp">إظهار الختم في الفاتورة</label>
             </div>
         </div>
@@ -1790,7 +1790,7 @@
                 <div id="invoice-signature-preview" style="margin-top:8px; display:flex; align-items:center; gap:10px;"></div>
             </div>
             <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="chk-invoice-show-signature" class="gold-switch" onchange="saveSettingsToCloud({invoiceShowSignature: String(this.checked)}); unitBannerData.showSignature = this.checked;">
+                <input type="checkbox" id="chk-invoice-show-signature" class="gold-switch" onchange="syncInvoiceShowFlag('Signature', this.checked)">
                 <label style="margin:0; cursor:pointer;" for="chk-invoice-show-signature">إظهار الإمضاء في الفاتورة</label>
             </div>
         </div>
@@ -1809,7 +1809,7 @@
                 </div>
                 <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
                     <input type="checkbox" id="chk-invoice-show-vodafone" class="gold-switch"
-                           onchange="saveSettingsToCloud({invoiceShowVodafone: String(this.checked)}); unitBannerData.showVodafone = this.checked;">
+                           onchange="syncInvoiceShowFlag('Vodafone', this.checked)">
                     <label style="margin:0; cursor:pointer;" for="chk-invoice-show-vodafone">إظهار فودافون كاش في الفاتورة</label>
                 </div>
             </div>
@@ -1833,7 +1833,7 @@
                 </div>
                 <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
                     <input type="checkbox" id="chk-invoice-show-instapay" class="gold-switch"
-                           onchange="saveSettingsToCloud({invoiceShowInstapay: String(this.checked)}); unitBannerData.showInstapay = this.checked;">
+                           onchange="syncInvoiceShowFlag('Instapay', this.checked)">
                     <label style="margin:0; cursor:pointer;" for="chk-invoice-show-instapay">إظهار إنستاباي في الفاتورة</label>
                 </div>
             </div>
@@ -1884,7 +1884,7 @@
                 </div>
                 <div class="admin-field" style="display:flex; align-items:center; gap:8px;">
                     <input type="checkbox" id="chk-invoice-show-bank" class="gold-switch"
-                           onchange="saveSettingsToCloud({invoiceShowBank: String(this.checked)}); unitBannerData.showBank = this.checked;">
+                           onchange="syncInvoiceShowFlag('Bank', this.checked)">
                     <label style="margin:0; cursor:pointer;" for="chk-invoice-show-bank">إظهار التحويل البنكي في الفاتورة</label>
                 </div>
             </div>
@@ -2184,6 +2184,32 @@
             <select id="invoice-booking-picker" onchange="prefillInvoiceFromBookingId(this.value)" style="width:100%; padding:10px 12px; border-radius:6px; border:1px solid #4a4a55; background:#1e1e24; color:white; font-family:inherit;">
                 <option value="">-- اختر حجزاً من القائمة --</option>
             </select>
+        </div>
+
+        <!-- v41.8: سوتشات سريعة لإظهار/إخفاء الختم والإمضاء وطرق الدفع هنا في قسم الفاتورة نفسه —
+             البيانات (الصور/الأرقام/الروابط) لسه بتتظبط من تبويب الإعدادات، وهنا بس اختيار تظهر ولا لأ -->
+        <div class="router-reminder-box" style="background: rgba(197,168,92,0.10); border-color:var(--gold); padding:14px; margin-bottom:20px; border-radius:12px; display:block;">
+            <div class="router-reminder-title" style="margin-bottom:10px;">
+                <i class="fa-solid fa-toggle-on"></i>
+                <span>إظهار في الفاتورة (البيانات نفسها بتتظبط من الإعدادات)</span>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:16px; font-size:0.85rem; color:#d1d1d6;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                    <input type="checkbox" id="chk-invoice-show-stamp-quick" class="gold-switch" onchange="syncInvoiceShowFlag('Stamp', this.checked)"> ختم الوحدة
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                    <input type="checkbox" id="chk-invoice-show-signature-quick" class="gold-switch" onchange="syncInvoiceShowFlag('Signature', this.checked)"> إمضاء المسؤول
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                    <input type="checkbox" id="chk-invoice-show-vodafone-quick" class="gold-switch" onchange="syncInvoiceShowFlag('Vodafone', this.checked)"> فودافون كاش
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                    <input type="checkbox" id="chk-invoice-show-instapay-quick" class="gold-switch" onchange="syncInvoiceShowFlag('Instapay', this.checked)"> إنستاباي
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                    <input type="checkbox" id="chk-invoice-show-bank-quick" class="gold-switch" onchange="syncInvoiceShowFlag('Bank', this.checked)"> تحويل بنكي
+                </label>
+            </div>
         </div>
 
         <div class="admin-grid">
@@ -6449,6 +6475,12 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             if (document.getElementById('chk-invoice-show-vodafone')) document.getElementById('chk-invoice-show-vodafone').checked = unitBannerData.showVodafone;
             if (document.getElementById('chk-invoice-show-instapay')) document.getElementById('chk-invoice-show-instapay').checked = unitBannerData.showInstapay;
             if (document.getElementById('chk-invoice-show-bank')) document.getElementById('chk-invoice-show-bank').checked = unitBannerData.showBank;
+            // v41.8: نفس السوتشات بس النسخة اللي ظاهرة في قسم الفاتورة نفسه (سريعة الوصول)
+            if (document.getElementById('chk-invoice-show-stamp-quick')) document.getElementById('chk-invoice-show-stamp-quick').checked = unitBannerData.showStamp;
+            if (document.getElementById('chk-invoice-show-signature-quick')) document.getElementById('chk-invoice-show-signature-quick').checked = unitBannerData.showSignature;
+            if (document.getElementById('chk-invoice-show-vodafone-quick')) document.getElementById('chk-invoice-show-vodafone-quick').checked = unitBannerData.showVodafone;
+            if (document.getElementById('chk-invoice-show-instapay-quick')) document.getElementById('chk-invoice-show-instapay-quick').checked = unitBannerData.showInstapay;
+            if (document.getElementById('chk-invoice-show-bank-quick')) document.getElementById('chk-invoice-show-bank-quick').checked = unitBannerData.showBank;
             renderInvoiceImagePreview('stamp', unitBannerData.stampUrl);
             renderInvoiceImagePreview('signature', unitBannerData.signatureUrl);
             // v32: بيانات الشركة (IDEA-EG) بقت ثابتة في الكود نفسه — مفيش حاجة تتحمّل من هنا
@@ -7005,6 +7037,12 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
 
         if (offerEditExistingInvoiceForBooking(currentBookingId)) return;
 
+        // v41.8: مفيش فاتورة محفوظة لنفس الحجز ده (أو المستخدم اختار إنشاء مستند جديد عن قصد) —
+        // لازم نتأكد إننا مش لسه "عالقين" في وضع تعديل فاتورة سابقة من أي حركة قبل كده
+        editingInvoiceNumber = null;
+        editingInvoicePaidTotal = 0;
+        updateInvoiceEditBanner();
+
         switchAdminTab('invoices');
         document.getElementById('input-invoice-guest').value = guest;
         document.getElementById('input-invoice-phone').value = phone;
@@ -7045,6 +7083,11 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         if (!b) { showStatus('⚠️ تعذر العثور على هذا الحجز.', 'error'); return; }
 
         if (offerEditExistingInvoiceForBooking(bookingId)) return;
+
+        // v41.8: نفس إصلاح التكرار — بداية فاتورة جديدة فعلاً لازم تتأكد إننا مش لسه في وضع تعديل سابق
+        editingInvoiceNumber = null;
+        editingInvoicePaidTotal = 0;
+        updateInvoiceEditBanner();
 
         invoiceSourceBookingId = bookingId;
         document.getElementById('input-invoice-guest').value = b.guestName || '';
@@ -7146,8 +7189,13 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                     });
                     lastSavedInvoiceDoc = fullDoc;
                     showStatus('✅ ' + (d.message || 'تم الحفظ بنجاح.') + ' (رقم: ' + fullDoc.invoiceNumber + ')', 'success');
-                    editingInvoiceNumber = null; // v41.3: رجوع لوضع "فاتورة جديدة" بعد الحفظ/التحديث بنجاح
-                    editingInvoicePaidTotal = 0;
+                    // v41.8 (إصلاح التكرار): مبقيناش بنرجّع editingInvoiceNumber لـ null بعد نجاح الحفظ —
+                    // ده كان هو السبب الحقيقي في إن أي حركة تانية (معاينة/واتساب/تحميل) بعد أول حفظ كانت
+                    // بتتعامل معاه كفاتورة جديدة وتعمل نسخة مكررة. دلوقتي بمجرد ما المستند ياخد رقم،
+                    // أي حفظ لاحق في نفس الجلسة (من غير ما تضغط "مسح النموذج" أو تبدأ حجز/فاتورة تانية)
+                    // هيكون تحديث لنفس الرقم ده، مش إنشاء رقم جديد.
+                    editingInvoiceNumber = fullDoc.invoiceNumber;
+                    editingInvoicePaidTotal = parseFloat(fullDoc.paidTotal) || editingInvoicePaidTotal || 0;
                     updateInvoiceEditBanner();
                     loadInvoicesHistory();
                     return fullDoc;
@@ -7225,9 +7273,15 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                         <button onclick='sendInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, getHistoryRowLang(${JSON.stringify(doc.invoiceNumber)}))' style="background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:#1a1a1a; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">📲 واتساب</button>
                         <button onclick='downloadInvoicePdfFromHistory(${JSON.stringify(doc.invoiceNumber)}, getHistoryRowLang(${JSON.stringify(doc.invoiceNumber)}))' style="background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:#1a1a1a; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تحميل PDF">⬇️ PDF</button>
                         ${doc.voided ? '' : `<button onclick='editInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)})' style="background:#8e6bc9; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تعديل بيانات الفاتورة دي">✏️ تعديل</button>`}
-                        <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "void")' style="background:#c99a2e; color:#1e1e24; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="إلغاء مع الاحتفاظ بالرقم">⛔ إلغاء</button>
-                        <button onclick='deleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "hard")' style="background:#B22222; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="حذف نهائي من السجل">🗑️ حذف نهائي</button>
+                        <button onclick='requestDeleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "void")' style="background:#c99a2e; color:#1e1e24; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="إلغاء مع الاحتفاظ بالرقم">⛔ إلغاء</button>
+                        <button onclick='requestDeleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)}, "hard")' style="background:#B22222; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="حذف نهائي من السجل">🗑️ حذف نهائي</button>
                     </div>
+                </div>
+                <!-- v41.8: صندوق تأكيد الحذف/الإلغاء — بيظهر جمب الزرار نفسه بدل رسالة فوق الصفحة -->
+                <div id="invoice-delete-confirm-${doc.invoiceNumber}" style="display:none; margin-top:8px; background:rgba(178,34,34,0.12); border:1px solid #B22222; border-radius:8px; padding:8px 12px; font-size:0.8rem; color:#f3c6c6;">
+                    <span id="invoice-delete-confirm-text-${doc.invoiceNumber}"></span>
+                    <button onclick='confirmDeleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)})' style="background:#B22222; color:white; border:none; padding:4px 14px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.76rem; margin-inline-start:10px;">نعم</button>
+                    <button onclick='cancelDeleteInvoiceFromHistory(${JSON.stringify(doc.invoiceNumber)})' style="background:#4a4a55; color:white; border:none; padding:4px 14px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.76rem; margin-inline-start:6px;">لا</button>
                 </div>
                 ${doc.docType === 'quote' ? '' : `
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:0.82rem;">
@@ -7324,22 +7378,36 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     }
 
     // v41: حذف/إلغاء فاتورة من السجل — mode: "void" (احتفاظ بالرقم) أو "hard" (حذف نهائي)
-    function deleteInvoiceFromHistory(invoiceNumber, mode) {
+    // v41.8: تأكيد الحذف/الإلغاء بقى صندوق "نعم/لا" جمب الزرار نفسه في الصف، بدل رسالة فوق الصفحة
+    // بتختفي بعد 4 ثواني. بيحفظ العملية المعلّقة (إلغاء أو حذف نهائي) لحد ما يدوس "نعم" أو "لا".
+    const pendingInvoiceDeletes = {};
+
+    function requestDeleteInvoiceFromHistory(invoiceNumber, mode) {
+        pendingInvoiceDeletes[invoiceNumber] = mode;
+        const box = document.getElementById('invoice-delete-confirm-' + invoiceNumber);
+        const textEl = document.getElementById('invoice-delete-confirm-text-' + invoiceNumber);
+        if (!box || !textEl) return;
+        textEl.textContent = mode === 'hard'
+            ? '⚠️ متأكد إنك عاوز تحذف المستند ده نهائياً؟ الخطوة دي مش هترجع.'
+            : '⛔ متأكد إنك عاوز تلغي المستند ده (مع الاحتفاظ برقمه في السجل)؟';
+        box.style.display = 'block';
+    }
+
+    function cancelDeleteInvoiceFromHistory(invoiceNumber) {
+        delete pendingInvoiceDeletes[invoiceNumber];
+        const box = document.getElementById('invoice-delete-confirm-' + invoiceNumber);
+        if (box) box.style.display = 'none';
+    }
+
+    function confirmDeleteInvoiceFromHistory(invoiceNumber) {
+        const mode = pendingInvoiceDeletes[invoiceNumber];
+        const box = document.getElementById('invoice-delete-confirm-' + invoiceNumber);
+        if (box) box.style.display = 'none';
+        if (!mode) return;
+        delete pendingInvoiceDeletes[invoiceNumber];
+
         const gasUrl = document.getElementById('input-gas-url').value.trim();
         if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
-
-        const msg = mode === 'hard'
-            ? `⚠️ هتحذف المستند ${invoiceNumber} نهائياً ومش هترجعله تاني. اضغط الزرار تاني في خلال 4 ثواني للتأكيد.`
-            : `⛔ هتلغي المستند ${invoiceNumber} مع الاحتفاظ برقمه في السجل. اضغط الزرار تاني في خلال 4 ثواني للتأكيد.`;
-
-        const confirmKey = '__invoiceDeleteConfirm_' + invoiceNumber + '_' + mode;
-        if (!window[confirmKey]) {
-            window[confirmKey] = true;
-            showStatus(msg, 'error');
-            setTimeout(() => { window[confirmKey] = false; }, 4000);
-            return;
-        }
-        window[confirmKey] = false;
 
         showStatus('⏳ جاري تنفيذ الطلب...', 'success');
         fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'deleteInvoice', invoiceNumber: invoiceNumber, mode: mode }) })
@@ -7360,6 +7428,26 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     // مفيش API مؤكد لتوليد رابط بمبلغ محدد تلقائياً مع المزودين دول.
     // v41.5: بيانات الختم/الإمضاء/فودافون كاش/إنستاباي بقت إعدادات مركزية (unitBannerData) بدل القراءة
     // من صندوق دليل الضيف — عشان نقدر نبعتها للسيرفر وقت توليد الـ PDF (السيرفر مالوش دخول على الصفحة نفسها)
+    // v41.8: سوتش واحد (إظهار/إخفاء) بيتحكم فيه من مكانين — تبويب الإعدادات وقسم الفاتورة نفسه —
+    // الدالة دي بتحدّث unitBannerData + تحفظ في الإعدادات + تزامن السوتش التاني (الموجود في المكان التاني)
+    // عشان الاتنين يفضلوا متطابقين مهما اتغيّر من أي مكان فيهم
+    const INVOICE_SHOW_FLAG_MAP = {
+        Stamp:     { settingsKey: 'invoiceShowStamp',     bannerKey: 'showStamp',     ids: ['chk-invoice-show-stamp', 'chk-invoice-show-stamp-quick'] },
+        Signature: { settingsKey: 'invoiceShowSignature', bannerKey: 'showSignature', ids: ['chk-invoice-show-signature', 'chk-invoice-show-signature-quick'] },
+        Vodafone:  { settingsKey: 'invoiceShowVodafone',   bannerKey: 'showVodafone',  ids: ['chk-invoice-show-vodafone', 'chk-invoice-show-vodafone-quick'] },
+        Instapay:  { settingsKey: 'invoiceShowInstapay',   bannerKey: 'showInstapay',  ids: ['chk-invoice-show-instapay', 'chk-invoice-show-instapay-quick'] },
+        Bank:      { settingsKey: 'invoiceShowBank',       bannerKey: 'showBank',      ids: ['chk-invoice-show-bank', 'chk-invoice-show-bank-quick'] }
+    };
+    function syncInvoiceShowFlag(kind, checked) {
+        const m = INVOICE_SHOW_FLAG_MAP[kind];
+        if (!m) return;
+        unitBannerData[m.bannerKey] = checked;
+        const payload = {};
+        payload[m.settingsKey] = String(checked);
+        saveSettingsToCloud(payload);
+        m.ids.forEach(id => { const el = document.getElementById(id); if (el) el.checked = checked; });
+    }
+
     function readInvoiceBrandingFields() {
         return {
             logo: unitBannerData.logo || '',
@@ -7613,7 +7701,11 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
             : '';
         const notesHtml = doc.notes ? `<div style="margin-top:14px; font-size:0.85rem; color:#444;"><strong>${isAr ? 'ملاحظات' : 'Notes'}:</strong> ${doc.notes}</div>` : '';
         const numberLine = doc.invoiceNumber ? `<div style="font-size:0.95rem; color:#555;">${isAr ? 'رقم' : 'No.'}: ${doc.invoiceNumber}</div>` : '<div style="font-size:0.85rem; color:#e74c3c;">' + (isAr ? '(مسودة — غير محفوظة)' : '(Draft — not saved)') + '</div>';
-        const equivalentRow = doc.equivalentText ? `<tr><td colspan="2" style="padding:4px 0; color:#666; font-size:0.85rem;">${doc.equivalentText}</td></tr>` : '';
+        // v41.8: لما نعرض مبلغ معادل بعملة تانية، لازم نوضح إن السعر ده تقريبي (متوسط سعر صرف حالي) مش سعر رسمي ثابت
+        const equivalentRow = doc.equivalentText ? `<tr><td colspan="2" style="padding:4px 0; color:#666; font-size:0.85rem;">
+            ${doc.equivalentText}
+            <div style="font-size:0.72rem; color:#999; margin-top:2px;">${isAr ? 'متوسط سعر الصرف الآن في البنوك المصرية' : 'Current average exchange rate at Egyptian banks'}</div>
+        </td></tr>` : '';
 
         // v41.3 (فكرة 2): لو فيه متبقي، نضيف بوكس يوضح المبلغ المتبقي + طرق الدفع المفعّلة من الإعدادات
         const remainingAmt = doc.remaining !== undefined && doc.remaining !== null ? (parseFloat(doc.remaining) || 0) : 0;
