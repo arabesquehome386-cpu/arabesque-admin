@@ -7185,7 +7185,10 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                 if (d.status === 'success') {
                     const fullDoc = Object.assign({}, payload, {
                         invoiceNumber: d.invoiceNumber || editingInvoiceNumber, subtotal: d.subtotal,
-                        discountAmount: d.discountAmount, total: d.total
+                        discountAmount: d.discountAmount, total: d.total,
+                        // v41.9 (حل جذري لمشكلة QR): روابط Drive المباشرة للملفات اللي اتولّدت فوراً وقت الحفظ،
+                        // عشان كود QR يستخدمها هي بدل رابط الـ Apps Script (مش متأثرة بإعداد "Who has access")
+                        pdfUrlAr: d.pdfUrlAr || '', pdfUrlEn: d.pdfUrlEn || ''
                     });
                     lastSavedInvoiceDoc = fullDoc;
                     showStatus('✅ ' + (d.message || 'تم الحفظ بنجاح.') + ' (رقم: ' + fullDoc.invoiceNumber + ')', 'success');
@@ -7286,10 +7289,16 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                 ${doc.docType === 'quote' ? '' : `
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:8px; font-size:0.82rem;">
                     <div>${payStatus}</div>
-                    <button onclick='toggleAddPaymentRow(${JSON.stringify(doc.invoiceNumber)})' style="background:#3a3a45; color:#d1d1d6; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">➕ إضافة دفعة</button>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        ${remaining > 0.009 ? `<button onclick='markInvoicePaidInFull(${JSON.stringify(doc.invoiceNumber)}, ${remaining})' style="background:#2E8B57; color:white; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;" title="تسجيل المتبقي بالكامل كدفعة واحدة">✅ تم السداد</button>` : ''}
+                        <button onclick='toggleAddPaymentRow(${JSON.stringify(doc.invoiceNumber)})' style="background:#3a3a45; color:#d1d1d6; border:none; padding:5px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">➕ إضافة دفعة</button>
+                    </div>
                 </div>
-                <div id="add-payment-row-${doc.invoiceNumber}" style="display:none; margin-top:8px; gap:8px; align-items:center;">
+                <div id="add-payment-row-${doc.invoiceNumber}" style="display:none; margin-top:8px; gap:8px; align-items:center; flex-wrap:wrap;">
                     <input type="number" min="0" id="add-payment-amount-${doc.invoiceNumber}" placeholder="قيمة الدفعة" style="padding:6px 10px; border-radius:6px; border:1px solid #4a4a55; background:#1e1e24; color:white; width:140px;">
+                    <!-- v41.9: رفع إيصال السداد (اختياري) قبل تسجيل الدفعة -->
+                    <input type="file" accept="image/*,application/pdf" id="add-payment-receipt-${doc.invoiceNumber}" style="font-size:0.72rem; color:#d1d1d6; max-width:170px;">
+                    <span id="add-payment-receipt-status-${doc.invoiceNumber}" style="font-size:0.72rem; color:#8a8a90;"></span>
                     <button onclick='submitInvoicePayment(${JSON.stringify(doc.invoiceNumber)})' style="background:#2E8B57; color:white; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:700; font-size:0.78rem;">✅ تسجيل الدفعة</button>
                 </div>`}
             </div>`;
@@ -7305,19 +7314,64 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         row.style.display = (row.style.display === 'none') ? 'flex' : 'none';
     }
 
+    // v41.9: زرار "تم السداد" — بيسجّل كل المتبقي كدفعة واحدة من غير ما تحتاج تكتب الرقم بنفسك
+    function markInvoicePaidInFull(invoiceNumber, remaining) {
+        const amount = parseFloat(remaining) || 0;
+        if (amount <= 0) { showStatus('⚠️ لا يوجد متبقي على هذه الفاتورة.', 'error'); return; }
+        submitInvoicePaymentAmount(invoiceNumber, amount, '');
+    }
+
     function submitInvoicePayment(invoiceNumber) {
-        const gasUrl = document.getElementById('input-gas-url').value.trim();
-        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
         const amountEl = document.getElementById('add-payment-amount-' + invoiceNumber);
         const amount = parseFloat(amountEl ? amountEl.value : 0) || 0;
         if (amount <= 0) { showStatus('⚠️ اكتب قيمة دفعة صحيحة.', 'error'); return; }
 
+        // v41.9: لو فيه إيصال سداد مرفوع، نرفعه على السيرفر أولاً، وبعدين نسجّل الدفعة مع رابطه
+        const receiptInput = document.getElementById('add-payment-receipt-' + invoiceNumber);
+        const receiptFile = receiptInput && receiptInput.files && receiptInput.files[0];
+        const statusEl = document.getElementById('add-payment-receipt-status-' + invoiceNumber);
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+
+        if (!receiptFile) {
+            submitInvoicePaymentAmount(invoiceNumber, amount, '');
+            return;
+        }
+
+        if (statusEl) statusEl.textContent = '⏳ جاري رفع الإيصال...';
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            fetch(gasUrl, { method: 'POST', body: JSON.stringify({
+                action: 'uploadDocument', fileName: 'Receipt_' + invoiceNumber + '_' + new Date().getTime() + '_' + receiptFile.name,
+                fileType: receiptFile.type, fileData: e.target.result
+            })})
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success' && d.url) {
+                    if (statusEl) statusEl.textContent = '✅ تم رفع الإيصال.';
+                    submitInvoicePaymentAmount(invoiceNumber, amount, d.url);
+                } else {
+                    showStatus('❌ فشل رفع الإيصال: ' + (d.message || 'خطأ غير معروف.'), 'error');
+                    if (statusEl) statusEl.textContent = '';
+                }
+            })
+            .catch(() => { showStatus('⚠️ تعذر الاتصال بالسيرفر لرفع الإيصال.', 'error'); if (statusEl) statusEl.textContent = ''; });
+        };
+        reader.readAsDataURL(receiptFile);
+    }
+
+    // الدالة المشتركة اللي فعلياً بتسجّل الدفعة (تُستخدم من "✅ تم السداد" ومن "✅ تسجيل الدفعة" الاتنين)
+    function submitInvoicePaymentAmount(invoiceNumber, amount, receiptUrl) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+
         showStatus('⏳ جاري تسجيل الدفعة...', 'success');
-        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'addInvoicePayment', invoiceNumber: invoiceNumber, amount: amount }) })
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'addInvoicePayment', invoiceNumber: invoiceNumber, amount: amount, receiptUrl: receiptUrl || '' }) })
             .then(r => r.json())
             .then(d => {
                 if (d.status === 'success') {
                     showStatus('✅ تم تسجيل الدفعة. المتبقي: ' + (parseFloat(d.remaining)||0).toFixed(2), 'success');
+                    const amountEl = document.getElementById('add-payment-amount-' + invoiceNumber);
                     if (amountEl) amountEl.value = '';
                     loadInvoicesHistory();
                 } else {
@@ -7448,6 +7502,16 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         m.ids.forEach(id => { const el = document.getElementById(id); if (el) el.checked = checked; });
     }
 
+    // v41.9: اسم ملف التحميل بقى فيه اسم الضيف بدل رقم الفاتورة لوحده بس
+    function sanitizeInvoiceFileNamePart(s) {
+        return String(s || '').trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_').slice(0, 60);
+    }
+    function buildInvoiceDownloadFileName(doc, lang, ext) {
+        const guestPart = sanitizeInvoiceFileNamePart(doc.guestName) || 'Guest';
+        const numPart = doc.invoiceNumber || (doc.docType === 'quote' ? 'Quote' : 'Document');
+        return numPart + '_' + guestPart + '_' + lang + '.' + ext;
+    }
+
     function readInvoiceBrandingFields() {
         return {
             logo: unitBannerData.logo || '',
@@ -7532,6 +7596,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     // =========================================================
 
     // بيولّد PDF حقيقي من السيرفر ويفتحه في تاب جديد (رابط Google Drive) عشان تقدر تحمّله بنفسك
+    // v41.9: التحميل بقى مباشر فعلاً (Blob من base64) بدل ما يفتح تاب جديد لجوجل درايڤ ويحتاج خطوة زيادة
     function downloadInvoicePdf(doc, lang) {
         const gasUrl = document.getElementById('input-gas-url').value.trim();
         if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
@@ -7540,7 +7605,27 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'generateInvoicePdf', lang: lang, invoice: doc }) })
             .then(r => r.json())
             .then(d => {
-                if (d.status === 'success' && d.pdfUrl) {
+                if (d.status === 'success' && d.pdfBase64) {
+                    try {
+                        const byteChars = atob(d.pdfBase64);
+                        const byteNumbers = new Array(byteChars.length);
+                        for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: 'application/pdf' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = buildInvoiceDownloadFileName(doc, lang, 'pdf');
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        setTimeout(() => URL.revokeObjectURL(url), 2000);
+                        showStatus('✅ تم تحميل ملف PDF مباشرة.', 'success');
+                    } catch (e) {
+                        showStatus('❌ تعذر تحويل الملف للتحميل: ' + e.toString(), 'error');
+                    }
+                } else if (d.status === 'success' && d.pdfUrl) {
+                    // احتياطي: لو السيرفر القديم لسه مش محدّث ورجّع لينك درايڤ بس
                     showStatus('✅ تم توليد الملف — هيفتح في تاب جديد، دوس أيقونة التحميل ⬇️ هناك.', 'success');
                     setTimeout(() => window.open(d.pdfUrl, '_blank'), 400);
                 } else {
@@ -7572,13 +7657,13 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
 
         const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
             <title>${doc.invoiceNumber || (doc.docType === 'quote' ? 'Quote' : 'Invoice')}</title></head>
-            <body style="margin:0; background:#fff;">${bodyHtml}</body></html>`;
+            <body style="margin:0; background:#f4f1ea;">${bodyHtml}</body></html>`;
 
         const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = (doc.invoiceNumber || 'document') + '_' + lang + '.html';
+        a.download = buildInvoiceDownloadFileName(doc, lang, 'html');
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -7739,10 +7824,15 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
 
         // v41.7 (فكرة 1): كود QR بيودّي لرابط تحميل/معاينة نفس المستند — متاح بس بعد الحفظ (لازم رقم مستند)
         // v41.7: دلوقتي بيتولّد محلياً 100% (buildQrSvg) كصورة SVG مضمّنة — من غير أي خدمة خارجية خالص
+        // v41.9 (حل جذري): لو السيرفر رجّع رابط Google Drive مباشر للملف (بيتولّد وقت الحفظ)، بنستخدمه هو في الـ QR
+        // مباشرة — ده بيتفحص عن طريق صلاحية مشاركة Drive نفسها (ANYONE_WITH_LINK) مش عن طريق نشرة الـ Apps Script،
+        // يعني مش محتاج إعداد "Who has access" في Deploy خالص. لو لسه مفيش رابط Drive (فاتورة لسه مش محفوظة
+        // أو فشل توليد الـ PDF وقت الحفظ)، بيرجع للطريقة القديمة (رابط Apps Script) كحل احتياطي بس.
         let qrHtml = '';
-        if (doc.invoiceNumber && doc.gasUrl) {
-            const qrTarget = doc.gasUrl + (doc.gasUrl.indexOf('?') > -1 ? '&' : '?') +
-                'type=invoicePdfView&invoiceNumber=' + encodeURIComponent(doc.invoiceNumber) + '&lang=' + lang;
+        const directPdfLink = lang === 'en' ? doc.pdfUrlEn : doc.pdfUrlAr;
+        if (doc.invoiceNumber && (directPdfLink || doc.gasUrl)) {
+            const qrTarget = directPdfLink || (doc.gasUrl + (doc.gasUrl.indexOf('?') > -1 ? '&' : '?') +
+                'type=invoicePdfView&invoiceNumber=' + encodeURIComponent(doc.invoiceNumber) + '&lang=' + lang);
             const qrSvg = buildQrSvg(qrTarget, 100);
             qrHtml = `<div style="text-align:center;">
                 ${qrSvg}
@@ -7754,8 +7844,9 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         const stampHtml = (doc.showStamp && doc.stampUrl) ? `<img src="${doc.stampUrl}" style="width:85px; height:85px; object-fit:contain; opacity:0.92;">` : '';
         const signatureImgHtml = (doc.showSignature && doc.signatureUrl) ? `<img src="${doc.signatureUrl}" style="max-width:160px; max-height:60px; object-fit:contain; display:block; margin:0 auto 4px;">` : '';
 
+        // v41.9: خلفية الفاتورة بقت بنفس درجة لون دليل الضيف (نفس التدرّج الكريمي الذهبي وبرواز ذهبي مزدوج)
         return `
-        <div class="invoice-lang-block" dir="${isAr ? 'rtl' : 'ltr'}" style="font-family:${isAr ? "'Tajawal', sans-serif" : "Arial, sans-serif"}; color:#1a1a1a; padding:28px; max-width:720px; margin:0 auto;">
+        <div class="invoice-lang-block" dir="${isAr ? 'rtl' : 'ltr'}" style="font-family:${isAr ? "'Tajawal', sans-serif" : "Arial, sans-serif"}; color:#1a1a1a; padding:28px; max-width:720px; margin:20px auto; background: radial-gradient(circle, rgba(255,254,250,1) 0%, rgba(248,242,228,1) 100%); border:12px double #A37F3D; border-radius:4px; box-shadow:0 10px 30px rgba(92,61,36,0.1);">
             ${qrHtml ? `<div style="text-align:center; margin-bottom:16px;">${qrHtml}</div>` : ''}
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #c5a85c; padding-bottom:16px; margin-bottom:20px;">
                 <div style="display:flex; align-items:center; gap:12px;">
@@ -7819,7 +7910,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
             <title>${doc.invoiceNumber || (doc.docType === 'quote' ? 'Quote' : 'Invoice')}</title>
             <style>
-                body { margin:0; background:#fff; }
+                body { margin:0; background:#f4f1ea; }
                 .print-now-bar { position:sticky; top:0; background:#1e1e24; padding:10px; text-align:center; z-index:9; }
                 .print-now-btn { background:linear-gradient(135deg,#A37F3D,#C5A85C); color:#1a1a1a; border:none; padding:10px 26px; border-radius:8px; cursor:pointer; font-size:1rem; font-weight:800; font-family:inherit; }
                 @media print { .print-now-bar { display:none; } @page { margin: 14mm; } }
