@@ -2177,7 +2177,47 @@
         </div>
 
         <!-- v41.3 (فكرة 1): تذكير الدفعات المتبقية — بيبعتلك رسالة على تليجرام فيها الفواتير اللي فيها متبقي وقرب ميعاد دخول الضيف (مع رابط واتساب جاهز تبعته إنت للضيف) -->
-        <button id="check-pending-payments-btn" class="btn-panel" onclick="checkPendingPaymentsNow()" style="background:linear-gradient(135deg,#b8860b,#d4af37); margin-bottom:20px;" title="بيفحص كل الفواتير دلوقتي ويبعتلك على تليجرام أي فاتورة فيها متبقي وقرب ميعاد دخول ضيفها (بيحصل أوتوماتيك كل يوم 9 الصبح كمان)">🔔 تحقق من الدفعات المتبقية الآن</button>
+        <button id="check-pending-payments-btn" class="btn-panel" onclick="checkPendingPaymentsNow()" style="background:linear-gradient(135deg,#b8860b,#d4af37); margin-bottom:10px;" title="بيفحص كل الفواتير دلوقتي ويبعتلك على تليجرام أي فاتورة فيها متبقي وقرب ميعاد دخول ضيفها (بيحصل أوتوماتيك كل يوم 9 الصبح كمان)">🔔 تحقق من الدفعات المتبقية الآن</button>
+        <button id="check-unrated-guests-btn" class="btn-panel" onclick="checkUnratedGuestsNow()" style="background:linear-gradient(135deg,#8e6bc9,#b39ddb); margin-bottom:20px;" title="بيفحص الضيوف اللي خرجوا بالأمس ولسه مش مقيّمين ويبعتلك تذكير على تليجرام (بيحصل أوتوماتيك كل يوم 11 الصبح كمان)">⭐ تحقق من الضيوف غير المقيّمين الآن</button>
+
+        <!-- v42: نظام تقييم الضيوف — نجوم 1-5 + ملاحظات، تحذير للضيوف ضعيفي التقييم، ومشاركة مع باقي المضيفين -->
+        <div class="router-reminder-box" style="background: rgba(197,168,92,0.10); border-color:var(--gold); padding:14px; margin-bottom:20px; border-radius:12px; display:block;">
+            <div class="router-reminder-title" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <span><i class="fa-solid fa-star"></i> تقييمات الضيوف</span>
+                <button class="btn-panel" onclick="toggleGuestRatingPanel()" style="background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:#1a1a1a; padding:6px 14px; font-size:0.8rem; margin:0;">⭐ تقييم ضيف</button>
+            </div>
+            <div id="guest-rating-panel" style="display:none; margin-top:10px;">
+                <div class="admin-grid">
+                    <div class="admin-field">
+                        <label>اختر ضيف مسجل قبل كده (اختياري)</label>
+                        <select id="select-rate-existing-guest" onchange="fillGuestRatingFromExisting(this.value)">
+                            <option value="">-- أو اكتب بيانات ضيف جديد تحت --</option>
+                        </select>
+                    </div>
+                    <div class="admin-field">
+                        <label>اسم الضيف</label>
+                        <input type="text" id="input-rate-guest-name" placeholder="اسم الضيف">
+                    </div>
+                    <div class="admin-field">
+                        <label>رقم الموبايل (اختياري)</label>
+                        <input type="text" id="input-rate-guest-phone" placeholder="رقم الموبايل">
+                    </div>
+                </div>
+                <div style="margin:10px 0;">
+                    <label style="display:block; margin-bottom:6px; color:#d1d1d6; font-size:0.85rem;">التقييم</label>
+                    <div id="guest-rating-stars" style="font-size:1.6rem; cursor:pointer; letter-spacing:4px;"></div>
+                </div>
+                <div class="admin-field" style="margin-bottom:10px;">
+                    <label>ملاحظات عن الضيف</label>
+                    <textarea id="input-rate-guest-notes" rows="2" placeholder="مثال: ضيف محترم ومنظّم / تأخر في تسليم الشقة / أضاف ضيوف زيادة من غير إذن..." style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #4a4a55; background:#1e1e24; color:white; font-family:inherit;"></textarea>
+                </div>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.85rem; color:#d1d1d6; margin-bottom:12px;">
+                    <input type="checkbox" id="chk-rate-share-registry" class="gold-switch"> 📤 شارك هذا التقييم في السجل المشترك بين كل المضيفين (هيظهر لو أي مضيف تاني بحث بنفس اسم/رقم الضيف ده)
+                </label>
+                <button class="btn-panel" onclick="submitGuestRating()" style="background:#2E8B57; color:white;">✅ حفظ التقييم</button>
+            </div>
+            <div id="guest-ratings-history" style="margin-top:12px; font-size:0.82rem; color:#d1d1d6;"></div>
+        </div>
 
         <div class="bookings-dropdown-container">
             <div class="bookings-dropdown-title"><i class="fa-solid fa-magnifying-glass"></i> اختر حجزاً مسجلاً بالفعل لعمل فاتورة له (اختياري)</div>
@@ -2212,14 +2252,18 @@
             </div>
         </div>
 
+        <!-- v42: تحذير تقييم ضعيف — يظهر لو الضيف المكتوب اسمه/رقمه مسجّل قبل كده بتقييم 4 نجوم أو أقل
+             (محلياً عندك، أو في السجل المشترك بين باقي المضيفين اللي بيستخدموا البرنامج) -->
+        <div id="guest-reputation-warning" style="display:none; background:rgba(178,34,34,0.14); border:1px solid #B22222; border-radius:10px; padding:12px 16px; margin-bottom:16px; font-size:0.85rem; color:#f3c6c6; line-height:1.7;"></div>
+
         <div class="admin-grid">
             <div class="admin-field">
                 <label>اسم الضيف / Guest Name</label>
-                <input type="text" id="input-invoice-guest" placeholder="مثال: أحمد علي">
+                <input type="text" id="input-invoice-guest" placeholder="مثال: أحمد علي" onblur="checkGuestReputationForInvoiceForm()">
             </div>
             <div class="admin-field">
                 <label>رقم الموبايل / Mobile</label>
-                <input type="text" id="input-invoice-phone" placeholder="مثال: 201061888636">
+                <input type="text" id="input-invoice-phone" placeholder="مثال: 201061888636" onblur="checkGuestReputationForInvoiceForm()">
             </div>
             <div class="admin-field">
                 <label>تاريخ الدخول / Check-in</label>
@@ -4615,6 +4659,7 @@
         if (tab === 'invoices') { // v41: الفواتير وعروض الأسعار
             calculateInvoiceTotals();
             loadInvoicesHistory();
+            loadGuestRatingsHistory(); // v42: تقييمات الضيوف
         }
     }
 
@@ -7379,6 +7424,166 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                 }
             })
             .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر.', 'error'));
+    }
+
+    /* =========================================================
+       v42: نظام تقييم الضيوف (نجوم 1-5 + ملاحظات) + تحذير تقييم ضعيف + السجل المشترك بين المضيفين
+       ========================================================= */
+    let currentGuestRatingStars = 0;
+    let guestRatingsHistoryCache = [];
+
+    function toggleGuestRatingPanel() {
+        const panel = document.getElementById('guest-rating-panel');
+        if (!panel) return;
+        const show = panel.style.display === 'none';
+        panel.style.display = show ? 'block' : 'none';
+        if (show) {
+            renderGuestRatingStars(0);
+            populateRatedGuestsDropdown();
+        }
+    }
+
+    function renderGuestRatingStars(n) {
+        currentGuestRatingStars = n;
+        const box = document.getElementById('guest-rating-stars');
+        if (!box) return;
+        box.innerHTML = [1, 2, 3, 4, 5].map(i =>
+            `<span onclick="renderGuestRatingStars(${i})" style="color:${i <= n ? '#C5A85C' : '#4a4a55'};">${i <= n ? '★' : '☆'}</span>`
+        ).join('');
+    }
+
+    // قائمة الضيوف المسجلين قبل كده (من سجل الفواتير المحمّل بالفعل في الذاكرة) — عشان تقدر تقيّم
+    // ضيف سبق وسجّلته من غير ما تكتب بياناته تاني
+    function populateRatedGuestsDropdown() {
+        const sel = document.getElementById('select-rate-existing-guest');
+        if (!sel) return;
+        const seen = {};
+        const options = ['<option value="">-- أو اكتب بيانات ضيف جديد تحت --</option>'];
+        (invoicesHistoryCache || []).forEach(doc => {
+            const key = (doc.guestName || '') + '|' + (doc.guestPhone || '');
+            if (!doc.guestName || seen[key]) return;
+            seen[key] = true;
+            options.push(`<option value='${JSON.stringify(key)}'>${doc.guestName}${doc.guestPhone ? ' — ' + doc.guestPhone : ''}</option>`);
+        });
+        sel.innerHTML = options.join('');
+    }
+
+    function fillGuestRatingFromExisting(key) {
+        if (!key) return;
+        const parts = key.split('|');
+        document.getElementById('input-rate-guest-name').value = parts[0] || '';
+        document.getElementById('input-rate-guest-phone').value = parts[1] || '';
+    }
+
+    function submitGuestRating() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        const guestName = document.getElementById('input-rate-guest-name').value.trim();
+        if (!guestName) { showStatus('⚠️ اكتب اسم الضيف أولاً.', 'error'); return; }
+        if (!currentGuestRatingStars) { showStatus('⚠️ اختار عدد النجوم.', 'error'); return; }
+
+        const payload = {
+            action: 'rateGuest',
+            guestName: guestName,
+            guestPhone: document.getElementById('input-rate-guest-phone').value.trim(),
+            stars: currentGuestRatingStars,
+            notes: document.getElementById('input-rate-guest-notes').value.trim(),
+            shareToRegistry: document.getElementById('chk-rate-share-registry').checked
+        };
+
+        showStatus('⏳ جاري حفظ التقييم...', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify(payload) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') {
+                    showStatus('✅ ' + (d.message || 'تم حفظ التقييم.'), 'success');
+                    document.getElementById('input-rate-guest-name').value = '';
+                    document.getElementById('input-rate-guest-phone').value = '';
+                    document.getElementById('input-rate-guest-notes').value = '';
+                    document.getElementById('chk-rate-share-registry').checked = false;
+                    renderGuestRatingStars(0);
+                    loadGuestRatingsHistory();
+                } else {
+                    showStatus('❌ فشل: ' + (d.message || 'خطأ غير معروف.'), 'error');
+                }
+            })
+            .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر.', 'error'));
+    }
+
+    function loadGuestRatingsHistory() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        const box = document.getElementById('guest-ratings-history');
+        if (!gasUrl || !box) return;
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'getGuestRatings' }) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status !== 'success') return;
+                guestRatingsHistoryCache = d.data || [];
+                if (guestRatingsHistoryCache.length === 0) { box.innerHTML = '<span style="color:#8a8a90;">لسه مفيش تقييمات مسجّلة.</span>'; return; }
+                box.innerHTML = '<div style="font-weight:700; margin-bottom:6px; color:#d1d1d6;">آخر التقييمات:</div>' +
+                    guestRatingsHistoryCache.slice(0, 15).map(r => {
+                        const stars = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+                        return `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #2a2a33; flex-wrap:wrap;">
+                            <div><span style="color:#C5A85C;">${stars}</span> — <strong>${r.guestName}</strong>${r.guestPhone ? ' (' + r.guestPhone + ')' : ''} ${r.notes ? '<br><span style="color:#8a8a90; font-size:0.85em;">' + r.notes + '</span>' : ''}</div>
+                            ${r.sharedToRegistry ? '<span style="color:#2E8B57; font-size:0.78rem;">✅ مُشارك</span>' : `<button onclick='shareGuestRatingNow(${JSON.stringify(r.ratingId)})' style="background:#3a3a45; color:#d1d1d6; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.75rem;">📤 مشاركة</button>`}
+                        </div>`;
+                    }).join('');
+            })
+            .catch(() => {});
+    }
+
+    function shareGuestRatingNow(ratingId) {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) return;
+        showStatus('⏳ جاري المشاركة في السجل المشترك...', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'shareGuestRatingToRegistry', ratingId: ratingId }) })
+            .then(r => r.json())
+            .then(d => {
+                showStatus((d.status === 'success' ? '✅ ' : '❌ ') + (d.message || ''), d.status === 'success' ? 'success' : 'error');
+                loadGuestRatingsHistory();
+            })
+            .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر.', 'error'));
+    }
+
+    function checkUnratedGuestsNow() {
+        const gasUrl = document.getElementById('input-gas-url').value.trim();
+        if (!gasUrl) { showStatus('⚠️ أضف رابط Apps Script أولاً.', 'error'); return; }
+        showStatus('⏳ جاري الفحص... (هتوصلك رسالة على تليجرام لو فيه ضيوف غير مقيّمين)', 'success');
+        fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'checkUnratedGuestsNow' }) })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'success') showStatus('✅ ' + (d.message || 'تم الفحص.'), 'success');
+                else showStatus('❌ فشل: ' + (d.message || ''), 'error');
+            })
+            .catch(() => showStatus('⚠️ تعذر الاتصال بالسيرفر.', 'error'));
+    }
+
+    // v42: تحذير تقييم ضعيف — بيتفحص لحظة ما تخرج من حقل اسم/رقم الضيف في نموذج الفاتورة، محلياً
+    // عندك وفي السجل المشترك بين باقي المضيفين اللي بيستخدموا البرنامج مع بعض
+    let guestReputationCheckTimer = null;
+    function checkGuestReputationForInvoiceForm() {
+        clearTimeout(guestReputationCheckTimer);
+        guestReputationCheckTimer = setTimeout(() => {
+            const gasUrl = document.getElementById('input-gas-url').value.trim();
+            const guestName = document.getElementById('input-invoice-guest').value.trim();
+            const guestPhone = document.getElementById('input-invoice-phone').value.trim();
+            const warningBox = document.getElementById('guest-reputation-warning');
+            if (!gasUrl || !warningBox || (!guestName && !guestPhone)) { if (warningBox) warningBox.style.display = 'none'; return; }
+
+            fetch(gasUrl, { method: 'POST', body: JSON.stringify({ action: 'checkGuestReputation', guestName: guestName, guestPhone: guestPhone }) })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.status !== 'success' || !d.warning) { warningBox.style.display = 'none'; return; }
+                    const items = (d.entries || []).filter(e => e.stars <= 4).map(e => {
+                        const stars = '★'.repeat(e.stars) + '☆'.repeat(5 - e.stars);
+                        const src = e.source === 'shared' ? ('مضيف آخر: ' + (e.propertyName || '')) : 'تقييمك إنت';
+                        return `<div>⚠️ <span style="color:#C5A85C;">${stars}</span> — ${src}${e.notes ? ' — "' + e.notes + '"' : ''}</div>`;
+                    }).join('');
+                    warningBox.innerHTML = '<strong>⚠️ تنبيه: هذا الضيف له تقييم منخفض (4 نجوم أو أقل) من قبل:</strong>' + items;
+                    warningBox.style.display = 'block';
+                })
+                .catch(() => {});
+        }, 400);
     }
 
     // v41.2: فكرة رقم 5 — إجمالي المحصّل فعلياً (مجموع الدفعات الحقيقية) هذا الشهر مقابل الشهر اللي فات،
