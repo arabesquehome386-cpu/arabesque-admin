@@ -4686,13 +4686,9 @@
             calculateInvoiceTotals();
             loadInvoicesHistory();
         }
-        if (tab === 'ratings') { // v42.2: تبويب التقييمات الموحّد (تقييم + بحث محلي وفي السجل المشترك مع بعض)
+        if (tab === 'ratings') { // v42.2/v42.3: تبويب التقييمات الموحّد (تقييم + بحث محلي وفي السجل المشترك مع بعض)
             loadGuestRatingsHistory();
-            try {
-                const p = loadInvoicesHistory();
-                if (p && typeof p.then === 'function') p.then(() => populateRatedGuestsDropdown());
-                else populateRatedGuestsDropdown();
-            } catch (e) { populateRatedGuestsDropdown(); }
+            populateRatedGuestsDropdown(); // v42.3: مصدرها localBookingsCache، محمّلة بالفعل من فتح الصفحة
         }
     }
 
@@ -7476,19 +7472,23 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
     }
     renderGuestRatingStars(0);
 
-    // قائمة الضيوف المسجلين قبل كده (من سجل الفواتير المحمّل بالفعل في الذاكرة) — عشان تقدر تقيّم
-    // ضيف سبق وسجّلته من غير ما تكتب بياناته تاني
+    // v42.3: قائمة الضيوف المسجلين قبل كده — بقت مصدرها localBookingsCache (كل حجوزاتك، مش بس
+    // اللي اتعمللها فاتورة) عشان تقدر تقيّم أي ضيف فعلاً تعامل معاه، مش بس اللي اتعمللهم فاتورة
+    // ورقية. قبل كده كانت بتاخد من invoicesHistoryCache بس (سجل الفواتير) فكانت بتطلع ضيف واحد أو
+    // اتنين بس لو مش كل حجز بتاخد له فاتورة.
     function populateRatedGuestsDropdown() {
         const sel = document.getElementById('select-rate-existing-guest');
         if (!sel) return;
         const seen = {};
         const options = ['<option value="">-- أو اكتب بيانات ضيف جديد تحت --</option>'];
-        (invoicesHistoryCache || []).forEach(doc => {
-            const key = (doc.guestName || '') + '|' + (doc.guestPhone || '');
-            if (!doc.guestName || seen[key]) return;
-            seen[key] = true;
-            options.push(`<option value='${JSON.stringify(key)}'>${doc.guestName}${doc.guestPhone ? ' — ' + doc.guestPhone : ''}</option>`);
-        });
+        [...(localBookingsCache || [])]
+            .sort((a, b) => new Date(b.checkIn) - new Date(a.checkIn))
+            .forEach(b => {
+                const key = (b.guestName || '') + '|' + (b.guestPhone || '');
+                if (!b.guestName || seen[key]) return;
+                seen[key] = true;
+                options.push(`<option value='${JSON.stringify(key)}'>${b.guestName}${b.guestPhone ? ' — ' + b.guestPhone : ''}</option>`);
+            });
         sel.innerHTML = options.join('');
     }
 
@@ -7600,7 +7600,7 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
                     if (d.status !== 'success' || !d.warning) { warningBox.style.display = 'none'; return; }
                     const items = (d.entries || []).filter(e => e.stars <= 4).map(e => {
                         const stars = '★'.repeat(e.stars) + '☆'.repeat(5 - e.stars);
-                        const src = e.source === 'shared' ? ('مضيف آخر: ' + (e.propertyName || '')) : 'تقييمك إنت';
+                        const src = formatRatingAttribution(e); // v42.3: اسم الهوست — اسم الوحدة مربوطين اتوماتيك
                         return `<div>⚠️ <span style="color:#C5A85C;">${stars}</span> — ${src}${e.notes ? ' — "' + e.notes + '"' : ''}</div>`;
                     }).join('');
                     warningBox.innerHTML = '<strong>⚠️ تنبيه: هذا الضيف له تقييم منخفض (4 نجوم أو أقل) من قبل:</strong>' + items;
@@ -7619,9 +7619,17 @@ ${exportRules.map((rule, i) => `<div style="background:rgba(255,255,255,0.04);bo
         return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
+    // v42.3: الإسناد (بواسطة مين) بقى دايماً "اسم الهوست — اسم الوحدة" مربوطين اتوماتيك من إعدادات
+    // صاحب التقييم (محلي أو مشترك على السواء)، بدل ما نفرّق بين "تقييمك إنت" واسم عقار بس
+    function formatRatingAttribution(r) {
+        const parts = [r.hostName, r.propertyName].filter(Boolean);
+        if (parts.length) return parts.join(' — ');
+        return r.source === 'local' ? 'تقييمك إنت' : 'مضيف غير مُسمّى';
+    }
+
     function renderRatingResultCard(r) {
         const stars = '★'.repeat(r.stars || 0) + '☆'.repeat(5 - (r.stars || 0));
-        const srcLabel = r.source === 'local' ? ('تقييمك إنت (' + (r.propertyName || 'عقارك') + ')') : (r.propertyName || 'مضيف آخر');
+        const srcLabel = formatRatingAttribution(r);
         return `<div style="background:#1a1a20; border:1px solid #3a3a45; border-radius:10px; padding:10px 12px; margin-bottom:8px;">
             <div style="color:#C5A85C;">${stars}</div>
             <div><strong>${escapeHtmlRatings(r.guestName)}</strong>${r.guestPhone ? ' — ' + escapeHtmlRatings(r.guestPhone) : ''}</div>
